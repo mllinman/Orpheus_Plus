@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 100" width="400" height="100">
+  <defs>
+    <linearGradient id="lyreBlue" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#00d4ff"/>
+      <stop offset="100%" stop-color="#0088cc"/>
+    </linearGradient>
+    <linearGradient id="silver" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#e0e0e0"/>
+      <stop offset="40%" stop-color="#b0b0b0"/>
+      <stop offset="100%" stop-color="#808080"/>
+    </linearGradient>
+    <linearGradient id="textGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#e8e8e8"/>
+      <stop offset="50%" stop-color="#a0a0a0"/>
+      <stop offset="100%" stop-color="#707070"/>
+    </linearGradient>
+  </defs>
+  <!-- Lyre body -->
+  <g transform="translate(15, 10)">
+    <!-- Left arm -->
+    <path d="M20,75 Q5,50 8,25 Q10,10 20,5 Q15,15 15,30 Q14,50 20,70Z" fill="url(#lyreBlue)" stroke="#006699" stroke-width="0.5"/>
+    <!-- Right arm -->
+    <path d="M55,75 Q70,50 67,25 Q65,10 55,5 Q60,15 60,30 Q61,50 55,70Z" fill="url(#lyreBlue)" stroke="#006699" stroke-width="0.5"/>
+    <!-- Base bar -->
+    <rect x="18" y="70" width="39" height="6" rx="2" fill="url(#silver)" stroke="#888" stroke-width="0.5"/>
+    <!-- Top bar -->
+    <rect x="16" y="8" width="43" height="4" rx="2" fill="url(#silver)" stroke="#888" stroke-width="0.5"/>
+    <!-- Strings -->
+    <line x1="24" y1="12" x2="24" y2="70" stroke="url(#silver)" stroke-width="1.2"/>
+    <line x1="30" y1="12" x2="30" y2="70" stroke="url(#silver)" stroke-width="1.2"/>
+    <line x1="36" y1="12" x2="36" y2="70" stroke="url(#silver)" stroke-width="1.2"/>
+    <line x1="42" y1="12" x2="42" y2="70" stroke="url(#silver)" stroke-width="1.2"/>
+    <line x1="48" y1="12" x2="48" y2="70" stroke="url(#silver)" stroke-width="1.2"/>
+    <line x1="51" y1="12" x2="51" y2="70" stroke="url(#silver)" stroke-width="1"/>
+  </g>
+  <!-- ORPHEUS text -->
+  <text x="115" y="65" font-family="'Segoe UI', 'Helvetica Neue', Arial, sans-serif" font-size="48" font-weight="300" letter-spacing="8" fill="url(#textGrad)" stroke="#999" stroke-width="0.3">ORPHEUS</text>
+</svg>
