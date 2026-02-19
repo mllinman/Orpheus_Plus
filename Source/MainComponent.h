@@ -1,12 +1,15 @@
 #pragma once
 #include <JuceHeader.h>
 #include "Audio/AudioEngine.h"
-// #include "Timeline/TimelineComponent.h"
+#include "Timeline/TimelineComponent.h"
 // #include "Timeline/TransportController.h"
 // #include "PianoRoll/PianoRollComponent.h"
 // #include "Mastering/MasteringModule.h"
-// #include "UI/OrpheusLookAndFeel.h"
-// #include "UI/TransportBar.h"
+#include "UI/OrpheusLookAndFeel.h"
+// ...
+    // Core systems
+
+#include "UI/TransportBar.h"
 // #include "UI/MixerPanel.h"
 // #include "UI/SpectrumAnalyzer.h"
 // #include "UI/PluginBrowser.h"
@@ -73,6 +76,7 @@ private:
 
     // Core systems
     // OrpheusLookAndFeel lookAndFeel;
+    OrpheusLookAndFeel orpheusLookAndFeel;
     AppState appState;
     std::unique_ptr<AudioEngine> audioEngine;
     std::unique_ptr<ProjectManager> projectManager;
@@ -80,8 +84,8 @@ private:
 
     // Main UI panels
     std::unique_ptr<juce::MenuBarComponent> menuBar;
-    // std::unique_ptr<TransportBar> transportBar;
-    // std::unique_ptr<TimelineComponent> timeline;
+    std::unique_ptr<TransportBar> transportBar;
+    std::unique_ptr<TimelineComponent> timeline;
     // std::unique_ptr<MixerPanel> mixerPanel;
     // std::unique_ptr<SpectrumAnalyzer> spectrumAnalyzer;
     // std::unique_ptr<PianoRollComponent> pianoRoll;
