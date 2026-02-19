@@ -53,8 +53,15 @@ public:
     void   scrollToPosition(double positionInSeconds);
 
     // Convert between pixel and time coords
-    double pixelToTime(double x) const;
-    double timeToPixel(double t) const;
+    // Convert between pixel and time coords
+    // "View" methods allow for calculating coordinates relative to the visible window (TimelineComponent 0,0)
+    double pixelToTime(double x) const;         // View Pixel -> Time
+    double timeToPixel(double t) const;         // Time -> View Pixel
+
+    // "Absolute" methods return coordinates relative to the start of the time (Time 0)
+    // Used by components inside the scrolling container (TrackLaneComponent)
+    double absolutePixelToTime(double x) const; // Absolute Pixel -> Time
+    double timeToAbsolutePixel(double t) const; // Time -> Absolute Pixel
 
     // AudioEngine::Listener
     void trackListChanged() override { rebuildTracks(); }

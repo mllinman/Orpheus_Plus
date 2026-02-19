@@ -283,12 +283,7 @@ void TimelineComponent::mouseWheelMove(const juce::MouseEvent& e,
     }
 }
 
-void TimelineComponent::setPixelsPerSecond(double pps)
-{
-    pixelsPerSecond = juce::jlimit(10.0, 2000.0, pps);
-    resized();
-    repaint();
-}
+
 
 void TimelineComponent::scrollBarMoved(juce::ScrollBar* bar, double newRange)
 {
@@ -307,14 +302,42 @@ void TimelineComponent::scrollBarMoved(juce::ScrollBar* bar, double newRange)
     repaint();
 }
 
+// View Conversions (Relative to Window)
 double TimelineComponent::pixelToTime(double x) const
 {
-    return horizontalScrollOffset + (x - TRACK_HEADER_W) / pixelsPerSecond;
+    return (x - TRACK_HEADER_W) / pixelsPerSecond + horizontalScrollOffset;
 }
 
 double TimelineComponent::timeToPixel(double t) const
 {
     return TRACK_HEADER_W + (t - horizontalScrollOffset) * pixelsPerSecond;
+}
+
+// Absolute Conversions (Relative to Track Start)
+double TimelineComponent::absolutePixelToTime(double x) const
+{
+    // x is absolute pixel
+    return (x - TRACK_HEADER_W) / pixelsPerSecond;
+}
+
+double TimelineComponent::timeToAbsolutePixel(double t) const
+{
+    return TRACK_HEADER_W + t * pixelsPerSecond;
+}
+
+void TimelineComponent::setPixelsPerSecond(double pps)
+{
+    double oldPPS = pixelsPerSecond;
+    double centerTime = pixelToTime(getWidth() / 2.0); // Center of view
+
+    pixelsPerSecond = juce::jlimit(10.0, 2000.0, pps);
+    
+    // Attempt to keep center of view ? 
+    // New Offset = centerTime - (Width/2)/NewPPS ?
+    // Or just let it be.
+    
+    resized(); // Recalculate container size
+    repaint();
 }
 
 double TimelineComponent::snapToGrid(double time) const

@@ -21,6 +21,7 @@ private:
     int  getNumRows() override;
     void paintListBoxItem(int row, juce::Graphics&, int w, int h, bool selected) override;
     void listBoxItemDoubleClicked(int row, const juce::MouseEvent&) override;
+    juce::var getDragSourceDescription(const juce::SparseSet<int>& rows) override;
 
     // PluginManager::Listener
     void scanProgress(float progress, const juce::String& name) override;

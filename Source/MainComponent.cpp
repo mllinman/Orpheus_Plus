@@ -1,3 +1,4 @@
+#include <JuceHeader.h>
 #include "MainComponent.h"
 
 // #if 0

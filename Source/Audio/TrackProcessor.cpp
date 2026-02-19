@@ -1,3 +1,4 @@
+#include <JuceHeader.h>
 #include "TrackProcessor.h"
 
 TrackProcessor::TrackProcessor()

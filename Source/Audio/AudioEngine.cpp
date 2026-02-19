@@ -1,4 +1,5 @@
 #include "AudioEngine.h"
+#include <JuceHeader.h>
 #include "PluginManager.h"
 #include "TrackProcessor.h"
 #include "MixerProcessor.h"
@@ -238,6 +239,74 @@ void AudioEngine::processAudioBlock(juce::AudioBuffer<float>& buffer)
     // Collect MIDI
     midiBuffer.clear();
     midiCollector.removeNextBlockOfMessages(midiBuffer, buffer.getNumSamples());
+
+    // Apply Automation before processing
+    if (playing.load())
+    {
+        double time = playheadPosition.load();
+        
+        for (auto* track : tracks)
+        {
+            if (track->nodeID == -1) continue;
+            
+            // Find processor
+            auto* node = processorGraph.getNodeForId(juce::AudioProcessorGraph::NodeID(track->nodeID));
+            if (!node) continue;
+            
+            auto* proc = dynamic_cast<TrackProcessor*>(node->getProcessor());
+            if (!proc) continue;
+
+            for (const auto& curve : track->automationCurves)
+            {
+                if (curve.points.empty()) continue;
+                
+                // Simple Linear Interpolation
+                float value = 0.0f;
+                
+                // Case: Time before first point
+                if (time <= curve.points.front().time)
+                {
+                    value = curve.points.front().value;
+                }
+                // Case: Time after last point
+                else if (time >= curve.points.back().time)
+                {
+                    value = curve.points.back().value;
+                }
+                // Case: Between points
+                else
+                {
+                    // Find segment
+                    // Since points are sorted, we can simple scan or binary search.
+                    // Scan is fine for small number of points.
+                    for (size_t i = 0; i < curve.points.size() - 1; ++i)
+                    {
+                        const auto& p1 = curve.points[i];
+                        const auto& p2 = curve.points[i+1];
+                        
+                        if (time >= p1.time && time < p2.time)
+                        {
+                            double t = (time - p1.time) / (p2.time - p1.time);
+                            value = p1.value + (p2.value - p1.value) * (float)t;
+                            break;
+                        }
+                    }
+                }
+                
+                // Apply
+                if (curve.parameterID == "vol")
+                {
+                    proc->setVolume(value);
+                    track->volume = value; // Update model for UI
+                }
+                else if (curve.parameterID == "pan")
+                {
+                    proc->setPan(value);
+                    track->pan = value;    // Update model for UI
+                }
+            }
+        }
+    }
 
     // Process Graph
     // For now, we are only handling output buffer processing.

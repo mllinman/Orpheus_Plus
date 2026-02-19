@@ -19,6 +19,29 @@ class PluginManager;
 
 
 //==============================================================================
+struct AutomationPoint
+{
+    double time;  // Seconds
+    float value;  // Normalized 0.0 - 1.0 (or mapped value)
+
+    bool operator<(const AutomationPoint& other) const { return time < other.time; }
+};
+
+struct AutomationCurve
+{
+    juce::String parameterID; // e.g., "vol", "pan"
+    std::vector<AutomationPoint> points;
+    bool active = false;
+
+    void addPoint(double time, float value)
+    {
+        // Simple insert sorted
+        points.push_back({time, value});
+        std::sort(points.begin(), points.end());
+    }
+};
+
+//==============================================================================
 // Represents a single track in the engine
 struct OrpheusTrackInfo
 {
@@ -40,6 +63,7 @@ struct OrpheusTrackInfo
     std::array<int, MAX_PLUGINS> pluginSlots; // Stores NodeID of plugin in graph. -1 if empty.
 
     juce::OwnedArray<Clip> clips;
+    std::vector<AutomationCurve> automationCurves;
     
     OrpheusTrackInfo() { pluginSlots.fill(-1); }
 };

@@ -1,3 +1,4 @@
+#include <JuceHeader.h>
 #include "PluginBrowser.h"
 
 PluginBrowser::PluginBrowser(AudioEngine& e, AppState& s)
@@ -86,6 +87,15 @@ void PluginBrowser::listBoxItemDoubleClicked(int row, const juce::MouseEvent&)
     // Load plugin onto currently selected track
     // TODO: determine selected track from AppState
     audioEngine.getPluginManager().addPluginToTrack(0, *filteredPlugins[row]);
+}
+
+juce::var PluginBrowser::getDragSourceDescription(const juce::SparseSet<int>& rows)
+{
+    if (rows.isEmpty()) return {};
+    int row = rows[0];
+    if (!juce::isPositiveAndBelow(row, filteredPlugins.size())) return {};
+
+    return "PluginDesc:" + filteredPlugins[row]->createXml()->toString();
 }
 
 void PluginBrowser::rebuildFilteredList()

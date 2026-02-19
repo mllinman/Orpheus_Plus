@@ -18,6 +18,7 @@
 
 //==============================================================================
 class MainComponent : public juce::Component,
+                      public juce::DragAndDropContainer,
                       public juce::MenuBarModel,
                       public juce::ApplicationCommandTarget,
                       private juce::Timer

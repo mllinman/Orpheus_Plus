@@ -1,3 +1,4 @@
+#include <JuceHeader.h>
 #include "TransportBar.h"
 
 TransportBar::TransportBar(AudioEngine& e, juce::ApplicationCommandManager& c)

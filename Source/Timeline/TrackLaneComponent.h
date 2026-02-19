@@ -48,10 +48,14 @@ private:
     // Interaction
     Clip* getClipAt(int x, int y);
     
-    enum class DragMode { None, Move, ResizeLeft, ResizeRight, FadeIn, FadeOut };
+    enum class DragMode { None, Move, ResizeLeft, ResizeRight, FadeIn, FadeOut, MoveAutomationPoint };
     DragMode currentDragMode = DragMode::None;
     Clip*    draggingClip    = nullptr;
     
+    // Automation
+    juce::String currentAutomationParam = ""; // "" = off, "vol", "pan"
+    int draggingAutomationPointIndex = -1;
+
     // Drag start state
     juce::Point<int> dragStartPos;
     double dragStartTime     = 0.0;
@@ -59,6 +63,7 @@ private:
     double dragStartOffset   = 0.0;
     double dragStartFadeIn   = 0.0;
     double dragStartFadeOut  = 0.0;
+    double dragStartVal      = 0.0; // Automation value
 
     DragMode getZoneAt(int x, int y, Clip* clip);
     void updateCursor(int x, int y);
@@ -85,6 +90,7 @@ private:
     juce::Slider     volumeSlider;
     juce::Slider     panSlider;
     juce::Label      trackNameLabel;
+    juce::ComboBox   automationCombo;
 
     // Waveform thumbnails
     juce::AudioThumbnailCache thumbnailCache { 32 };

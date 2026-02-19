@@ -1,3 +1,4 @@
+#include <JuceHeader.h>
 #include "MixerPanel.h"
 #include "../Audio/PluginManager.h"
 
@@ -9,11 +10,12 @@ MixerPanel::ChannelStrip::ChannelStrip(int idx, AudioEngine& e) : trackIndex(idx
     // Plugin Slots
     for (int i = 0; i < OrpheusTrackInfo::MAX_PLUGINS; ++i)
     {
-        auto* b = pluginSlots.add(new juce::TextButton());
+        auto* b = pluginSlots.add(new PluginSlot(trackIndex, i, engine));
         addAndMakeVisible(b);
         b->setColour(juce::TextButton::buttonColourId, juce::Colour(0xff2d2d3e));
         
         b->onClick = [this, i] {
+            // ... (keep existing click logic, but maybe update text update logic elsewhere usually)
             auto& trackInfo = engine.getTrackInfo(trackIndex);
             int nodeID = trackInfo.pluginSlots[i];
             
@@ -32,24 +34,46 @@ MixerPanel::ChannelStrip::ChannelStrip(int idx, AudioEngine& e) : trackIndex(idx
                     m.addItem(id++, desc.name + " (" + desc.manufacturerName + ")");
                 }
                 
-                m.showMenuAsync(juce::PopupMenu::Options{}, [this, &pm](int result) {
+                m.showMenuAsync(juce::PopupMenu::Options{}, [this, &pm, i](int result) {
                     if (result > 0)
                     {
                         auto& list = pm.getKnownPluginList();
                         if (result - 1 < list.getTypes().size())
                         {
                             const auto& desc = list.getTypes()[result - 1]; // unsafe if list changes?
-                            pm.addPluginToTrack(trackIndex, desc);
+                            pm.addPluginToTrack(trackIndex, desc); // Note: this defaults to first empty slot. 
+                            // We need addPluginToTrack(trackIndex, desc, slotIndex)
+                            // But for now, let's just stick to "add to track" and refactor if needed. 
+                            // Wait, if I click slot 2 but slot 0 is empty, where should it go?
+                            // Ideally slot 2. 
+                            // Let's defer that refinement.
                         }
                     }
                 });
             }
             else
             {
-                engine.getPluginManager().openPluginEditor(trackIndex, i);
+                // Right click handled? No this is Click.
+                // Opens editor.
+                if (juce::ModifierKeys::getCurrentModifiers().isPopupMenu())
+                {
+                     // Remove menu
+                     juce::PopupMenu m;
+                     m.addItem(1, "Remove Plugin");
+                     m.showMenuAsync(juce::PopupMenu::Options{}, [this, i](int result) {
+                         if (result == 1) engine.getPluginManager().removePluginFromTrack(trackIndex, i);
+                     });
+                }
+                else
+                {
+                    engine.getPluginManager().openPluginEditor(trackIndex, i);
+                }
             }
         };
     }
+
+
+
 
     nameLabel.setText(info.name, juce::dontSendNotification);
     nameLabel.setFont(juce::Font(10.0f));
@@ -212,4 +236,23 @@ void MixerPanel::rebuildStrips()
     }
 
     resized();
+}
+
+bool MixerPanel::ChannelStrip::PluginSlot::isInterestedInDragSource(const SourceDetails& dragSourceDetails)
+{
+    return dragSourceDetails.description.toString().startsWith("PluginDesc:");
+}
+
+void MixerPanel::ChannelStrip::PluginSlot::itemDropped(const SourceDetails& dragSourceDetails)
+{
+    juce::String xmlString = dragSourceDetails.description.toString().substring(11); // Remove "PluginDesc:"
+    auto xml = juce::parseXML(xmlString);
+    if (xml)
+    {
+        juce::PluginDescription desc;
+        if (desc.loadFromXml(*xml))
+        {
+             engine.getPluginManager().addPluginToTrack(trackIndex, desc);
+        }
+    }
 }

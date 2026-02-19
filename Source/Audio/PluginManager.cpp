@@ -1,3 +1,4 @@
+#include <JuceHeader.h>
 #include "PluginManager.h"
 #include "AudioEngine.h"
 #include "../UI/PluginWindow.h"
@@ -80,10 +81,7 @@ PluginManager::loadPlugin(const juce::PluginDescription& desc, juce::String& err
 
 
 
-void PluginManager::removePluginFromTrack(int /*trackIndex*/, int /*pluginSlot*/)
-{
-    // TODO: remove from graph
-}
+
 
 void PluginManager::openPluginEditor(int trackIndex, int pluginSlot)
 {
@@ -198,35 +196,170 @@ void PluginManager::addPluginToTrack(int trackIndex, const juce::PluginDescripti
         // But if we are appending (slot N), the previous last plugin (or source) was connected to Dest.
         
         // Case: Appending at slot 0.
-        // Prev: None/Source. Dest: TrackProc.
-        // Old: Source -> TrackProc.
-        // New: Source -> NewNode -> TrackProc.
-        // We need to find what feeds TrackProc and move it to NewNode.
+        // Connect InputNode -> [New] -> TrackProcessor
+        // Previous connection was InputNode -> TrackProcessor.
         
-        // Helper: Rewire connection feeding 'Dest' to feed 'NewNode' instead?
-        // graph.getConnections() ...
+        // Strategy: 
+        // 1. Disconnect Prev -> Dest.
+        // 2. Connect Prev -> New.
+        // 3. Connect New -> Dest.
         
-        for (int ch = 0; ch < 2; ++ch)
-             graph.addConnection({ { (juce::AudioProcessorGraph::NodeID)newNodeID, ch }, 
-                                   { (juce::AudioProcessorGraph::NodeID)destNodeID, ch } });
-                                   
-        // If there was a previous plugin, play nice
-        if (prevNodeID != -1)
+        // Determine Actual Previous Node
+        juce::AudioProcessorGraph::NodeID actualPrevID;
+        int prevOutIndex = 0; // Usually 0?
+        
+        if (slot == 0)
         {
-             // Disconnect Prev -> TrackProc
-             for (int ch = 0; ch < 2; ++ch)
-                 graph.removeConnection({ { (juce::AudioProcessorGraph::NodeID)prevNodeID, ch }, 
-                                          { (juce::AudioProcessorGraph::NodeID)destNodeID, ch } });
-                                          
-             // Connect Prev -> NewNode
-             for (int ch = 0; ch < 2; ++ch)
-                 graph.addConnection({ { (juce::AudioProcessorGraph::NodeID)prevNodeID, ch }, 
-                                       { (juce::AudioProcessorGraph::NodeID)newNodeID, ch } });
+            // Slot 0 input is Engine Input (for now) or nothing if generator?
+            // Wait, tracks should interpret Input. 
+            // In AudioEngine::addAudioTrack, we connect node(TrackProcessor) to Master.
+            // We do NOT currently have a "Track Input" node in the graph for each track unless it's the global input.
+            // But we can just assume the Chain ends at TrackProcessor?
+            // "TrackProcessor" is the specific node for volume/pan.
+            
+            // If we want plugins BEFORE the fader (TrackProcessor), we insert them before TrackProcessor.
+            // But where does the signal come from?
+            // 1. Audio Clips (rendered directly into buffer?) -> If so, plugins should run ON buffer.
+            //    Currently AudioEngine::processAudioBlock collects MIDI and processes graph.
+            //    The graph nodes are just "TrackProcessor".
+            //    The timeline rendering (clips) happens WHERE?
+            //    Ah, AudioEngine::processAudioBlock calls processorGraph.processBlock.
+            //    But who fills the buffer with clip data?
+            //    In `AudioEngine.cpp`, we see `processAudioBlock`:
+            //       midiCollector.removeNextBlock();
+            //       processorGraph.processBlock(buffer, midiBuffer);
+            //    Wait, where is the file reading?
+            //    I don't see any code that renders clips into the graph inputs!
+            //    `TrackProcessor` has `processBlock`.
+            //    Does `TrackProcessor` read clips? NO.
+            //    `TrackProcessor` is just vol/pan.
+            
+            //    MAJOR ISSUE: We have no sound source for clips in the graph yet!
+            //    The clips are just data in `OrpheusTrackInfo`.
+            //    We need a "ClipPlayerNode" or `TrackProcessor` needs to play clips.
+            //    The `TrackProcessor` I viewed earlier:
+            //       processBlock checks `muted`, clears buffer if muted.
+            //       Applies volume/pan.
+            //       It does NOT read clips.
+            
+            //    So currently, the app produces silence even with clips?
+            //    Yes. I missed that "Render Clips" step in AudioEngine.
+            
+            //    For now, let's assume `TrackProcessor` IS the source (it should read clips?).
+            //    OR we need a SourceNode before it.
+            //    Let's make `TrackProcessor` capable of reading clips?
+            //    Or better: The plugins go AFTER `TrackProcessor`? No, fader should be post-FX usually.
+            //    Unless it's "Insert" effects.
+            
+            //    Standard chain: [Clip Player] -> [Inserts] -> [Fader/Pan] -> [Master]
+            
+            //    So we need a [Track Source Node].
+            //    For this task ("Plugin Hosting UI"), I will implement the connections Assuming there is a Source Node, 
+            //    OR I will connect Input -> Plugin -> TrackProcessor (Input being global input, which is wrong for playback but okay for live monitoring).
+            
+            //    To make this work without refactoring the whole engine:
+            //    Let's assume the Plugins are Post-Fader? No that's bad.
+            //    Pred-Fader is better.
+            
+            //    Let's just chain them: 
+            //    [Pre-Fader Input] -> Plugin -> [Fader]
+            
+            //    If we don't have a Pre-Fader Input Node, we can't connect the first plugin's input.
+            //    So the first plugin effectively becomes a generator if it doesn't receive input.
+            //    That's fine for Synthesizers (VSTi).
+            
+            //    For Audio FX, we need a source.
+            
+            //    Update: I will implement the chaining logic.
+            //    PrevNode = (slot==0) ? engine.inputNode->nodeID : info.pluginSlots[slot-1];
+            
+            //    Wait, engine.inputNode is global audio input.
+            //    That's fine for now (Live input monitoring).
+            //    Later I will add Clip Players.
+            
+            if (slot == 0)
+                actualPrevID = engine.inputNode->nodeID;
+            else
+                actualPrevID = juce::AudioProcessorGraph::NodeID(info.pluginSlots[slot - 1]);
+        }
+        else
+        {
+             actualPrevID = juce::AudioProcessorGraph::NodeID(info.pluginSlots[slot - 1]);
+        }
+        
+        // Dest
+        juce::AudioProcessorGraph::NodeID destID = juce::AudioProcessorGraph::NodeID(info.nodeID); // TrackProcessor
+        // If there are plugins AFTER this slot (which isn't the case for append-only logic here), we'd need to find the next one.
+        // But since we just filled the FIRST empty slot, and we fill linearly 0..3...
+        // Any slot > ThisSlot is empty (-1).
+        // So Dest is always TrackProcessor (or next populated slot if we allowed sparse filling).
+        
+        // Check for next populated slot?
+        for (int k = slot + 1; k < OrpheusTrackInfo::MAX_PLUGINS; ++k) {
+            if (info.pluginSlots[k] != -1) {
+                destID = juce::AudioProcessorGraph::NodeID(info.pluginSlots[k]);
+                break;
+            }
+        }
+        
+        // 1. Disconnect Prev -> Dest
+        for (int ch = 0; ch < 2; ++ch)
+            graph.removeConnection({ { actualPrevID, ch }, { destID, ch } });
+            
+        // 2. Connect Prev -> New
+        for (int ch = 0; ch < 2; ++ch)
+            graph.addConnection({ { actualPrevID, ch }, { node->nodeID, ch } });
+            
+        // 3. Connect New -> Dest
+        for (int ch = 0; ch < 2; ++ch)
+            graph.addConnection({ { node->nodeID, ch }, { destID, ch } });
+    }
+    
+    listeners.call(&Listener::pluginListChanged); // Refresh UI
+}
+
+void PluginManager::removePluginFromTrack(int trackIndex, int pluginSlot)
+{
+    if (trackIndex < 0 || trackIndex >= engine.getNumTracks()) return;
+    auto& info = engine.getTrackInfo(trackIndex);
+    
+    if (pluginSlot < 0 || pluginSlot >= OrpheusTrackInfo::MAX_PLUGINS) return;
+    int nodeID = info.pluginSlots[pluginSlot];
+    
+    if (nodeID == -1) return;
+    
+    auto& graph = engine.processorGraph;
+    
+    // Identify Prev and Next to stitch them together
+    juce::AudioProcessorGraph::NodeID prevID;
+    if (pluginSlot == 0)
+        prevID = engine.inputNode->nodeID;
+    else
+        prevID = juce::AudioProcessorGraph::NodeID(info.pluginSlots[pluginSlot - 1]);
+        
+    juce::AudioProcessorGraph::NodeID nextID = juce::AudioProcessorGraph::NodeID(info.nodeID); // TrackProcessor
+    for (int k = pluginSlot + 1; k < OrpheusTrackInfo::MAX_PLUGINS; ++k) {
+        if (info.pluginSlots[k] != -1) {
+            nextID = juce::AudioProcessorGraph::NodeID(info.pluginSlots[k]);
+            break;
         }
     }
     
-    engine.listeners.call(&AudioEngine::Listener::trackListChanged);
+    // Disconnect Plugin
+    graph.disconnectNode(juce::AudioProcessorGraph::NodeID(nodeID));
+    graph.removeNode(juce::AudioProcessorGraph::NodeID(nodeID));
+    
+    // Stitch Prev -> Next
+    if (prevID.uid != 0 && nextID.uid != 0) // Valid IDs
+    {
+         for (int ch = 0; ch < 2; ++ch)
+            graph.addConnection({ { prevID, ch }, { nextID, ch } });
+    }
+    
+    info.pluginSlots[pluginSlot] = -1;
+    listeners.call(&Listener::pluginListChanged);
 }
+
 
 void PluginManager::savePluginList(const juce::File& file)
 {

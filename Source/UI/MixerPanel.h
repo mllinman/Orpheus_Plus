@@ -39,7 +39,21 @@ private:
         juce::Label      nameLabel;
         float peakL = 0.0f, peakR = 0.0f;
 
-        juce::OwnedArray<juce::TextButton> pluginSlots;
+        struct PluginSlot : public juce::TextButton,
+                            public juce::DragAndDropTarget
+        {
+            int trackIndex;
+            int slotIndex;
+            AudioEngine& engine;
+            
+            PluginSlot(int trk, int slot, AudioEngine& e) 
+                : trackIndex(trk), slotIndex(slot), engine(e) {}
+            
+            bool isInterestedInDragSource(const SourceDetails& dragSourceDetails) override;
+            void itemDropped(const SourceDetails& dragSourceDetails) override;
+        };
+
+        juce::OwnedArray<PluginSlot> pluginSlots;
 
         ChannelStrip(int idx, AudioEngine& e);
         ~ChannelStrip() override;

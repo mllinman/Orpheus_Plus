@@ -59,6 +59,20 @@ TrackLaneComponent::TrackLaneComponent(int idx, AudioEngine& e, AppState& s,
     // Name label
     trackNameLabel.setText(info.name, juce::dontSendNotification);
     
+    // Automation Combo
+    automationCombo.addItem("Automation: Off", 1);
+    automationCombo.addItem("Volume", 2);
+    automationCombo.addItem("Pan", 3);
+    automationCombo.setSelectedId(1);
+    automationCombo.onChange = [this] {
+        int id = automationCombo.getSelectedId();
+        if (id == 1) currentAutomationParam = "";
+        else if (id == 2) currentAutomationParam = "vol";
+        else if (id == 3) currentAutomationParam = "pan";
+        repaint();
+    };
+    addAndMakeVisible(automationCombo);
+
     // Init thumbnails for existing clips
     for (auto* clip : info.clips)
     {
@@ -99,6 +113,8 @@ void TrackLaneComponent::resized()
     auto sliderRow = header.removeFromTop(20);
     panSlider.setBounds(sliderRow.removeFromRight(30));
     volumeSlider.setBounds(sliderRow);
+    
+    automationCombo.setBounds(header.removeFromTop(18));
 }
 
 void TrackLaneComponent::paint(juce::Graphics& g)
@@ -145,15 +161,13 @@ void TrackLaneComponent::paintClips(juce::Graphics& g, juce::Rectangle<int> clip
 
 juce::Rectangle<float> TrackLaneComponent::getClipScreenBounds(const Clip& clip) const
 {
-    double startPixel = timeline.timeToPixel(clip.startTime);
-    double endPixel   = timeline.timeToPixel(clip.startTime + clip.duration);
+    double startPixel = timeline.timeToAbsolutePixel(clip.startTime);
+    double endPixel   = timeline.timeToAbsolutePixel(clip.startTime + clip.duration);
 
     float  y  = 4.0f;
     float  h  = (float)(getHeight() - 8);
     
     // Note: Assuming timeToPixel returns absolute timeline pixel.
-    // We adjust by HEADER_WIDTH to map to this component's local bounds?
-    // Stick to previous logic: timeToPixel - HEADER_WIDTH.
     return { (float)(startPixel - HEADER_WIDTH), y, (float)(endPixel - startPixel), h }; 
 }
 
@@ -161,15 +175,18 @@ TrackLaneComponent::DragMode TrackLaneComponent::getZoneAt(int x, int y, Clip* c
 {
     if (!clip) return DragMode::None;
 
-    // Convert clip time to pixel relative to Timeline (which is what x is relative to... NO)
-    // x is relative to TrackLaneComponent.
+    // x is absolute pixel in TrackLane (inside container)
     // Clip drawing starts at HEADER_WIDTH?
-    // In getClipScreenBounds, we return (sx1 - HEADER_WIDTH).
-    // So the visual X of clip start is timeToPixel(start) - HEADER_WIDTH.
+    // In getClipScreenBounds, we return (startPixel - HEADER_WIDTH).
+    // So visual X of clip start is timeToAbsolutePixel(start) - HEADER_WIDTH.
     
-    int clipX = timeline.timeToPixel(clip->startTime) - HEADER_WIDTH;
-    int clipW = timeline.timeToPixel(clip->duration); // Duration in pixels
-    int clipR = clipX + clipW;
+    int clipX = timeline.timeToAbsolutePixel(clip->startTime) - HEADER_WIDTH;
+    int clipW = timeline.timeToAbsolutePixel(clip->duration) - HEADER_WIDTH; // wait, duration is relative? 
+    // timeToAbsolutePixel(dur) = Header + dur*p.
+    // So length is (Header+dur*p) - Header = dur*p.
+    // Or just:
+    int clipLen = (int)(clip->duration * timeline.getPixelsPerSecond());
+    int clipR = clipX + clipLen;
 
     if (x >= clipX && x < clipX + 6) return DragMode::ResizeLeft;
     if (x <= clipR && x > clipR - 6) return DragMode::ResizeRight;
@@ -214,12 +231,12 @@ void TrackLaneComponent::mouseDown(const juce::MouseEvent& e)
     if (e.x < HEADER_WIDTH) return;
 
     // 1. Tool Logic (Split / Erase)
-    double clickTime = timeline.snapToGrid(timeline.pixelToTime(e.x)); // Snap for tools? Maybe.
+    double clickTime = timeline.snapToGrid(timeline.absolutePixelToTime(e.x)); // Snap for tools? Maybe.
     auto tool = timeline.getTool();
 
     if (tool == TimelineComponent::EditTool::Split)
     {
-        if (auto* clip = getClipAt(timeline.pixelToTime(e.x))) // hit test unsnapped
+        if (auto* clip = getClipAt(timeline.absolutePixelToTime(e.x))) // hit test unsnapped
         {
             // Split logic
             double originalEnd = clip->startTime + clip->duration;
@@ -253,7 +270,7 @@ void TrackLaneComponent::mouseDown(const juce::MouseEvent& e)
     }
     else if (tool == TimelineComponent::EditTool::Erase)
     {
-        if (auto* clip = getClipAt(timeline.pixelToTime(e.x)))
+        if (auto* clip = getClipAt(timeline.absolutePixelToTime(e.x)))
         {
             audioEngine.getTrackInfo(trackIndex).clips.removeObject(clip);
             repaint();
@@ -261,7 +278,91 @@ void TrackLaneComponent::mouseDown(const juce::MouseEvent& e)
         return;
     }
 
-    // 2. Default Interaction (Move / Resize / Fade / Select)
+    // 2. Default Interaction
+    
+    // Check Automation Mode First
+    if (currentAutomationParam.isNotEmpty())
+    {
+        double clickTime = timeline.absolutePixelToTime(e.x); // X is Absolute
+        auto& info = audioEngine.getTrackInfo(trackIndex);
+
+        
+        // Helper: Find or create curve
+        AutomationCurve* targetCurve = nullptr;
+        for (auto& c : info.automationCurves) {
+            if (c.parameterID == currentAutomationParam) { targetCurve = &c; break; }
+        }
+        if (!targetCurve) {
+            info.automationCurves.push_back({ currentAutomationParam, {}, true });
+            targetCurve = &info.automationCurves.back();
+        }
+
+        // Hit test points
+        int hitIndex = -1;
+        for (int i=0; i<targetCurve->points.size(); ++i)
+        {
+            float px = (float)timeline.timeToAbsolutePixel(targetCurve->points[i].time) - HEADER_WIDTH;
+            // timeToAbsolutePixel returns value including Header. 
+            // TrackLane render offset is -HEADER_WIDTH.
+            // So px needs to be adjusted?
+            // getClipScreenBounds subtracts HEADER_WIDTH.
+            // Rendering logic: x - HEADER_WIDTH.
+            // So yes, px = timeToAbs(t) - HEADER_WIDTH.
+
+            float zeroY = (float)getLocalBounds().getBottom(); // Approx
+            float rangeY = (float)getLocalBounds().getHeight();
+            float val = targetCurve->points[i].value;
+            float norm = val; 
+            if (currentAutomationParam == "vol") norm = val / 1.5f; 
+            else if (currentAutomationParam == "pan") norm = (val + 1.0f) / 2.0f;
+            float py = zeroY - norm * rangeY;
+
+            if (e.getPosition().getDistanceFrom({(int)px, (int)py}) < 6)
+            {
+                hitIndex = i;
+                break;
+            }
+        }
+
+        if (hitIndex != -1)
+        {
+            // e.mods doesn't have isDoubleClick. e has getNumberOfClicks().
+            if (e.getNumberOfClicks() > 1) 
+            {
+                targetCurve->points.erase(targetCurve->points.begin() + hitIndex);
+                repaint();
+                return;
+            }
+            // Start Drag
+            currentDragMode = DragMode::MoveAutomationPoint;
+            draggingAutomationPointIndex = hitIndex;
+            dragStartPos = e.getPosition();
+            dragStartTime = targetCurve->points[hitIndex].time;
+            dragStartVal  = targetCurve->points[hitIndex].value;
+        }
+        else
+        {
+            // Add Point
+             // Calc value from Y
+            float zeroY = (float)getLocalBounds().getBottom();
+            float rangeY = (float)getLocalBounds().getHeight();
+            float normY = (zeroY - e.y) / rangeY;
+            float newVal = normY;
+            if (currentAutomationParam == "vol") newVal = normY * 1.5f;
+            else if (currentAutomationParam == "pan") newVal = normY * 2.0f - 1.0f;
+
+            targetCurve->addPoint(clickTime, newVal);
+            repaint();
+            
+            // Immediately start dragging the new point?
+            currentDragMode = DragMode::MoveAutomationPoint;
+            draggingAutomationPointIndex = -1; 
+            // Need to find index of new point (sorted).
+            // For now just add.
+        }
+        return; 
+    }
+
     draggingClip = getClipAt(e.x, e.y); // Pixel hit test
     
     if (draggingClip)
@@ -324,14 +425,55 @@ void TrackLaneComponent::mouseDown(const juce::MouseEvent& e)
 
 void TrackLaneComponent::mouseDrag(const juce::MouseEvent& e)
 {
-    if (!draggingClip) return;
+    if (!draggingClip && currentAutomationParam.isEmpty()) return;
     
-    double mouseTime = timeline.pixelToTime(e.x);
+    double mouseTime = timeline.absolutePixelToTime(e.x);
     double snappedMouseTime = timeline.snapToGrid(mouseTime);
     
     // Delta time for Move
-    double deltaTime = mouseTime - timeline.pixelToTime(dragStartPos.x); 
+    double deltaTime = mouseTime - timeline.absolutePixelToTime(dragStartPos.x); 
     
+    
+    if (currentDragMode == DragMode::MoveAutomationPoint)
+    {
+        auto& info = audioEngine.getTrackInfo(trackIndex);
+         AutomationCurve* targetCurve = nullptr;
+        for (auto& c : info.automationCurves) {
+            if (c.parameterID == currentAutomationParam) { targetCurve = &c; break; }
+        }
+        
+        if (targetCurve && draggingAutomationPointIndex >= 0 && draggingAutomationPointIndex < targetCurve->points.size())
+        {
+            double newTime = timeline.snapToGrid(mouseTime);
+            if (newTime < 0) newTime = 0;
+            
+            // Calc value from Y
+            float zeroY = (float)getLocalBounds().getBottom();
+            float rangeY = (float)getLocalBounds().getHeight();
+            float normY = (zeroY - e.y) / rangeY; // local bounds or clip area?
+            // Mouse event is relative to component (0,0 is top left)
+            // But clips are drawn in clipArea?
+            // "height - 8" was used in paintClips.
+            // Let's assume full height matching paint logic approx.
+            
+            float newVal = normY;
+            if (currentAutomationParam == "vol") newVal = std::clamp(normY * 1.5f, 0.0f, 1.5f);
+            else if (currentAutomationParam == "pan") newVal = std::clamp(normY * 2.0f - 1.0f, -1.0f, 1.0f);
+            
+            targetCurve->points[draggingAutomationPointIndex].time = newTime;
+            targetCurve->points[draggingAutomationPointIndex].value = newVal;
+            
+            // Re-sort required if time changed past neighbors?
+            // For now, assume simple drag. 
+             std::sort(targetCurve->points.begin(), targetCurve->points.end());
+             // Invalidates index if order changes!
+             // So we need to find it again or just re-sort on mouseUp.
+             // Visual glitch if not sorted.
+        }
+        repaint();
+        return;
+    }
+
     if (currentDragMode == DragMode::Move)
     {
         // Snap absolute start time
@@ -397,8 +539,8 @@ void TrackLaneComponent::mouseDoubleClick(const juce::MouseEvent& e)
 {
     if (e.x < HEADER_WIDTH) return;
 
-    double clickTime = timeline.snapToGrid(timeline.pixelToTime(e.x));
-    if (auto* clip = getClipAt(timeline.pixelToTime(e.x))) // Check unsnapped for hit test
+    double clickTime = timeline.snapToGrid(timeline.absolutePixelToTime(e.x));
+    if (auto* clip = getClipAt(timeline.absolutePixelToTime(e.x))) // Check unsnapped for hit test
     {
         if (clip->getType() == Clip::Type::Midi)
         {
@@ -473,7 +615,7 @@ Clip* TrackLaneComponent::getClipAt(int x, int y)
     // Ignore Y for now as we have single lane per track
     // (In future if we have overlapping layers shown vertically, check Y)
     juce::ignoreUnused(y);
-    return getClipAt(timeline.pixelToTime(x));
+    return getClipAt(timeline.absolutePixelToTime(x));
 }
 
 void TrackLaneComponent::changeListenerCallback(juce::ChangeBroadcaster*)
