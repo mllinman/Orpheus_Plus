@@ -32,13 +32,19 @@ struct OrpheusTrackInfo
     juce::String inputBus;
     juce::String outputBus;
 
+    static constexpr int MAX_PLUGINS = 4;
+    std::array<int, MAX_PLUGINS> pluginSlots; // Stores NodeID of plugin in graph. -1 if empty.
+
     juce::OwnedArray<Clip> clips;
+    
+    OrpheusTrackInfo() { pluginSlots.fill(-1); }
 };
 
 //==============================================================================
 class AudioEngine : private juce::AudioIODeviceCallback,
                     private juce::MidiInputCallback
 {
+    friend class PluginManager;
 public:
     AudioEngine();
     ~AudioEngine() override;

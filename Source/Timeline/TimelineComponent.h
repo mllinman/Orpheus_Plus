@@ -19,6 +19,12 @@ public:
     void setTool(EditTool t) { currentTool = t; sendChangeMessage(); } // Broadcast change? or just internal state. TrackLanes need to know? They reference timeline.
     EditTool getTool() const { return currentTool; }
 
+    // Grid Snapping
+    enum class SnapTo { Bar, Beat, Half, Quarter, Eighth, Sixteenth, Off };
+    void setSnapTo(SnapTo s) { currentSnapMode = s; }
+    SnapTo getSnapTo() const { return currentSnapMode; }
+    double snapToGrid(double time) const;
+
     TimelineComponent(AudioEngine& engine, AppState& state,
                       juce::ApplicationCommandManager& commands);
     ~TimelineComponent() override;
@@ -69,6 +75,9 @@ private:
     juce::TextButton splitButton  { "Split" };
     juce::TextButton drawButton   { "Draw" };
     juce::TextButton eraseButton  { "Erase" };
+    
+    juce::ComboBox   snapComboBox;
+    SnapTo           currentSnapMode = SnapTo::Beat;
 
     AudioEngine& audioEngine;
     AppState&    appState;

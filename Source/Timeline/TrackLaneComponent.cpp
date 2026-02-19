@@ -156,7 +156,7 @@ void TrackLaneComponent::mouseDown(const juce::MouseEvent& e)
 {
     if (e.x < HEADER_WIDTH) return;
 
-    double clickTime = timeline.pixelToTime(e.x);
+    double clickTime = timeline.snapToGrid(timeline.pixelToTime(e.x));
     auto tool = timeline.getTool();
 
     if (tool == TimelineComponent::EditTool::Split)
@@ -174,21 +174,20 @@ void TrackLaneComponent::mouseDown(const juce::MouseEvent& e)
                 clip->duration = newDuration;
 
                 // 2. Create new clip
-                if (clip->getType() == Clip::Type::Audio)
+                if (clip->getType() == Clip::Type::Audio) // ...
                 {
                     auto* ac = static_cast<AudioClip*>(clip);
                     auto* newClip = new AudioClip(ac->sourceFile, clickTime);
                     newClip->offset   = ac->offset + newDuration;
                     newClip->duration = remaining;
                     newClip->colour   = ac->colour;
-                    newClip->setThumbnailCache(thumbnailCache, audioEngine.getFormatManager()); // Use same cache? yes
+                    newClip->setThumbnailCache(thumbnailCache, audioEngine.getFormatManager()); 
                     audioEngine.getTrackInfo(trackIndex).clips.add(newClip);
                 }
                 else if (clip->getType() == Clip::Type::Midi)
                 {
                     auto* newClip = new MidiClip(clickTime, remaining);
                     newClip->colour = clip->colour;
-                    // TODO: Split MIDI data
                     audioEngine.getTrackInfo(trackIndex).clips.add(newClip);
                 }
                 
@@ -207,12 +206,18 @@ void TrackLaneComponent::mouseDown(const juce::MouseEvent& e)
         return;
     }
 
-    draggedClip = getClipAt(clickTime);
-
+    draggedClip = getClipAt(timeline.pixelToTime(e.x)); // Don't snap for selection check!
+    
+    // If we clicked a clip, calculate offset. 
+    // If we snap here, we might miss the clip if it's not on grid? 
+    // No, getClipAt checks bounds. 
+    // But dragStartTime should be precise relative to clip start.
+    
     if (draggedClip)
     {
         selectedClip = draggedClip;
-        dragStartTime = clickTime - draggedClip->startTime;
+        dragStartTime = timeline.pixelToTime(e.x) - draggedClip->startTime; 
+        // Use unsnapped time for drag offset calculation to avoid jumpiness
     }
     else if (e.mods.isRightButtonDown())
     {
@@ -246,7 +251,9 @@ void TrackLaneComponent::mouseDrag(const juce::MouseEvent& e)
 {
     if (!draggedClip || e.x < HEADER_WIDTH) return;
 
-    double newStart = timeline.pixelToTime(e.x + HEADER_WIDTH) - dragStartTime;
+    double currentPos = timeline.pixelToTime(e.x);
+    double newStart   = currentPos - dragStartTime;
+    newStart = timeline.snapToGrid(newStart);
     draggedClip->startTime = juce::jmax(0.0, newStart);
     repaint();
 }
@@ -260,17 +267,16 @@ void TrackLaneComponent::mouseDoubleClick(const juce::MouseEvent& e)
 {
     if (e.x < HEADER_WIDTH) return;
 
-    double clickTime = timeline.pixelToTime(e.x);
-    if (auto* clip = getClipAt(clickTime))
+    double clickTime = timeline.snapToGrid(timeline.pixelToTime(e.x));
+    if (auto* clip = getClipAt(timeline.pixelToTime(e.x))) // Check unsnapped for hit test
     {
         if (clip->getType() == Clip::Type::Midi)
         {
-            // TODO: open piano roll with this clip
+            // TODO: open piano roll
         }
     }
     else if (timeline.getTool() == TimelineComponent::EditTool::Draw)
     {
-        // Double click to create MIDI clip
         addMidiClip(clickTime);
     }
 }
@@ -289,16 +295,7 @@ bool TrackLaneComponent::isInterestedInFileDrag(const juce::StringArray& files)
 
 void TrackLaneComponent::filesDropped(const juce::StringArray& files, int x, int y)
 {
-    double dropTime = timeline.pixelToTime(x); // x is relative to TrackLane, matches pixelToTime expectation if x includes header offset?
-    // Wait, pixelToTime expects x including header offset if it subtracts HEADER_WIDTH?
-    // TimelineComponent::pixelToTime(x) = offset + (x - HEADER_W) / pps.
-    // If e.x in TrackLane is from 0 (left edge), and Header is at 0..HEADER_W.
-    // So if I click at x=10 (in header), pixelToTime gives negative time. Correct.
-    // If I click at x=HEADER_W+100, time is 100/pps + scroll. Correct.
-    // So passing e.x directly is correct.
-    
-    // BUT what about filesDropped? x is relative to component.
-    // So yes, x matches e.x.
+    double dropTime = timeline.snapToGrid(timeline.pixelToTime(x));
     for (auto& f : files)
         addAudioClip(juce::File(f), dropTime);
 }

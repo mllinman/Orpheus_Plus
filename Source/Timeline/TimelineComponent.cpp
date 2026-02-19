@@ -22,7 +22,34 @@ TimelineComponent::TimelineComponent(AudioEngine& e, AppState& s,
     setupButton(drawButton,   EditTool::Draw);
     setupButton(eraseButton,  EditTool::Erase);
 
+    setupButton(drawButton,   EditTool::Draw);
+    setupButton(eraseButton,  EditTool::Erase);
+
     selectButton.setToggleState(true, juce::dontSendNotification);
+
+    // Snap Combo
+    snapComboBox.addItem("Bar",  1);
+    snapComboBox.addItem("Beat", 2);
+    snapComboBox.addItem("1/2",  3);
+    snapComboBox.addItem("1/4",  4);
+    snapComboBox.addItem("1/8",  5);
+    snapComboBox.addItem("1/16", 6);
+    snapComboBox.addItem("Off",  7);
+    
+    snapComboBox.setSelectedId(2, juce::dontSendNotification); // Beat default
+    snapComboBox.onChange = [this] {
+        switch (snapComboBox.getSelectedId())
+        {
+            case 1: currentSnapMode = SnapTo::Bar; break;
+            case 2: currentSnapMode = SnapTo::Beat; break;
+            case 3: currentSnapMode = SnapTo::Half; break;
+            case 4: currentSnapMode = SnapTo::Quarter; break;
+            case 5: currentSnapMode = SnapTo::Eighth; break;
+            case 6: currentSnapMode = SnapTo::Sixteenth; break;
+            case 7: currentSnapMode = SnapTo::Off; break;
+        }
+    };
+    addAndMakeVisible(snapComboBox);
 
     addAndMakeVisible(horizontalScrollBar);
     addAndMakeVisible(verticalScrollBar);
@@ -76,6 +103,10 @@ void TimelineComponent::resized()
     splitButton.setBounds(toolArea.removeFromLeft(btnW).reduced(2));
     drawButton.setBounds(toolArea.removeFromLeft(btnW).reduced(2));
     eraseButton.setBounds(toolArea.removeFromLeft(btnW).reduced(2));
+
+    // Snap UI
+    auto snapArea = ruler.removeFromLeft(100);
+    snapComboBox.setBounds(snapArea.reduced(2));
 
     auto viewport = bounds;
 
@@ -286,6 +317,52 @@ double TimelineComponent::timeToPixel(double t) const
     return TRACK_HEADER_W + (t - horizontalScrollOffset) * pixelsPerSecond;
 }
 
+double TimelineComponent::snapToGrid(double time) const
+{
+    if (currentSnapMode == SnapTo::Off) return time;
+
+    double bpm = audioEngine.getBpm();
+    if (bpm <= 0.0) return time;
+
+    double secondsPerBeat = 60.0 / bpm;
+    // double timeSigNum = (double)audioEngine.getTimeSigNumerator();
+    double timeSigDen = (double)audioEngine.getTimeSigDenominator();
+
+    double gridInterval = 0.0;
+
+    switch (currentSnapMode)
+    {
+        case SnapTo::Bar:       gridInterval = secondsPerBeat * (double)audioEngine.getTimeSigNumerator(); break;
+        case SnapTo::Beat:      gridInterval = secondsPerBeat; break;
+        case SnapTo::Half:      gridInterval = secondsPerBeat * (4.0 / timeSigDen) * 2.0; break; // Assumes X/4 sig roughly? Or just 2 beats? 1/2 note. 
+                                // 1/2 note = 2 * (1/4 note). If den=4, beat=1/4. So 2*secondsPerBeat.
+                                // If den=8, beat=1/8. 1/2 note = 4 beats. 
+                                // Standard: beat value = 4/den. secondsPerWholenote = secondsPerBeat * den? No.
+                                // simple way: 
+                                // secondsPerQuarter = secondsPerBeat * (timeSigDen / 4.0);
+                                // Interval = secondsPerQuarter * 4 * factor?
+                                // Let's stick to musical time relative to quarter note = 1 beat at 4/4.
+                                // But generic:
+                                // gridInterval = secondsPerBeat * (4.0/timeSigDen) * ratio;
+                                // 1/1 = 4.0
+                                // 1/2 = 2.0
+                                // 1/4 = 1.0 (Beat if x/4)
+                                // 1/8 = 0.5
+                                // 1/16 = 0.25
+                                // So:
+                                gridInterval = (60.0 / bpm) * (4.0 / timeSigDen) * 2.0; 
+                                break;
+        case SnapTo::Quarter:   gridInterval = (60.0 / bpm) * (4.0 / timeSigDen) * 1.0; break;
+        case SnapTo::Eighth:    gridInterval = (60.0 / bpm) * (4.0 / timeSigDen) * 0.5; break;
+        case SnapTo::Sixteenth: gridInterval = (60.0 / bpm) * (4.0 / timeSigDen) * 0.25; break;
+        default: return time;
+    }
+
+    if (gridInterval <= 0.0001) return time;
+
+    return std::round(time / gridInterval) * gridInterval;
+}
+
 void TimelineComponent::scrollToPosition(double posSeconds)
 {
     horizontalScrollOffset = juce::jmax(0.0, posSeconds);
@@ -309,7 +386,7 @@ void TimelineComponent::filesDropped(const juce::StringArray& files, int x, int 
 {
     // Calculate time from x position
     // x is relative to TimelineComponent
-    double dropTime = pixelToTime(x);
+    double dropTime = snapToGrid(pixelToTime(x));
 
     // Filter valid files
     for (auto& f : files)
