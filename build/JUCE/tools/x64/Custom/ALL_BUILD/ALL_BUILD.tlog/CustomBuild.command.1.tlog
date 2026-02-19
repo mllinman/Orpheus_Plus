@@ -1,0 +1,10 @@
+^C:\USERS\MLLIN\ONEDRIVE\DOCUMENTS\GITHUB\ORPHEUS_PLUS\JUCE\CMAKELISTS.TXT
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -SC:/Users/mllin/OneDrive/Documents/GitHub/Orpheus_Plus/JUCE -BC:/Users/mllin/OneDrive/Documents/GitHub/Orpheus_Plus/build/JUCE/tools --check-stamp-file C:/Users/mllin/OneDrive/Documents/GitHub/Orpheus_Plus/build/JUCE/tools/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
