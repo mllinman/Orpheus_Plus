@@ -28,8 +28,8 @@ MainComponent::MainComponent()
     pianoRoll = std::make_unique<PianoRollComponent>(appState, *audioEngine);
     addChildComponent(*pianoRoll); // hidden until needed
 
-    masteringModule = std::make_unique<MasteringModule>(*audioEngine);
-    addChildComponent(*masteringModule);
+    // masteringModule = std::make_unique<MasteringModule>(*audioEngine);
+    // addChildComponent(*masteringModule);
 
     pluginBrowser = std::make_unique<PluginBrowser>(*audioEngine, appState);
     addChildComponent(*pluginBrowser);
@@ -67,6 +67,7 @@ void MainComponent::resized()
         mixerPanel->setVisible(false);
     }
 
+    /*
     if (showMastering)
     {
         masteringModule->setBounds(bounds.removeFromRight(360));
@@ -76,6 +77,7 @@ void MainComponent::resized()
     {
         masteringModule->setVisible(false);
     }
+    */
 
     if (showPluginBrowser)
     {

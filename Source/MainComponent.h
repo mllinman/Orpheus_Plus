@@ -4,7 +4,7 @@
 #include "Timeline/TimelineComponent.h"
 #include "Timeline/TransportController.h"
 #include "PianoRoll/PianoRollComponent.h"
-#include "Mastering/MasteringModule.h"
+// #include "Mastering/MasteringModule.h"
 #include "UI/OrpheusLookAndFeel.h"
 #include "UI/TransportBar.h"
 #include "UI/MixerPanel.h"
@@ -82,7 +82,7 @@ private:
     std::unique_ptr<MixerPanel> mixerPanel;
     std::unique_ptr<SpectrumAnalyzer> spectrumAnalyzer;
     std::unique_ptr<PianoRollComponent> pianoRoll;
-    std::unique_ptr<MasteringModule> masteringModule;
+    // std::unique_ptr<MasteringModule> masteringModule;
     std::unique_ptr<PluginBrowser> pluginBrowser;
 
     // Layout state
