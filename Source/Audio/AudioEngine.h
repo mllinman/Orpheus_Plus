@@ -1,5 +1,9 @@
 #pragma once
 #include <JuceHeader.h>
+#include <vector>
+#include <memory>
+#include <atomic>
+#include <array>
 // #include "../StemSeparation/StemSeparator.h"
 // #include "../AudioToMidi/AudioToMidiConverter.h"
 // #include "../PitchCorrection/AutoTuneProcessor.h"
