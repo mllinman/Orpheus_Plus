@@ -1,13 +1,13 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <CustomBuild Include="C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\build\JUCE\tools\CMakeFiles\d61e346f809c1a1dfee3937347a33bf8\INSTALL_force.rule">
+    <CustomBuild Include="C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\JUCE\tools\CMakeFiles\ae581236d9c0362a6d84c8fd52816156\INSTALL_force.rule">
       <Filter>CMake Rules</Filter>
     </CustomBuild>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="CMake Rules">
-      <UniqueIdentifier>{C27F0568-020D-379D-82A3-3A3D7CE5EC6D}</UniqueIdentifier>
+      <UniqueIdentifier>{6E9FF0EB-D3E3-381A-BC66-B794641A3159}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>
