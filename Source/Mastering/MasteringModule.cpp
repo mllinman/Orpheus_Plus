@@ -1,6 +1,9 @@
+#if 0
 #include "MasteringModule.h"
 
 MasteringModule::MasteringModule(AudioEngine& e) : audioEngine(e)
+...
+#endif
 {
     buildUI();
 
