@@ -52,14 +52,16 @@ TransportBar::TransportBar(AudioEngine& e, juce::ApplicationCommandManager& c)
     addAndMakeVisible(timeSigDenominator);
 
     // Position display
-    positionLabel.setText("0:00:00.000", juce::dontSendNotification);
-    positionLabel.setFont(juce::Font(juce::Font::getDefaultMonospacedFontName(), 14.0f, 0));
+    // Fix Font deprecation and casts
+    auto monoFont = juce::Font(juce::Font::getDefaultMonospacedFontName(), 14.0f, juce::Font::plain);
+
+    positionLabel.setFont(monoFont);
     positionLabel.setColour(juce::Label::textColourId, juce::Colour(0xff4fc3f7));
     positionLabel.setJustificationType(juce::Justification::centred);
     addAndMakeVisible(positionLabel);
 
     barBeatLabel.setText("1 | 1 | 000", juce::dontSendNotification);
-    barBeatLabel.setFont(juce::Font(juce::Font::getDefaultMonospacedFontName(), 14.0f, 0));
+    barBeatLabel.setFont(monoFont);
     barBeatLabel.setColour(juce::Label::textColourId, juce::Colour(0xffffd54f));
     barBeatLabel.setJustificationType(juce::Justification::centred);
     addAndMakeVisible(barBeatLabel);
@@ -124,7 +126,7 @@ void TransportBar::paint(juce::Graphics& g)
 {
     g.fillAll(juce::Colour(0xff16213e));
     g.setColour(juce::Colour(0xff0d0d1a));
-    g.drawHorizontalLine(getHeight() - 1, 0, (float)getWidth());
+    g.drawHorizontalLine(getHeight() - 1, 0.0f, (float)getWidth());
 
     // Level meter bars (simple)
     auto meterArea = getLocalBounds().removeFromRight(80).reduced(4);
@@ -152,10 +154,10 @@ void TransportBar::paint(juce::Graphics& g)
 void TransportBar::updatePositionDisplay()
 {
     double pos = audioEngine.getPlayheadPosition();
-    int hours = (int)(pos / 3600);
-    int mins  = (int)(pos / 60) % 60;
+    int hours = (int)(pos / 3600.0);
+    int mins  = (int)(pos / 60.0) % 60;
     int secs  = (int)pos % 60;
-    int ms    = (int)(pos * 1000) % 1000;
+    int ms    = (int)(pos * 1000.0) % 1000;
 
     positionLabel.setText(
         juce::String::formatted("%d:%02d:%02d.%03d", hours, mins, secs, ms),
@@ -167,7 +169,7 @@ void TransportBar::updatePositionDisplay()
     int    bar  = (int)(pos / secondsPerBar) + 1;
     double rem  = std::fmod(pos, secondsPerBar);
     int    beat = (int)(rem / secondsPerBeat) + 1;
-    int    tick = (int)(std::fmod(rem, secondsPerBeat) / secondsPerBeat * 1000);
+    int    tick = (int)((std::fmod(rem, secondsPerBeat) / secondsPerBeat) * 1000.0);
 
     barBeatLabel.setText(
         juce::String::formatted("%d | %d | %03d", bar, beat, tick),

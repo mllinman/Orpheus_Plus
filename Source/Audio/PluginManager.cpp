@@ -3,7 +3,10 @@
 
 PluginManager::PluginManager(AudioEngine& e) : engine(e)
 {
-    formatManager.addDefaultFormats();
+    formatManager.addFormat(new juce::VST3PluginFormat());
+   #if JUCE_MAC
+    formatManager.addFormat(new juce::AudioUnitPluginFormat());
+   #endif
 
     auto pluginListFile = juce::File::getSpecialLocation(juce::File::userApplicationDataDirectory)
                             .getChildFile("OrpheusPlus/plugins.xml");
@@ -33,8 +36,8 @@ void PluginManager::scanForPlugins()
         auto deadMansPedal = juce::File::getSpecialLocation(juce::File::userApplicationDataDirectory)
                                .getChildFile("OrpheusPlus/deadmanspedal.txt");
 
-        scanner = std::make_unique<juce::PluginDirectoryScanner>(
-            knownPlugins, formatManager, paths, true, deadMansPedal, true);
+        scanner.reset(new juce::PluginDirectoryScanner(
+            knownPlugins, formatManager, paths, true, deadMansPedal, true));
 
         juce::String currentPluginName;
         while (scanner->scanNextFile(true, currentPluginName))

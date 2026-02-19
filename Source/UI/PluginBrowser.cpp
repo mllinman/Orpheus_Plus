@@ -94,12 +94,12 @@ void PluginBrowser::rebuildFilteredList()
     juce::String query = searchBox.getText().toLowerCase();
 
     const auto& list = audioEngine.getPluginManager().getKnownPluginList();
-    for (const auto& desc : list.getTypes())
+    for (auto* desc : list.getTypes())
     {
-        if (query.isEmpty() || desc.name.toLowerCase().contains(query) ||
-            desc.manufacturerName.toLowerCase().contains(query))
+        if (query.isEmpty() || desc->name.toLowerCase().contains(query) ||
+            desc->manufacturerName.toLowerCase().contains(query))
         {
-            filteredPlugins.add(&desc);
+            filteredPlugins.add(desc);
         }
     }
 

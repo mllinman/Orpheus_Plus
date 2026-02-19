@@ -1,0 +1,10 @@
+^C:\USERS\MLLIN\ONEDRIVE\DOCUMENTS\GITHUB\ORPHEUS_PLUS\BUILD\CMAKEFILES\65D1ADC853EB65A1390CF9639A590831\GENERATE.STAMP.RULE
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -SC:/Users/mllin/OneDrive/Documents/GitHub/Orpheus_Plus -BC:/Users/mllin/OneDrive/Documents/GitHub/Orpheus_Plus/build --check-stamp-list CMakeFiles/generate.stamp.list --vs-solution-file C:/Users/mllin/OneDrive/Documents/GitHub/Orpheus_Plus/build/OrpheusPlus.sln
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd

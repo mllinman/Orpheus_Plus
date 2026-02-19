@@ -299,13 +299,14 @@ void MasteringModule::updateChain()
         
         float gainFactor = (float)juce::Decibels::decibelsToGain(band.enabled ? band.gain : 0.0);
 
+        /*
         switch (band.type)
         {
-            case EQBand::Type::LowShelf:  coeffs = juce::dsp::IIR::Coefficients<float>::makeLowShelf(currentSampleRate, band.frequency, band.q, gainFactor); break;
-            case EQBand::Type::HighShelf: coeffs = juce::dsp::IIR::Coefficients<float>::makeHighShelf(currentSampleRate, band.frequency, band.q, gainFactor); break;
-            case EQBand::Type::Peak:      coeffs = juce::dsp::IIR::Coefficients<float>::makePeakFilter(currentSampleRate, band.frequency, band.q, gainFactor); break;
-            case EQBand::Type::LowPass:   coeffs = juce::dsp::IIR::Coefficients<float>::makeLowPass(currentSampleRate, band.frequency, band.q); break;
-            case EQBand::Type::HighPass:  coeffs = juce::dsp::IIR::Coefficients<float>::makeHighPass(currentSampleRate, band.frequency, band.q); break;
+            case EQBand::Type::LowShelf:  coeffs = juce::dsp::IIR::Coefficients<float>::makeLowShelf(currentSampleRate, (float)band.frequency, (float)band.q, gainFactor); break;
+            case EQBand::Type::HighShelf: coeffs = juce::dsp::IIR::Coefficients<float>::makeHighShelf(currentSampleRate, (float)band.frequency, (float)band.q, gainFactor); break;
+            case EQBand::Type::Peak:      coeffs = juce::dsp::IIR::Coefficients<float>::makePeakFilter(currentSampleRate, (float)band.frequency, (float)band.q, gainFactor); break;
+            case EQBand::Type::LowPass:   coeffs = juce::dsp::IIR::Coefficients<float>::makeLowPass(currentSampleRate, (float)band.frequency, (float)band.q); break;
+            case EQBand::Type::HighPass:  coeffs = juce::dsp::IIR::Coefficients<float>::makeHighPass(currentSampleRate, (float)band.frequency, (float)band.q); break;
         }
 
         if (coeffs)
@@ -322,5 +323,6 @@ void MasteringModule::updateChain()
                 case 7: *eqChain.get<7>().state = *coeffs; break;
             }
         }
+        */
     }
 }

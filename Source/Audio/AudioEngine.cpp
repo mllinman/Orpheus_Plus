@@ -258,6 +258,17 @@ void AudioEngine::handleIncomingMidiMessage(juce::MidiInput*, const juce::MidiMe
 }
 
 //──────────────────────────────────────────────────────────────────────────────
+void AudioEngine::registerAnalyzer(SpectrumAnalyzer* analyzer)
+{
+    // analyzers.add(analyzer);
+}
+
+void AudioEngine::unregisterAnalyzer(SpectrumAnalyzer* analyzer)
+{
+    // analyzers.remove(analyzer);
+}
+
+//──────────────────────────────────────────────────────────────────────────────
 // Export
 //──────────────────────────────────────────────────────────────────────────────
 void AudioEngine::exportMix(const juce::File& outputFile, int sampleRate, int bitDepth)

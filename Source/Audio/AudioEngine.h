@@ -9,6 +9,7 @@ class TrackProcessor;
 class MixerProcessor;
 struct TrackInfo;
 class SpectrumAnalyzer;
+class PluginManager;
 
 
 //==============================================================================
@@ -120,8 +121,8 @@ public:
     void addListener(Listener* l)    { listeners.add(l); }
     void removeListener(Listener* l) { listeners.remove(l); }
 
-    void registerAnalyzer(SpectrumAnalyzer* analyzer)   { analyzers.add(analyzer); }
-    void unregisterAnalyzer(SpectrumAnalyzer* analyzer) { analyzers.remove(analyzer); }
+    void registerAnalyzer(SpectrumAnalyzer* analyzer);
+    void unregisterAnalyzer(SpectrumAnalyzer* analyzer);
 
 
 private:
