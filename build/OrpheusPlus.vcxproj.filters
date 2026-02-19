@@ -19,10 +19,28 @@
     <ClCompile Include="C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Audio\PluginManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Timeline\TimelineComponent.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Timeline\TrackLaneComponent.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Timeline\AudioClip.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Timeline\MidiClip.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Timeline\TransportController.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\PianoRoll\PianoRollComponent.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Mastering\MasteringModule.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Mastering\MultibandCompressor.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Project\ProjectManager.cpp">
@@ -91,35 +109,41 @@
     <ClCompile Include="C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\JUCE\modules\juce_audio_processors_headless\juce_audio_processors_headless_lv2_libs.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\JUCE\modules\juce_audio_utils\juce_audio_utils.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\JUCE\modules\juce_dsp\juce_dsp.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\build\OrpheusPlus_artefacts\JuceLibraryCode\JuceHeader.h">
+    <ClInclude Include="C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus_artefacts\JuceLibraryCode\JuceHeader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <CustomBuild Include="C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\build\CMakeFiles\fcb18cc244a911f59eb3c52b1d438c71\JuceHeader.h.rule">
+    <CustomBuild Include="C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\CMakeFiles\c300aa820eb4fffbf8f5fbe03085937c\JuceHeader.h.rule">
       <Filter>CMake Rules</Filter>
     </CustomBuild>
     <CustomBuild Include="C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\CMakeLists.txt" />
   </ItemGroup>
   <ItemGroup>
-    <Object Include="C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\build\OrpheusPlus_rc_lib.dir\$(Configuration)\OrpheusPlus_resources.res">
+    <Object Include="C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus_rc_lib.dir\$(Configuration)\OrpheusPlus_resources.res">
       <Filter>Object Libraries</Filter>
     </Object>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="CMake Rules">
-      <UniqueIdentifier>{457C929D-0E63-3717-B18D-94BA99011FB0}</UniqueIdentifier>
+      <UniqueIdentifier>{350E3850-F697-31AB-AD37-564EC5262799}</UniqueIdentifier>
     </Filter>
     <Filter Include="Header Files">
-      <UniqueIdentifier>{DDE0F657-51AB-3E7B-9D6E-011C999E97DA}</UniqueIdentifier>
+      <UniqueIdentifier>{080FB93A-890B-3CC6-BE02-A6AE91833A34}</UniqueIdentifier>
     </Filter>
     <Filter Include="Object Libraries">
-      <UniqueIdentifier>{202654E4-F455-3FB2-8F50-7FDA4A5AEFAC}</UniqueIdentifier>
+      <UniqueIdentifier>{5DD431E7-D247-375B-8515-03DDFE9DB37A}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source Files">
-      <UniqueIdentifier>{1EEE1D86-9CED-3223-AC32-28577F7B443F}</UniqueIdentifier>
+      <UniqueIdentifier>{2AA65029-04CC-3ECE-9234-2A5B751C78BC}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>
