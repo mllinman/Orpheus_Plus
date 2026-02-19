@@ -23,23 +23,6 @@ public:
 
     void systemRequestedQuit() override
     {
-        if (auto* mw = mainWindow.get())
-        {
-            if (mw->getMainComponent().hasUnsavedChanges())
-            {
-                juce::AlertWindow::showOkCancelBox(
-                    juce::MessageBoxIconType::QuestionIcon,
-                    "Unsaved Changes",
-                    "You have unsaved changes. Quit anyway?",
-                    "Quit", "Cancel",
-                    nullptr,
-                    juce::ModalCallbackFunction::create([this](int result) {
-                        if (result == 1)
-                            quit();
-                    }));
-                return;
-            }
-        }
         quit();
     }
 
@@ -56,13 +39,11 @@ public:
                              DocumentWindow::allButtons)
         {
             setUsingNativeTitleBar(true);
-            mainComponent = std::make_unique<MainComponent>();
-            setContentOwned(mainComponent.get(), true);
+            setContentOwned(new juce::Component(), true);
 
             setResizable(true, true);
-            setResizeLimits(1280, 720, 7680, 4320);
-
-            centreWithSize(1600, 960);
+            setResizeLimits(600, 400, 10000, 10000);
+            centreWithSize(800, 600);
             setVisible(true);
         }
 
@@ -71,10 +52,7 @@ public:
             JUCEApplication::getInstance()->systemRequestedQuit();
         }
 
-        MainComponent& getMainComponent() { return *mainComponent; }
-
     private:
-        std::unique_ptr<MainComponent> mainComponent;
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MainWindow)
     };
 
