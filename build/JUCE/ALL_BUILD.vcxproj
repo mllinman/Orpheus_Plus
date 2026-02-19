@@ -25,7 +25,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{2205C950-5463-37DD-906F-C7169C471B02}</ProjectGuid>
+    <ProjectGuid>{40F5A8D6-3BEB-373D-8D18-5BADD45F2B88}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <WindowsTargetPlatformVersion>10.0.26100.0</WindowsTargetPlatformVersion>
     <Platform>x64</Platform>
@@ -112,7 +112,7 @@
       <UseUtf8Encoding>Always</UseUtf8Encoding>
       <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Building Custom Rule C:/Users/mllin/OneDrive/Documents/GitHub/Orpheus_Plus/JUCE/CMakeLists.txt</Message>
       <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">setlocal
-"C:\Program Files\CMake\bin\cmake.exe" -SC:/Users/mllin/OneDrive/Documents/GitHub/Orpheus_Plus -BC:/Users/mllin/OneDrive/Documents/GitHub/Orpheus_Plus/build --check-stamp-file C:/Users/mllin/OneDrive/Documents/GitHub/Orpheus_Plus/build/JUCE/CMakeFiles/generate.stamp
+"C:\Program Files\CMake\bin\cmake.exe" -SC:/Users/mllin/OneDrive/Documents/GitHub/Orpheus_Plus -BC:/Users/mllin/OneDrive/Documents/GitHub/Orpheus_Plus/Build --check-stamp-file C:/Users/mllin/OneDrive/Documents/GitHub/Orpheus_Plus/Build/JUCE/CMakeFiles/generate.stamp
 if %errorlevel% neq 0 goto :cmEnd
 :cmEnd
 endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
@@ -120,12 +120,12 @@ endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
 exit /b %1
 :cmDone
 if %errorlevel% neq 0 goto :VCEnd</Command>
-      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\Program Files\CMake\share\cmake-4.1\Modules\BasicConfigVersion-ExactVersion.cmake.in;C:\Program Files\CMake\share\cmake-4.1\Modules\CMakeDependentOption.cmake;C:\Program Files\CMake\share\cmake-4.1\Modules\CMakePackageConfigHelpers.cmake;C:\Program Files\CMake\share\cmake-4.1\Modules\WriteBasicConfigVersionFile.cmake;C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\JUCE\extras\Build\CMake\JUCECheckAtomic.cmake;C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\JUCE\extras\Build\CMake\JUCEConfig.cmake.in;C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\JUCE\extras\Build\CMake\JUCEHelperTargets.cmake;C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\JUCE\extras\Build\CMake\JUCEModuleSupport.cmake;C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\JUCE\extras\Build\CMake\JUCEUtils.cmake;C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\build\CMakeFiles\cmake.verify_globs;%(AdditionalInputs)</AdditionalInputs>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\build\JUCE\CMakeFiles\generate.stamp</Outputs>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\Program Files\CMake\share\cmake-4.1\Modules\BasicConfigVersion-ExactVersion.cmake.in;C:\Program Files\CMake\share\cmake-4.1\Modules\CMakeDependentOption.cmake;C:\Program Files\CMake\share\cmake-4.1\Modules\CMakePackageConfigHelpers.cmake;C:\Program Files\CMake\share\cmake-4.1\Modules\WriteBasicConfigVersionFile.cmake;C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\CMakeFiles\cmake.verify_globs;C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\JUCE\extras\Build\CMake\JUCECheckAtomic.cmake;C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\JUCE\extras\Build\CMake\JUCEConfig.cmake.in;C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\JUCE\extras\Build\CMake\JUCEHelperTargets.cmake;C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\JUCE\extras\Build\CMake\JUCEModuleSupport.cmake;C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\JUCE\extras\Build\CMake\JUCEUtils.cmake;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\JUCE\CMakeFiles\generate.stamp</Outputs>
       <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</LinkObjects>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Building Custom Rule C:/Users/mllin/OneDrive/Documents/GitHub/Orpheus_Plus/JUCE/CMakeLists.txt</Message>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">setlocal
-"C:\Program Files\CMake\bin\cmake.exe" -SC:/Users/mllin/OneDrive/Documents/GitHub/Orpheus_Plus -BC:/Users/mllin/OneDrive/Documents/GitHub/Orpheus_Plus/build --check-stamp-file C:/Users/mllin/OneDrive/Documents/GitHub/Orpheus_Plus/build/JUCE/CMakeFiles/generate.stamp
+"C:\Program Files\CMake\bin\cmake.exe" -SC:/Users/mllin/OneDrive/Documents/GitHub/Orpheus_Plus -BC:/Users/mllin/OneDrive/Documents/GitHub/Orpheus_Plus/Build --check-stamp-file C:/Users/mllin/OneDrive/Documents/GitHub/Orpheus_Plus/Build/JUCE/CMakeFiles/generate.stamp
 if %errorlevel% neq 0 goto :cmEnd
 :cmEnd
 endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
@@ -133,12 +133,12 @@ endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
 exit /b %1
 :cmDone
 if %errorlevel% neq 0 goto :VCEnd</Command>
-      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\Program Files\CMake\share\cmake-4.1\Modules\BasicConfigVersion-ExactVersion.cmake.in;C:\Program Files\CMake\share\cmake-4.1\Modules\CMakeDependentOption.cmake;C:\Program Files\CMake\share\cmake-4.1\Modules\CMakePackageConfigHelpers.cmake;C:\Program Files\CMake\share\cmake-4.1\Modules\WriteBasicConfigVersionFile.cmake;C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\JUCE\extras\Build\CMake\JUCECheckAtomic.cmake;C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\JUCE\extras\Build\CMake\JUCEConfig.cmake.in;C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\JUCE\extras\Build\CMake\JUCEHelperTargets.cmake;C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\JUCE\extras\Build\CMake\JUCEModuleSupport.cmake;C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\JUCE\extras\Build\CMake\JUCEUtils.cmake;C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\build\CMakeFiles\cmake.verify_globs;%(AdditionalInputs)</AdditionalInputs>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\build\JUCE\CMakeFiles\generate.stamp</Outputs>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\Program Files\CMake\share\cmake-4.1\Modules\BasicConfigVersion-ExactVersion.cmake.in;C:\Program Files\CMake\share\cmake-4.1\Modules\CMakeDependentOption.cmake;C:\Program Files\CMake\share\cmake-4.1\Modules\CMakePackageConfigHelpers.cmake;C:\Program Files\CMake\share\cmake-4.1\Modules\WriteBasicConfigVersionFile.cmake;C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\CMakeFiles\cmake.verify_globs;C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\JUCE\extras\Build\CMake\JUCECheckAtomic.cmake;C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\JUCE\extras\Build\CMake\JUCEConfig.cmake.in;C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\JUCE\extras\Build\CMake\JUCEHelperTargets.cmake;C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\JUCE\extras\Build\CMake\JUCEModuleSupport.cmake;C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\JUCE\extras\Build\CMake\JUCEUtils.cmake;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\JUCE\CMakeFiles\generate.stamp</Outputs>
       <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkObjects>
       <Message Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">Building Custom Rule C:/Users/mllin/OneDrive/Documents/GitHub/Orpheus_Plus/JUCE/CMakeLists.txt</Message>
       <Command Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">setlocal
-"C:\Program Files\CMake\bin\cmake.exe" -SC:/Users/mllin/OneDrive/Documents/GitHub/Orpheus_Plus -BC:/Users/mllin/OneDrive/Documents/GitHub/Orpheus_Plus/build --check-stamp-file C:/Users/mllin/OneDrive/Documents/GitHub/Orpheus_Plus/build/JUCE/CMakeFiles/generate.stamp
+"C:\Program Files\CMake\bin\cmake.exe" -SC:/Users/mllin/OneDrive/Documents/GitHub/Orpheus_Plus -BC:/Users/mllin/OneDrive/Documents/GitHub/Orpheus_Plus/Build --check-stamp-file C:/Users/mllin/OneDrive/Documents/GitHub/Orpheus_Plus/Build/JUCE/CMakeFiles/generate.stamp
 if %errorlevel% neq 0 goto :cmEnd
 :cmEnd
 endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
@@ -146,12 +146,12 @@ endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
 exit /b %1
 :cmDone
 if %errorlevel% neq 0 goto :VCEnd</Command>
-      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">C:\Program Files\CMake\share\cmake-4.1\Modules\BasicConfigVersion-ExactVersion.cmake.in;C:\Program Files\CMake\share\cmake-4.1\Modules\CMakeDependentOption.cmake;C:\Program Files\CMake\share\cmake-4.1\Modules\CMakePackageConfigHelpers.cmake;C:\Program Files\CMake\share\cmake-4.1\Modules\WriteBasicConfigVersionFile.cmake;C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\JUCE\extras\Build\CMake\JUCECheckAtomic.cmake;C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\JUCE\extras\Build\CMake\JUCEConfig.cmake.in;C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\JUCE\extras\Build\CMake\JUCEHelperTargets.cmake;C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\JUCE\extras\Build\CMake\JUCEModuleSupport.cmake;C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\JUCE\extras\Build\CMake\JUCEUtils.cmake;C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\build\CMakeFiles\cmake.verify_globs;%(AdditionalInputs)</AdditionalInputs>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\build\JUCE\CMakeFiles\generate.stamp</Outputs>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">C:\Program Files\CMake\share\cmake-4.1\Modules\BasicConfigVersion-ExactVersion.cmake.in;C:\Program Files\CMake\share\cmake-4.1\Modules\CMakeDependentOption.cmake;C:\Program Files\CMake\share\cmake-4.1\Modules\CMakePackageConfigHelpers.cmake;C:\Program Files\CMake\share\cmake-4.1\Modules\WriteBasicConfigVersionFile.cmake;C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\CMakeFiles\cmake.verify_globs;C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\JUCE\extras\Build\CMake\JUCECheckAtomic.cmake;C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\JUCE\extras\Build\CMake\JUCEConfig.cmake.in;C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\JUCE\extras\Build\CMake\JUCEHelperTargets.cmake;C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\JUCE\extras\Build\CMake\JUCEModuleSupport.cmake;C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\JUCE\extras\Build\CMake\JUCEUtils.cmake;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\JUCE\CMakeFiles\generate.stamp</Outputs>
       <LinkObjects Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">false</LinkObjects>
       <Message Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">Building Custom Rule C:/Users/mllin/OneDrive/Documents/GitHub/Orpheus_Plus/JUCE/CMakeLists.txt</Message>
       <Command Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">setlocal
-"C:\Program Files\CMake\bin\cmake.exe" -SC:/Users/mllin/OneDrive/Documents/GitHub/Orpheus_Plus -BC:/Users/mllin/OneDrive/Documents/GitHub/Orpheus_Plus/build --check-stamp-file C:/Users/mllin/OneDrive/Documents/GitHub/Orpheus_Plus/build/JUCE/CMakeFiles/generate.stamp
+"C:\Program Files\CMake\bin\cmake.exe" -SC:/Users/mllin/OneDrive/Documents/GitHub/Orpheus_Plus -BC:/Users/mllin/OneDrive/Documents/GitHub/Orpheus_Plus/Build --check-stamp-file C:/Users/mllin/OneDrive/Documents/GitHub/Orpheus_Plus/Build/JUCE/CMakeFiles/generate.stamp
 if %errorlevel% neq 0 goto :cmEnd
 :cmEnd
 endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
@@ -159,8 +159,8 @@ endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
 exit /b %1
 :cmDone
 if %errorlevel% neq 0 goto :VCEnd</Command>
-      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">C:\Program Files\CMake\share\cmake-4.1\Modules\BasicConfigVersion-ExactVersion.cmake.in;C:\Program Files\CMake\share\cmake-4.1\Modules\CMakeDependentOption.cmake;C:\Program Files\CMake\share\cmake-4.1\Modules\CMakePackageConfigHelpers.cmake;C:\Program Files\CMake\share\cmake-4.1\Modules\WriteBasicConfigVersionFile.cmake;C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\JUCE\extras\Build\CMake\JUCECheckAtomic.cmake;C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\JUCE\extras\Build\CMake\JUCEConfig.cmake.in;C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\JUCE\extras\Build\CMake\JUCEHelperTargets.cmake;C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\JUCE\extras\Build\CMake\JUCEModuleSupport.cmake;C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\JUCE\extras\Build\CMake\JUCEUtils.cmake;C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\build\CMakeFiles\cmake.verify_globs;%(AdditionalInputs)</AdditionalInputs>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\build\JUCE\CMakeFiles\generate.stamp</Outputs>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">C:\Program Files\CMake\share\cmake-4.1\Modules\BasicConfigVersion-ExactVersion.cmake.in;C:\Program Files\CMake\share\cmake-4.1\Modules\CMakeDependentOption.cmake;C:\Program Files\CMake\share\cmake-4.1\Modules\CMakePackageConfigHelpers.cmake;C:\Program Files\CMake\share\cmake-4.1\Modules\WriteBasicConfigVersionFile.cmake;C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\CMakeFiles\cmake.verify_globs;C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\JUCE\extras\Build\CMake\JUCECheckAtomic.cmake;C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\JUCE\extras\Build\CMake\JUCEConfig.cmake.in;C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\JUCE\extras\Build\CMake\JUCEHelperTargets.cmake;C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\JUCE\extras\Build\CMake\JUCEModuleSupport.cmake;C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\JUCE\extras\Build\CMake\JUCEUtils.cmake;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\JUCE\CMakeFiles\generate.stamp</Outputs>
       <LinkObjects Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">false</LinkObjects>
     </CustomBuild>
   </ItemGroup>
@@ -168,8 +168,8 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
   </ItemGroup>
   <ItemGroup />
   <ItemGroup>
-    <ProjectReference Include="C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\build\ZERO_CHECK.vcxproj">
-      <Project>{A7E97E44-62EA-33E0-9BA6-02D603FA66C9}</Project>
+    <ProjectReference Include="C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\ZERO_CHECK.vcxproj">
+      <Project>{595CEE03-3E44-3F6D-9AC1-86FD19895690}</Project>
       <Name>ZERO_CHECK</Name>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
