@@ -131,6 +131,6 @@ endif()
 string(REPLACE ";" "\n" CMAKE_INSTALL_MANIFEST_CONTENT
        "${CMAKE_INSTALL_MANIFEST_FILES}")
 if(CMAKE_INSTALL_LOCAL_ONLY)
-  file(WRITE "C:/Users/mllin/OneDrive/Documents/GitHub/Orpheus_Plus/build/JUCE/tools/modules/install_local_manifest.txt"
+  file(WRITE "C:/Users/mllin/OneDrive/Documents/GitHub/Orpheus_Plus/Build/JUCE/tools/modules/install_local_manifest.txt"
      "${CMAKE_INSTALL_MANIFEST_CONTENT}")
 endif()
