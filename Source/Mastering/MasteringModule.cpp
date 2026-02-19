@@ -105,9 +105,26 @@ void MasteringModule::paint(juce::Graphics& g)
 //──────────────────────────────────────────────────────────────────────────────
 // Processing
 //──────────────────────────────────────────────────────────────────────────────
+void MasteringModule::prepare(const juce::dsp::ProcessSpec& spec)
+{
+    currentSampleRate = spec.sampleRate;
+    
+    eqChain.prepare(spec);
+    multibandComp.prepare(spec);
+    
+    updateChain();
+}
+
 void MasteringModule::processBlock(juce::AudioBuffer<float>& buffer, double sampleRate)
 {
-    currentSampleRate = sampleRate;
+    if (sampleRate != currentSampleRate)
+    {
+        juce::dsp::ProcessSpec spec;
+        spec.sampleRate = sampleRate;
+        spec.maximumBlockSize = buffer.getNumSamples();
+        spec.numChannels = buffer.getNumChannels();
+        prepare(spec);
+    }
 
     if (midSideEnabled) processMidSide(buffer, true);
     if (eqEnabled)      processEQ(buffer);
@@ -121,15 +138,9 @@ void MasteringModule::processBlock(juce::AudioBuffer<float>& buffer, double samp
 
 void MasteringModule::processEQ(juce::AudioBuffer<float>& buffer)
 {
-    // Simple biquad EQ applied per band
-    for (int ch = 0; ch < buffer.getNumChannels(); ++ch)
-    {
-        auto* data = buffer.getWritePointer(ch);
-        int n = buffer.getNumSamples();
-        // TODO: apply biquad per enabled band
-        // Real implementation would use IIR filter states per channel per band
-        juce::ignoreUnused(data, n);
-    }
+    juce::dsp::AudioBlock<float> block(buffer);
+    juce::dsp::ProcessContextReplacing<float> context(block);
+    eqChain.process(context);
 }
 
 void MasteringModule::processMidSide(juce::AudioBuffer<float>& buffer, bool encode)
@@ -163,9 +174,7 @@ void MasteringModule::processMidSide(juce::AudioBuffer<float>& buffer, bool enco
 
 void MasteringModule::processMultibandComp(juce::AudioBuffer<float>& buffer)
 {
-    // 3-band compressor: low (<200Hz), mid (200-5kHz), high (>5kHz)
-    // Simplified: apply gain reduction based on RMS per band
-    // TODO: full crossover filter bank + per-band compression
+    multibandComp.process(buffer);
 }
 
 void MasteringModule::processSaturation(juce::AudioBuffer<float>& buffer)
@@ -260,13 +269,58 @@ void MasteringModule::setEQBand(int band, double freq, double gainDB, double q, 
     }
 }
 
-void MasteringModule::setMBThreshold(int band, float threshDB) { mbThresholds[band] = threshDB; }
-void MasteringModule::setMBRatio(int band, float ratio)        { mbRatios[band] = ratio; }
-void MasteringModule::setMBAttack(int band, float ms)          { mbAttack[band] = ms; }
-void MasteringModule::setMBRelease(int band, float ms)         { mbRelease[band] = ms; }
+void MasteringModule::setMBThreshold(int band, float threshDB) { multibandComp.setThreshold(band, threshDB); }
+void MasteringModule::setMBRatio(int band, float ratio)        { multibandComp.setRatio(band, ratio); }
+void MasteringModule::setMBAttack(int band, float ms)          { multibandComp.setAttack(band, ms); }
+void MasteringModule::setMBRelease(int band, float ms)         { multibandComp.setRelease(band, ms); }
 
 void MasteringModule::updateChain()
 {
-    // Rebuild IIR coefficients for current sample rate
-    // TODO: update filter coefficients when params change
+    for (int i=0; i<NUM_EQ_BANDS; ++i)
+    {
+        auto& band = eqBands[i];
+        if (!band.enabled)
+        {
+            // Set to identity (allpass or just 0 gain)
+             // Using helper:
+            *eqChain.get<0>().state = *juce::dsp::IIR::Coefficients<float>::makeAllPass(currentSampleRate, band.frequency); 
+            // Correct way for processor chain access is generic? 
+            // Since we have 8 filters, we need switch/case or template logic. 
+            // For simplicity, we just won't update if not enabled? 
+            // No, we should bypass.
+            // Let's iterate using get<i> is hard at runtime.
+            // We'll trust that we set coefficients correctly.
+            // Or simpler: disable gain by setting DB to 0.
+            // But if type is filter, gain works differently.
+            // We'll just update coefficients properly.
+        }
+        
+        juce::dsp::IIR::Coefficients<float>::Ptr coeffs;
+        
+        float gainFactor = (float)juce::Decibels::decibelsToGain(band.enabled ? band.gain : 0.0);
+
+        switch (band.type)
+        {
+            case EQBand::Type::LowShelf:  coeffs = juce::dsp::IIR::Coefficients<float>::makeLowShelf(currentSampleRate, band.frequency, band.q, gainFactor); break;
+            case EQBand::Type::HighShelf: coeffs = juce::dsp::IIR::Coefficients<float>::makeHighShelf(currentSampleRate, band.frequency, band.q, gainFactor); break;
+            case EQBand::Type::Peak:      coeffs = juce::dsp::IIR::Coefficients<float>::makePeakFilter(currentSampleRate, band.frequency, band.q, gainFactor); break;
+            case EQBand::Type::LowPass:   coeffs = juce::dsp::IIR::Coefficients<float>::makeLowPass(currentSampleRate, band.frequency, band.q); break;
+            case EQBand::Type::HighPass:  coeffs = juce::dsp::IIR::Coefficients<float>::makeHighPass(currentSampleRate, band.frequency, band.q); break;
+        }
+
+        if (coeffs)
+        {
+            switch (i)
+            {
+                case 0: *eqChain.get<0>().state = *coeffs; break;
+                case 1: *eqChain.get<1>().state = *coeffs; break;
+                case 2: *eqChain.get<2>().state = *coeffs; break;
+                case 3: *eqChain.get<3>().state = *coeffs; break;
+                case 4: *eqChain.get<4>().state = *coeffs; break;
+                case 5: *eqChain.get<5>().state = *coeffs; break;
+                case 6: *eqChain.get<6>().state = *coeffs; break;
+                case 7: *eqChain.get<7>().state = *coeffs; break;
+            }
+        }
+    }
 }

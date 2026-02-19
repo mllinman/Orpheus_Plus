@@ -4,23 +4,14 @@
 #include "../Project/AppState.h"
 
 class TimelineComponent;
+#include "Clip.h"
+#include "AudioClip.h"
+#include "MidiClip.h"
 
 //==============================================================================
 // Represents a single audio or MIDI clip on the timeline
-struct Clip
-{
-    enum class Type { Audio, Midi };
-    Type   type        = Type::Audio;
-    double startTime   = 0.0;    // seconds
-    double duration    = 4.0;    // seconds
-    double offset      = 0.0;    // start offset within source
-    juce::String name;
-    juce::File   sourceFile;     // for audio clips
-    juce::MidiMessageSequence midiData; // for MIDI clips
-    juce::Colour colour;
-    bool selected = false;
-    juce::AudioThumbnail* thumbnail = nullptr;
-};
+// Clip struct removed, using Clip.h
+
 
 //==============================================================================
 class TrackLaneComponent : public juce::Component,
@@ -50,8 +41,6 @@ private:
     void changeListenerCallback(juce::ChangeBroadcaster*) override;
     void paintHeader(juce::Graphics& g, juce::Rectangle<int> headerBounds);
     void paintClips(juce::Graphics& g, juce::Rectangle<int> clipArea);
-    void paintAudioClip(juce::Graphics& g, const Clip& clip, juce::Rectangle<float> clipBounds);
-    void paintMidiClip(juce::Graphics& g, const Clip& clip, juce::Rectangle<float> clipBounds);
     void paintVolumeAutomation(juce::Graphics& g, juce::Rectangle<int> clipArea);
 
     Clip* getClipAt(double timeSeconds);

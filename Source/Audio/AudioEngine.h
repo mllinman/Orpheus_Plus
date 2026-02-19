@@ -7,7 +7,9 @@
 
 class TrackProcessor;
 class MixerProcessor;
-class PluginManager;
+struct TrackInfo;
+class SpectrumAnalyzer;
+
 
 //==============================================================================
 // Represents a single track in the engine
@@ -118,6 +120,10 @@ public:
     void addListener(Listener* l)    { listeners.add(l); }
     void removeListener(Listener* l) { listeners.remove(l); }
 
+    void registerAnalyzer(SpectrumAnalyzer* analyzer)   { analyzers.add(analyzer); }
+    void unregisterAnalyzer(SpectrumAnalyzer* analyzer) { analyzers.remove(analyzer); }
+
+
 private:
     //── AudioIODeviceCallback ────────────────────────────────────────────────
     void audioDeviceIOCallbackWithContext(const float* const* inputChannelData,
@@ -139,6 +145,11 @@ private:
     juce::AudioDeviceManager deviceManager;
     juce::AudioFormatManager  formatManager;
     juce::AudioProcessorGraph processorGraph;
+
+    using Node = juce::AudioProcessorGraph::Node;
+    Node::Ptr inputNode;
+    Node::Ptr outputNode;
+    Node::Ptr masterNode;
     juce::MidiMessageCollector midiCollector;
     juce::MidiBuffer           midiBuffer;
     juce::UndoManager          undoManager { 50 };
@@ -167,6 +178,8 @@ private:
     int    currentBlockSize  = 512;
 
     juce::ListenerList<Listener> listeners;
+    juce::Array<SpectrumAnalyzer*> analyzers;
+
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(AudioEngine)
 };

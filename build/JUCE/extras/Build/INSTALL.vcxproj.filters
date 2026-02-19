@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <CustomBuild Include="C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\build\CMakeFiles\31abbd3ae62be04d9fb1e7f70858eceb\INSTALL_force.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="CMake Rules">
+      <UniqueIdentifier>{457C929D-0E63-3717-B18D-94BA99011FB0}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

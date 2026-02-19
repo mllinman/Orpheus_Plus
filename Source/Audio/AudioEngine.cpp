@@ -1,5 +1,9 @@
 #include "AudioEngine.h"
 #include "PluginManager.h"
+#include "TrackProcessor.h"
+#include "MixerProcessor.h"
+#include "../UI/SpectrumAnalyzer.h"
+
 
 AudioEngine::AudioEngine()
 {
@@ -30,6 +34,24 @@ void AudioEngine::initialise()
     deviceManager.addMidiInputDeviceCallback({}, this);
 
     midiCollector.reset(44100.0);
+
+    // Initialize Graph
+    processorGraph.clear();
+    using AudioGraphIOProcessor = juce::AudioProcessorGraph::AudioGraphIOProcessor;
+
+    // Create IO nodes
+    inputNode = processorGraph.addNode(std::make_unique<AudioGraphIOProcessor>(AudioGraphIOProcessor::audioInputNode));
+    outputNode = processorGraph.addNode(std::make_unique<AudioGraphIOProcessor>(AudioGraphIOProcessor::audioOutputNode));
+    
+    // Create Master Node
+    masterNode = processorGraph.addNode(std::make_unique<MixerProcessor>());
+
+    // Connect Master -> Output
+    if (masterNode && outputNode)
+    {
+        for (int ch = 0; ch < 2; ++ch)
+            processorGraph.addConnection({ { masterNode->nodeID, ch }, { outputNode->nodeID, ch } });
+    }
 }
 
 void AudioEngine::shutdown()
@@ -93,6 +115,19 @@ int AudioEngine::addAudioTrack(const juce::String& name)
     info.name   = name;
     info.type   = TrackInfo::Type::Audio;
     info.colour = juce::Colours::cornflowerblue.withSaturation(0.7f);
+
+    // Create Track Processor
+    auto trackProc = std::make_unique<TrackProcessor>();
+    auto node = processorGraph.addNode(std::move(trackProc));
+    info.nodeID = node->nodeID;
+
+    // Connect Track -> Master
+    if (node && masterNode)
+    {
+        for (int ch = 0; ch < 2; ++ch)
+            processorGraph.addConnection({ { node->nodeID, ch }, { masterNode->nodeID, ch } });
+    }
+
     tracks.add(info);
 
     juce::MessageManager::callAsync([this]{ listeners.call(&Listener::trackListChanged); });
@@ -127,6 +162,10 @@ void AudioEngine::removeTrack(int index)
 {
     if (juce::isPositiveAndBelow(index, tracks.size()))
     {
+        auto& track = tracks.getReference(index);
+        if (track.nodeID != -1)
+            processorGraph.removeNode(juce::AudioProcessorGraph::NodeID(track.nodeID));
+
         tracks.remove(index);
         listeners.call(&Listener::trackListChanged);
     }
@@ -200,10 +239,17 @@ void AudioEngine::processAudioBlock(juce::AudioBuffer<float>& buffer)
     midiBuffer.clear();
     midiCollector.removeNextBlockOfMessages(midiBuffer, buffer.getNumSamples());
 
-    // Apply master volume
-    float vol = masterVolume.load();
-    for (int ch = 0; ch < buffer.getNumChannels(); ++ch)
-        juce::FloatVectorOperations::multiply(buffer.getWritePointer(ch), vol, buffer.getNumSamples());
+    // Process Graph
+    // For now, we are only handling output buffer processing.
+    // Ideally, we would pass input data if we had recording enabled.
+    processorGraph.processBlock(buffer, midiBuffer);
+
+    // Update analyzers
+    for (auto* analyzer : analyzers)
+    {
+        if (analyzer)
+            analyzer->pushBuffer(buffer);
+    }
 }
 
 void AudioEngine::handleIncomingMidiMessage(juce::MidiInput*, const juce::MidiMessage& message)

@@ -1,6 +1,7 @@
 #pragma once
 #include <JuceHeader.h>
 #include "../Audio/AudioEngine.h"
+#include "MultibandCompressor.h"
 
 //==============================================================================
 // Linear Phase EQ Band
@@ -25,6 +26,7 @@ public:
     void resized() override;
 
     // Process a buffer through the mastering chain
+    void prepare(const juce::dsp::ProcessSpec& spec);
     void processBlock(juce::AudioBuffer<float>& buffer, double sampleRate);
 
     // Chain enable/disable
@@ -93,11 +95,9 @@ private:
     float limiterEnvL = 0.0f, limiterEnvR = 0.0f;
 
     // Multiband comp state
-    float mbThresholds[3] = { -18.0f, -18.0f, -18.0f };
-    float mbRatios[3]     = { 2.0f,   3.0f,   2.0f   };
-    float mbAttack[3]     = { 10.0f,  5.0f,   8.0f   };
-    float mbRelease[3]    = { 100.0f, 80.0f,  120.0f };
-    float mbEnvL[3] = {}, mbEnvR[3] = {};
+    // Multiband comp
+    MultibandCompressor multibandComp;
+    bool mbCompInitialized = false;
 
     // Metering
     std::atomic<float> currentLUFS  { -70.0f };

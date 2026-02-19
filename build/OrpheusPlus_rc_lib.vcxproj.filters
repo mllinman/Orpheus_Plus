@@ -1,0 +1,22 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <CustomBuild Include="C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\build\CMakeFiles\fcb18cc244a911f59eb3c52b1d438c71\OrpheusPlus_resources.rc.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\build\OrpheusPlus_artefacts\JuceLibraryCode\OrpheusPlus_resources.rc">
+      <Filter>Source Files</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="CMake Rules">
+      <UniqueIdentifier>{457C929D-0E63-3717-B18D-94BA99011FB0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{1EEE1D86-9CED-3223-AC32-28577F7B443F}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

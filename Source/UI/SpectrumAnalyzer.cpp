@@ -2,15 +2,22 @@
 
 SpectrumAnalyzer::SpectrumAnalyzer(AudioEngine& e) : audioEngine(e)
 {
+    audioEngine.registerAnalyzer(this);
     startTimerHz(30);
 }
-SpectrumAnalyzer::~SpectrumAnalyzer() { stopTimer(); }
+SpectrumAnalyzer::~SpectrumAnalyzer() 
+{ 
+    audioEngine.unregisterAnalyzer(this);
+    stopTimer(); 
+}
 
 void SpectrumAnalyzer::timerCallback()
 {
     if (nextFFTBlock)
     {
         fftData = fifo;
+        nextFFTBlock = false;
+
         window.multiplyWithWindowingTable(fftData.data(), FFT_SIZE);
         fft.performFrequencyOnlyForwardTransform(fftData.data());
 
@@ -24,9 +31,34 @@ void SpectrumAnalyzer::timerCallback()
                                        mindB, maxdB, 0.0f, 1.0f);
             scopeData[i]  = level;
         }
-        nextFFTBlock = false;
+        
         repaint();
     }
+}
+
+void SpectrumAnalyzer::pushBuffer(const juce::AudioBuffer<float>& buffer)
+{
+    if (buffer.getNumChannels() > 0)
+    {
+        auto* channelData = buffer.getReadPointer(0);
+        for (int i = 0; i < buffer.getNumSamples(); ++i)
+            pushNextSampleIntoFifo(channelData[i]);
+    }
+}
+
+void SpectrumAnalyzer::pushNextSampleIntoFifo(float sample)
+{
+    if (fifoIndex == FFT_SIZE)
+    {
+        if (!nextFFTBlock)
+        {
+            std::fill(fifo.begin() + FFT_SIZE, fifo.end(), 0.0f);
+            nextFFTBlock = true;
+        }
+        fifoIndex = 0;
+    }
+
+    fifo[fifoIndex++] = sample;
 }
 
 void SpectrumAnalyzer::resized() {}

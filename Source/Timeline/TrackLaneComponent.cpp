@@ -116,88 +116,20 @@ void TrackLaneComponent::paint(juce::Graphics& g)
 
 void TrackLaneComponent::paintClips(juce::Graphics& g, juce::Rectangle<int> clipArea)
 {
-    for (auto& clip : clips)
+    for (auto* clip : clips)
     {
         auto clipBounds = getClipScreenBounds(*clip);
         if (clipBounds.getRight() < clipArea.getX() ||
             clipBounds.getX() > clipArea.getRight())
             continue;
 
-        if (clip->type == Clip::Type::Audio)
-            paintAudioClip(g, *clip, clipBounds);
-        else
-            paintMidiClip(g, *clip, clipBounds);
+        clip->paint(g, clipBounds, clipArea);
     }
 }
 
-void TrackLaneComponent::paintAudioClip(juce::Graphics& g, const Clip& clip,
-                                         juce::Rectangle<float> clipBounds)
-{
-    auto& info = audioEngine.getTrackInfo(trackIndex);
 
-    // Background
-    g.setColour(clip.selected ? info.colour.brighter(0.3f) : info.colour.withBrightness(0.5f));
-    g.fillRoundedRectangle(clipBounds, 3.0f);
+// Old paint methods removed
 
-    // Title
-    g.setColour(juce::Colours::white.withAlpha(0.9f));
-    g.setFont(juce::Font(10.0f));
-    g.drawText(clip.name, clipBounds.toNearestInt().reduced(4, 2),
-               juce::Justification::topLeft, true);
-
-    // Waveform
-    if (clip.thumbnail)
-    {
-        g.setColour(juce::Colours::white.withAlpha(0.6f));
-        auto waveArea = clipBounds.reduced(0, 14);
-        clip.thumbnail->drawChannel(g, waveArea.toNearestInt(), 0.0, clip.duration, 0, 1.0f);
-    }
-
-    // Border
-    g.setColour(clip.selected ? juce::Colours::white : info.colour.brighter(0.2f));
-    g.drawRoundedRectangle(clipBounds, 3.0f, 1.0f);
-}
-
-void TrackLaneComponent::paintMidiClip(juce::Graphics& g, const Clip& clip,
-                                        juce::Rectangle<float> clipBounds)
-{
-    auto& info = audioEngine.getTrackInfo(trackIndex);
-
-    g.setColour(clip.selected ? juce::Colour(0xffbb86fc) : juce::Colour(0xff7b2d8b));
-    g.fillRoundedRectangle(clipBounds, 3.0f);
-
-    g.setColour(juce::Colours::white.withAlpha(0.9f));
-    g.setFont(juce::Font(10.0f));
-    g.drawText(clip.name.isEmpty() ? "MIDI Clip" : clip.name,
-               clipBounds.toNearestInt().reduced(4, 2),
-               juce::Justification::topLeft, true);
-
-    // Draw mini piano roll preview
-    if (!clip.midiData.isEmpty())
-    {
-        int numNotes = clip.midiData.getNumEvents();
-        int noteRange = 127;
-        float noteH = juce::jmax(1.0f, clipBounds.getHeight() / 16.0f);
-
-        for (int i = 0; i < numNotes; ++i)
-        {
-            auto* e = clip.midiData.getEventPointer(i);
-            if (e->message.isNoteOn())
-            {
-                int note = e->message.getNoteNumber();
-                double noteStart = e->message.getTimeStamp() / clip.duration;
-                float nx = clipBounds.getX() + (float)noteStart * clipBounds.getWidth();
-                float ny = clipBounds.getBottom() - (note / 127.0f) * clipBounds.getHeight();
-
-                g.setColour(juce::Colours::white.withAlpha(0.7f));
-                g.fillRect(nx, ny, 4.0f, noteH);
-            }
-        }
-    }
-
-    g.setColour(clip.selected ? juce::Colours::white : juce::Colour(0xffbb86fc).withAlpha(0.5f));
-    g.drawRoundedRectangle(clipBounds, 3.0f, 1.0f);
-}
 
 juce::Rectangle<float> TrackLaneComponent::getClipScreenBounds(const Clip& clip) const
 {
@@ -297,36 +229,29 @@ void TrackLaneComponent::filesDropped(const juce::StringArray& files, int x, int
 
 void TrackLaneComponent::addAudioClip(const juce::File& file, double startTime)
 {
-    auto* clip       = clips.add(new Clip());
-    clip->type       = Clip::Type::Audio;
-    clip->startTime  = startTime;
-    clip->name       = file.getFileNameWithoutExtension();
-    clip->sourceFile = file;
-    clip->colour     = audioEngine.getTrackInfo(trackIndex).colour;
-
-    // Create thumbnail
-    clip->thumbnail = new juce::AudioThumbnail(512, audioEngine.getFormatManager(),
-                                                thumbnailCache);
-    clip->thumbnail->addChangeListener(this);
-    clip->thumbnail->setSource(new juce::FileInputSource(file));
-
-    // Get duration from file
+    auto* clip = new AudioClip(file, startTime);
+    clip->colour = audioEngine.getTrackInfo(trackIndex).colour;
+    
+    // Setup thumbnail
+    clip->setThumbnailCache(thumbnailCache, audioEngine.getFormatManager());
+    if (clip->thumbnail)
+        clip->thumbnail->addChangeListener(this);
+    
+    // Update duration
     if (auto* reader = audioEngine.getFormatManager().createReaderFor(file))
     {
         clip->duration = reader->lengthInSamples / reader->sampleRate;
         delete reader;
     }
 
+    clips.add(clip);
     repaint();
 }
 
 void TrackLaneComponent::addMidiClip(double startTime, double duration)
 {
-    auto* clip      = clips.add(new Clip());
-    clip->type      = Clip::Type::Midi;
-    clip->startTime = startTime;
-    clip->duration  = duration;
-    clip->name      = "MIDI Clip";
+    auto* clip = new MidiClip(startTime, duration);
+    clips.add(clip);
     repaint();
 }
 

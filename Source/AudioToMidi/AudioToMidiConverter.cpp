@@ -101,7 +101,7 @@ bool AudioToMidiConverter::runCrepe(const juce::File& audio, const juce::File& o
     //─────────────────────────────────────────────────────────────────────────
     juce::String script =
         "import crepe, librosa, numpy as np, pretty_midi\n"
-        "y, sr = librosa.load('" + audio.getFullPathName() + "')\n"
+        "y, sr = librosa.load(r'" + audio.getFullPathName() + "')\n"
         "time, freq, conf, act = crepe.predict(y, sr, viterbi=True)\n"
         "pm = pretty_midi.PrettyMIDI()\n"
         "inst = pretty_midi.Instrument(0)\n"
@@ -113,7 +113,7 @@ bool AudioToMidiConverter::runCrepe(const juce::File& audio, const juce::File& o
         "start=time[i-1], end=time[i])\n"
         "        inst.notes.append(n)\n"
         "pm.instruments.append(inst)\n"
-        "pm.write('" + outMidi.getFullPathName() + "')\n";
+        "pm.write(r'" + outMidi.getFullPathName() + "')\n";
 
     auto scriptFile = juce::File::createTempFile(".py");
     scriptFile.replaceWithText(script);
@@ -137,7 +137,7 @@ bool AudioToMidiConverter::runOnsetDetection(const juce::File& audio,
 {
     juce::String script =
         "import librosa, numpy as np, pretty_midi\n"
-        "y, sr = librosa.load('" + audio.getFullPathName() + "')\n"
+        "y, sr = librosa.load(r'" + audio.getFullPathName() + "')\n"
         "onsets = librosa.onset.onset_detect(y=y, sr=sr, units='time')\n"
         "pm = pretty_midi.PrettyMIDI()\n"
         "drums = pretty_midi.Instrument(0, is_drum=True)\n"
@@ -145,7 +145,7 @@ bool AudioToMidiConverter::runOnsetDetection(const juce::File& audio,
         "    n = pretty_midi.Note(velocity=100, pitch=38, start=float(t), end=float(t)+0.1)\n"
         "    drums.notes.append(n)\n"
         "pm.instruments.append(drums)\n"
-        "pm.write('" + outMidi.getFullPathName() + "')\n";
+        "pm.write(r'" + outMidi.getFullPathName() + "')\n";
 
     auto scriptFile = juce::File::createTempFile(".py");
     scriptFile.replaceWithText(script);

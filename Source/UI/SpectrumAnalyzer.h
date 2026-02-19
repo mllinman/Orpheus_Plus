@@ -12,10 +12,14 @@ public:
     void paint(juce::Graphics&) override;
     void resized() override;
 
+    void pushBuffer(const juce::AudioBuffer<float>& buffer);
+
 private:
     void timerCallback() override;
+
     void pushNextSampleIntoFifo(float sample);
-    void drawFrame(juce::Graphics&);
+    // void drawFrame(juce::Graphics&); // Removed unused
+
 
     static constexpr int FFT_ORDER = 11;
     static constexpr int FFT_SIZE  = 1 << FFT_ORDER; // 2048

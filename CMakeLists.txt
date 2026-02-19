@@ -24,7 +24,7 @@ juce_add_gui_app(OrpheusPlus
     PRODUCT_NAME        "Orpheus Plus"
     COMPANY_NAME        "Orpheus Audio"
     BUNDLE_ID           "com.orpheusaudio.orpheusplus"
-    ICON_BIG            "${CMAKE_CURRENT_SOURCE_DIR}/Assets/icon_512.png"
+
     MICROPHONE_PERMISSION_ENABLED   TRUE
     NEEDS_MIDI_INPUT    TRUE
     NEEDS_MIDI_OUTPUT   TRUE
@@ -52,21 +52,19 @@ target_sources(OrpheusPlus PRIVATE
 
     # Piano Roll
     Source/PianoRoll/PianoRollComponent.cpp
-    Source/PianoRoll/MidiNoteComponent.cpp
+
 
     # Mastering
     Source/Mastering/MasteringModule.cpp
-    Source/Mastering/LUFSMeter.cpp
     Source/Mastering/MultibandCompressor.cpp
-    Source/Mastering/LinearPhaseEQ.cpp
-    Source/Mastering/MidSideProcessor.cpp
+
 
     # AI Features
     Source/StemSeparation/StemSeparator.cpp
     Source/AudioToMidi/AudioToMidiConverter.cpp
     Source/PitchCorrection/AutoTuneProcessor.cpp
     Source/AudioCleanup/AudioCleanupProcessor.cpp
-    Source/AudioCleanup/SpectralDenoiser.cpp
+
 
     # Project Management
     Source/Project/ProjectManager.cpp
@@ -77,8 +75,8 @@ target_sources(OrpheusPlus PRIVATE
     Source/UI/TransportBar.cpp
     Source/UI/MixerPanel.cpp
     Source/UI/SpectrumAnalyzer.cpp
-    Source/UI/VectorScope.cpp
     Source/UI/PluginBrowser.cpp
+
 )
 
 target_compile_definitions(OrpheusPlus PRIVATE
