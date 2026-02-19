@@ -145,26 +145,83 @@ void TrackLaneComponent::paintClips(juce::Graphics& g, juce::Rectangle<int> clip
 
 juce::Rectangle<float> TrackLaneComponent::getClipScreenBounds(const Clip& clip) const
 {
-    double x1 = timeline.timeToPixel(clip.startTime) - HEADER_WIDTH;
-    double x2 = timeline.timeToPixel(clip.startTime + clip.duration) - HEADER_WIDTH;
+    double startPixel = timeline.timeToPixel(clip.startTime);
+    double endPixel   = timeline.timeToPixel(clip.startTime + clip.duration);
+
     float  y  = 4.0f;
     float  h  = (float)(getHeight() - 8);
-    return { (float)x1, y, (float)(x2 - x1), h };
+    
+    // Note: Assuming timeToPixel returns absolute timeline pixel.
+    // We adjust by HEADER_WIDTH to map to this component's local bounds?
+    // Stick to previous logic: timeToPixel - HEADER_WIDTH.
+    return { (float)(startPixel - HEADER_WIDTH), y, (float)(endPixel - startPixel), h }; 
+}
+
+TrackLaneComponent::DragMode TrackLaneComponent::getZoneAt(int x, int y, Clip* clip)
+{
+    if (!clip) return DragMode::None;
+
+    // Convert clip time to pixel relative to Timeline (which is what x is relative to... NO)
+    // x is relative to TrackLaneComponent.
+    // Clip drawing starts at HEADER_WIDTH?
+    // In getClipScreenBounds, we return (sx1 - HEADER_WIDTH).
+    // So the visual X of clip start is timeToPixel(start) - HEADER_WIDTH.
+    
+    int clipX = timeline.timeToPixel(clip->startTime) - HEADER_WIDTH;
+    int clipW = timeline.timeToPixel(clip->duration); // Duration in pixels
+    int clipR = clipX + clipW;
+
+    if (x >= clipX && x < clipX + 6) return DragMode::ResizeLeft;
+    if (x <= clipR && x > clipR - 6) return DragMode::ResizeRight;
+    
+    // Fades (simplification: top corners)
+    if (y < 20)
+    {
+        if (x >= clipX && x < clipX + 12) return DragMode::FadeIn;
+        if (x <= clipR && x > clipR - 12) return DragMode::FadeOut;
+    }
+
+    return DragMode::Move;
+}
+
+void TrackLaneComponent::updateCursor(int x, int y)
+{
+    auto* clip = getClipAt(x, y);
+    if (!clip)
+    {
+        setMouseCursor(juce::MouseCursor::NormalCursor);
+        return;
+    }
+
+    auto mode = getZoneAt(x, y, clip);
+    switch (mode)
+    {
+        case DragMode::ResizeLeft:
+        case DragMode::ResizeRight: setMouseCursor(juce::MouseCursor::LeftRightResizeCursor); break;
+        case DragMode::FadeIn:
+        case DragMode::FadeOut:     setMouseCursor(juce::MouseCursor::UpDownResizeCursor); break; 
+        default:                    setMouseCursor(juce::MouseCursor::NormalCursor); break;
+    }
+}
+
+void TrackLaneComponent::mouseMoved(const juce::MouseEvent& e)
+{
+    updateCursor(e.x, e.y);
 }
 
 void TrackLaneComponent::mouseDown(const juce::MouseEvent& e)
 {
     if (e.x < HEADER_WIDTH) return;
 
-    double clickTime = timeline.snapToGrid(timeline.pixelToTime(e.x));
+    // 1. Tool Logic (Split / Erase)
+    double clickTime = timeline.snapToGrid(timeline.pixelToTime(e.x)); // Snap for tools? Maybe.
     auto tool = timeline.getTool();
 
     if (tool == TimelineComponent::EditTool::Split)
     {
-        if (auto* clip = getClipAt(clickTime))
+        if (auto* clip = getClipAt(timeline.pixelToTime(e.x))) // hit test unsnapped
         {
             // Split logic
-            // 1. Shorten current clip
             double originalEnd = clip->startTime + clip->duration;
             double newDuration = clickTime - clip->startTime;
             double remaining   = originalEnd - clickTime;
@@ -173,8 +230,7 @@ void TrackLaneComponent::mouseDown(const juce::MouseEvent& e)
             {
                 clip->duration = newDuration;
 
-                // 2. Create new clip
-                if (clip->getType() == Clip::Type::Audio) // ...
+                if (clip->getType() == Clip::Type::Audio)
                 {
                     auto* ac = static_cast<AudioClip*>(clip);
                     auto* newClip = new AudioClip(ac->sourceFile, clickTime);
@@ -190,7 +246,6 @@ void TrackLaneComponent::mouseDown(const juce::MouseEvent& e)
                     newClip->colour = clip->colour;
                     audioEngine.getTrackInfo(trackIndex).clips.add(newClip);
                 }
-                
                 repaint();
             }
         }
@@ -198,7 +253,7 @@ void TrackLaneComponent::mouseDown(const juce::MouseEvent& e)
     }
     else if (tool == TimelineComponent::EditTool::Erase)
     {
-        if (auto* clip = getClipAt(clickTime))
+        if (auto* clip = getClipAt(timeline.pixelToTime(e.x)))
         {
             audioEngine.getTrackInfo(trackIndex).clips.removeObject(clip);
             repaint();
@@ -206,61 +261,136 @@ void TrackLaneComponent::mouseDown(const juce::MouseEvent& e)
         return;
     }
 
-    draggedClip = getClipAt(timeline.pixelToTime(e.x)); // Don't snap for selection check!
+    // 2. Default Interaction (Move / Resize / Fade / Select)
+    draggingClip = getClipAt(e.x, e.y); // Pixel hit test
     
-    // If we clicked a clip, calculate offset. 
-    // If we snap here, we might miss the clip if it's not on grid? 
-    // No, getClipAt checks bounds. 
-    // But dragStartTime should be precise relative to clip start.
-    
-    if (draggedClip)
+    if (draggingClip)
     {
-        selectedClip = draggedClip;
-        dragStartTime = timeline.pixelToTime(e.x) - draggedClip->startTime; 
-        // Use unsnapped time for drag offset calculation to avoid jumpiness
-    }
-    else if (e.mods.isRightButtonDown())
-    {
-        // Right click: context menu
-        juce::PopupMenu menu;
-        menu.addItem(1, "Add Audio Clip...");
-        menu.addItem(2, "Add MIDI Clip");
-        menu.showMenuAsync(juce::PopupMenu::Options{}, [this, clickTime](int result) {
-            if (result == 1)
-            {
-                auto chooser = std::make_shared<juce::FileChooser>("Select audio file",
-                    juce::File{}, "*.wav;*.aiff;*.mp3;*.flac");
-                chooser->launchAsync(juce::FileBrowserComponent::openMode |
-                                     juce::FileBrowserComponent::canSelectFiles,
-                    [this, clickTime, chooser](const juce::FileChooser& fc) {
-                        if (fc.getResult().existsAsFile())
-                            addAudioClip(fc.getResult(), clickTime);
-                    });
-            }
-            else if (result == 2)
-            {
-                addMidiClip(clickTime);
-            }
-        });
-    }
+        // Drag Mode / Zone
+        currentDragMode = getZoneAt(e.x, e.y, draggingClip);
+        
+        dragStartPos = e.getPosition();
+        dragStartTime = draggingClip->startTime;
+        dragStartDuration = draggingClip->duration;
+        dragStartOffset = draggingClip->offset;
+        dragStartFadeIn = draggingClip->fadeIn;
+        dragStartFadeOut = draggingClip->fadeOut;
 
-    repaint();
+        // Selection
+        if (!e.mods.isShiftDown())
+        {
+            auto& info = audioEngine.getTrackInfo(trackIndex);
+            for (auto* c : info.clips) c->selected = false;
+        }
+        draggingClip->selected = true;
+        
+        repaint();
+    }
+    else
+    {
+        currentDragMode = DragMode::None;
+        
+        // Deselect all
+        auto& info = audioEngine.getTrackInfo(trackIndex);
+        for (auto* c : info.clips) c->selected = false;
+        repaint();
+
+        // Right Click Menu (Add Clip)
+        if (e.mods.isRightButtonDown())
+        {
+            juce::PopupMenu menu;
+            menu.addItem(1, "Add Audio Clip...");
+            menu.addItem(2, "Add MIDI Clip");
+            menu.showMenuAsync(juce::PopupMenu::Options{}, [this, clickTime](int result) {
+                if (result == 1)
+                {
+                    auto chooser = std::make_shared<juce::FileChooser>("Select audio file",
+                        juce::File{}, "*.wav;*.aiff;*.mp3;*.flac");
+                    chooser->launchAsync(juce::FileBrowserComponent::openMode |
+                                         juce::FileBrowserComponent::canSelectFiles,
+                        [this, clickTime, chooser](const juce::FileChooser& fc) {
+                            if (fc.getResult().existsAsFile())
+                                addAudioClip(fc.getResult(), clickTime);
+                        });
+                }
+                else if (result == 2)
+                {
+                    addMidiClip(clickTime);
+                }
+            });
+        }
+    }
 }
 
 void TrackLaneComponent::mouseDrag(const juce::MouseEvent& e)
 {
-    if (!draggedClip || e.x < HEADER_WIDTH) return;
+    if (!draggingClip) return;
+    
+    double mouseTime = timeline.pixelToTime(e.x);
+    double snappedMouseTime = timeline.snapToGrid(mouseTime);
+    
+    // Delta time for Move
+    double deltaTime = mouseTime - timeline.pixelToTime(dragStartPos.x); 
+    
+    if (currentDragMode == DragMode::Move)
+    {
+        // Snap absolute start time
+        double newStart = timeline.snapToGrid(dragStartTime + deltaTime); 
+        if (newStart < 0) newStart = 0;
+        
+        draggingClip->startTime = newStart;
+        // No change to offset/duration
+    }
+    else if (currentDragMode == DragMode::ResizeLeft)
+    {
+        double newStart = snappedMouseTime;
+        double end = dragStartTime + dragStartDuration;
+        
+        if (newStart >= end - 0.1) newStart = end - 0.1; // Min duration constraint
+        if (newStart < 0) newStart = 0;
+        
+        double shift = newStart - dragStartTime;
+        
+        draggingClip->startTime = newStart;
+        draggingClip->duration  = end - newStart;
+        // Audio offset adjustment (so content stays in place relative to time)
+        if (draggingClip->getType() == Clip::Type::Audio)
+             draggingClip->offset = dragStartOffset + shift;
+    }
+    else if (currentDragMode == DragMode::ResizeRight)
+    {
+        double newEnd = snappedMouseTime;
+        if (newEnd <= draggingClip->startTime + 0.1) newEnd = draggingClip->startTime + 0.1;
+        
+        draggingClip->duration = newEnd - draggingClip->startTime;
+    }
+    else if (currentDragMode == DragMode::FadeIn)
+    {
+        // Fade is local to clip start
+        double fade = mouseTime - draggingClip->startTime;
+        if (fade < 0) fade = 0;
+        if (fade > draggingClip->duration) fade = draggingClip->duration;
+        
+        draggingClip->fadeIn = fade;
+    }
+    else if (currentDragMode == DragMode::FadeOut)
+    {
+        // Fade is local to clip end
+        double end = draggingClip->startTime + draggingClip->duration;
+        double fade = end - mouseTime;
+        if (fade < 0) fade = 0;
+        if (fade > draggingClip->duration) fade = draggingClip->duration;
+        
+        draggingClip->fadeOut = fade;
+    }
 
-    double currentPos = timeline.pixelToTime(e.x);
-    double newStart   = currentPos - dragStartTime;
-    newStart = timeline.snapToGrid(newStart);
-    draggedClip->startTime = juce::jmax(0.0, newStart);
     repaint();
 }
 
 void TrackLaneComponent::mouseUp(const juce::MouseEvent&)
 {
-    draggedClip = nullptr;
+    draggingClip = nullptr;
+    currentDragMode = DragMode::None;
 }
 
 void TrackLaneComponent::mouseDoubleClick(const juce::MouseEvent& e)
@@ -336,6 +466,14 @@ Clip* TrackLaneComponent::getClipAt(double timeSeconds)
             timeSeconds < clip->startTime + clip->duration)
             return clip;
     return nullptr;
+}
+
+Clip* TrackLaneComponent::getClipAt(int x, int y)
+{
+    // Ignore Y for now as we have single lane per track
+    // (In future if we have overlapping layers shown vertically, check Y)
+    juce::ignoreUnused(y);
+    return getClipAt(timeline.pixelToTime(x));
 }
 
 void TrackLaneComponent::changeListenerCallback(juce::ChangeBroadcaster*)

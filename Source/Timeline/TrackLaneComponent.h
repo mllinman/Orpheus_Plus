@@ -45,6 +45,25 @@ private:
     void paintVolumeAutomation(juce::Graphics& g, juce::Rectangle<int> clipArea);
 
     Clip* getClipAt(double timeSeconds);
+    // Interaction
+    Clip* getClipAt(int x, int y);
+    
+    enum class DragMode { None, Move, ResizeLeft, ResizeRight, FadeIn, FadeOut };
+    DragMode currentDragMode = DragMode::None;
+    Clip*    draggingClip    = nullptr;
+    
+    // Drag start state
+    juce::Point<int> dragStartPos;
+    double dragStartTime     = 0.0;
+    double dragStartDuration = 0.0;
+    double dragStartOffset   = 0.0;
+    double dragStartFadeIn   = 0.0;
+    double dragStartFadeOut  = 0.0;
+
+    DragMode getZoneAt(int x, int y, Clip* clip);
+    void updateCursor(int x, int y);
+    void mouseMoved(const juce::MouseEvent&);
+
     juce::Rectangle<float> getClipScreenBounds(const Clip& clip) const;
 
     static constexpr int HEADER_WIDTH = 180;
@@ -57,7 +76,7 @@ private:
     // juce::OwnedArray<Clip> clips; // specific clips owned by AudioEngine now
     Clip* draggedClip    = nullptr;
     Clip* selectedClip   = nullptr;
-    double dragStartTime = 0.0;
+    // double dragStartTime = 0.0; // This is now part of the new drag state variables
 
     // Header controls
     juce::TextButton muteButton  { "M" };

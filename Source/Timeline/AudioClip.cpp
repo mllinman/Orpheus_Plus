@@ -47,4 +47,35 @@ void AudioClip::paint(juce::Graphics& g, juce::Rectangle<float> clipBounds, juce
     // Border
     g.setColour(selected ? juce::Colours::white : colour.brighter(0.2f));
     g.drawRoundedRectangle(clipBounds, 3.0f, 1.0f);
+    
+    // Fades
+    if (fadeIn > 0)
+    {
+        float fadeW = (float)(fadeIn * clipBounds.getWidth() / duration);
+        if (fadeW > 0)
+        {
+            g.setColour(juce::Colours::black.withAlpha(0.3f));
+            juce::Path p;
+            p.startNewSubPath(clipBounds.getX(), clipBounds.getY());
+            p.lineTo(clipBounds.getX() + fadeW, clipBounds.getY());
+            p.lineTo(clipBounds.getX(), clipBounds.getBottom());
+            p.closeSubPath();
+            g.fillPath(p);
+        }
+    }
+    
+    if (fadeOut > 0)
+    {
+        float fadeW = (float)(fadeOut * clipBounds.getWidth() / duration);
+        if (fadeW > 0)
+        {
+            g.setColour(juce::Colours::black.withAlpha(0.3f));
+            juce::Path p;
+            p.startNewSubPath(clipBounds.getRight(), clipBounds.getY());
+            p.lineTo(clipBounds.getRight() - fadeW, clipBounds.getY());
+            p.lineTo(clipBounds.getRight(), clipBounds.getBottom());
+            p.closeSubPath();
+            g.fillPath(p);
+        }
+    }
 }
