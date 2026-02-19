@@ -10,9 +10,15 @@ class TimelineComponent : public juce::Component,
                           public juce::FileDragAndDropTarget,
                           public juce::ScrollBar::Listener,
                           public AudioEngine::Listener,
+                          public juce::ChangeBroadcaster,
                           private juce::Timer
 {
 public:
+    // Edit Tools
+    enum class EditTool { Select, Split, Draw, Erase };
+    void setTool(EditTool t) { currentTool = t; sendChangeMessage(); } // Broadcast change? or just internal state. TrackLanes need to know? They reference timeline.
+    EditTool getTool() const { return currentTool; }
+
     TimelineComponent(AudioEngine& engine, AppState& state,
                       juce::ApplicationCommandManager& commands);
     ~TimelineComponent() override;
@@ -57,6 +63,12 @@ private:
     static constexpr int  RULER_HEIGHT    = 30;
     static constexpr int  TRACK_HEADER_W  = 180;
     static constexpr int  DEFAULT_TRACK_H = 80;
+
+    EditTool currentTool = EditTool::Select;
+    juce::TextButton selectButton { "Select" };
+    juce::TextButton splitButton  { "Split" };
+    juce::TextButton drawButton   { "Draw" };
+    juce::TextButton eraseButton  { "Erase" };
 
     AudioEngine& audioEngine;
     AppState&    appState;

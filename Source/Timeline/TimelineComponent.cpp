@@ -7,6 +7,23 @@ TimelineComponent::TimelineComponent(AudioEngine& e, AppState& s,
 {
     audioEngine.addListener(this);
 
+    // Initialize Tools
+    auto setupButton = [this](juce::TextButton& b, EditTool tool) {
+        b.setRadioGroupId(1001);
+        b.setToggleable(true);
+        b.setClickingTogglesState(true);
+        b.setColour(juce::TextButton::buttonOnColourId, juce::Colour(0xffe94560));
+        b.onClick = [this, tool] { setTool(tool); };
+        addAndMakeVisible(b);
+    };
+
+    setupButton(selectButton, EditTool::Select);
+    setupButton(splitButton,  EditTool::Split);
+    setupButton(drawButton,   EditTool::Draw);
+    setupButton(eraseButton,  EditTool::Erase);
+
+    selectButton.setToggleState(true, juce::dontSendNotification);
+
     addAndMakeVisible(horizontalScrollBar);
     addAndMakeVisible(verticalScrollBar);
     addAndMakeVisible(trackViewport);
@@ -51,6 +68,15 @@ void TimelineComponent::resized()
     verticalScrollBar.setBounds(bounds.removeFromRight(scrollBarThickness));
 
     auto ruler    = bounds.removeFromTop(RULER_HEIGHT);
+    
+    // Tools
+    auto toolArea = ruler.removeFromLeft(TRACK_HEADER_W);
+    int btnW = toolArea.getWidth() / 4;
+    selectButton.setBounds(toolArea.removeFromLeft(btnW).reduced(2));
+    splitButton.setBounds(toolArea.removeFromLeft(btnW).reduced(2));
+    drawButton.setBounds(toolArea.removeFromLeft(btnW).reduced(2));
+    eraseButton.setBounds(toolArea.removeFromLeft(btnW).reduced(2));
+
     auto viewport = bounds;
 
     trackViewport.setBounds(viewport);

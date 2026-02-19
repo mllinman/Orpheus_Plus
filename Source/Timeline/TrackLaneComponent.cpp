@@ -156,7 +156,57 @@ void TrackLaneComponent::mouseDown(const juce::MouseEvent& e)
 {
     if (e.x < HEADER_WIDTH) return;
 
-    double clickTime = timeline.pixelToTime(e.x + HEADER_WIDTH);
+    double clickTime = timeline.pixelToTime(e.x);
+    auto tool = timeline.getTool();
+
+    if (tool == TimelineComponent::EditTool::Split)
+    {
+        if (auto* clip = getClipAt(clickTime))
+        {
+            // Split logic
+            // 1. Shorten current clip
+            double originalEnd = clip->startTime + clip->duration;
+            double newDuration = clickTime - clip->startTime;
+            double remaining   = originalEnd - clickTime;
+            
+            if (newDuration > 0.05 && remaining > 0.05) // Min clip length
+            {
+                clip->duration = newDuration;
+
+                // 2. Create new clip
+                if (clip->getType() == Clip::Type::Audio)
+                {
+                    auto* ac = static_cast<AudioClip*>(clip);
+                    auto* newClip = new AudioClip(ac->sourceFile, clickTime);
+                    newClip->offset   = ac->offset + newDuration;
+                    newClip->duration = remaining;
+                    newClip->colour   = ac->colour;
+                    newClip->setThumbnailCache(thumbnailCache, audioEngine.getFormatManager()); // Use same cache? yes
+                    audioEngine.getTrackInfo(trackIndex).clips.add(newClip);
+                }
+                else if (clip->getType() == Clip::Type::Midi)
+                {
+                    auto* newClip = new MidiClip(clickTime, remaining);
+                    newClip->colour = clip->colour;
+                    // TODO: Split MIDI data
+                    audioEngine.getTrackInfo(trackIndex).clips.add(newClip);
+                }
+                
+                repaint();
+            }
+        }
+        return;
+    }
+    else if (tool == TimelineComponent::EditTool::Erase)
+    {
+        if (auto* clip = getClipAt(clickTime))
+        {
+            audioEngine.getTrackInfo(trackIndex).clips.removeObject(clip);
+            repaint();
+        }
+        return;
+    }
+
     draggedClip = getClipAt(clickTime);
 
     if (draggedClip)
@@ -210,13 +260,18 @@ void TrackLaneComponent::mouseDoubleClick(const juce::MouseEvent& e)
 {
     if (e.x < HEADER_WIDTH) return;
 
-    double clickTime = timeline.pixelToTime(e.x + HEADER_WIDTH);
+    double clickTime = timeline.pixelToTime(e.x);
     if (auto* clip = getClipAt(clickTime))
     {
         if (clip->getType() == Clip::Type::Midi)
         {
             // TODO: open piano roll with this clip
         }
+    }
+    else if (timeline.getTool() == TimelineComponent::EditTool::Draw)
+    {
+        // Double click to create MIDI clip
+        addMidiClip(clickTime);
     }
 }
 
@@ -234,7 +289,16 @@ bool TrackLaneComponent::isInterestedInFileDrag(const juce::StringArray& files)
 
 void TrackLaneComponent::filesDropped(const juce::StringArray& files, int x, int y)
 {
-    double dropTime = timeline.pixelToTime(x + HEADER_WIDTH);
+    double dropTime = timeline.pixelToTime(x); // x is relative to TrackLane, matches pixelToTime expectation if x includes header offset?
+    // Wait, pixelToTime expects x including header offset if it subtracts HEADER_WIDTH?
+    // TimelineComponent::pixelToTime(x) = offset + (x - HEADER_W) / pps.
+    // If e.x in TrackLane is from 0 (left edge), and Header is at 0..HEADER_W.
+    // So if I click at x=10 (in header), pixelToTime gives negative time. Correct.
+    // If I click at x=HEADER_W+100, time is 100/pps + scroll. Correct.
+    // So passing e.x directly is correct.
+    
+    // BUT what about filesDropped? x is relative to component.
+    // So yes, x matches e.x.
     for (auto& f : files)
         addAudioClip(juce::File(f), dropTime);
 }
