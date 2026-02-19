@@ -1,5 +1,5 @@
 #include <JuceHeader.h>
-// #include "MainComponent.h"
+#include "MainComponent.h"
 
 //==============================================================================
 class OrpheusPlusApplication : public juce::JUCEApplication
@@ -39,7 +39,7 @@ public:
                              DocumentWindow::allButtons)
         {
             setUsingNativeTitleBar(true);
-            setContentOwned(new juce::Component(), true);
+            setContentOwned(new MainComponent(), true);
 
             setResizable(true, true);
             setResizeLimits(600, 400, 10000, 10000);

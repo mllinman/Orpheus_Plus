@@ -24,7 +24,7 @@ void MidiClip::paint(juce::Graphics& g, juce::Rectangle<float> clipBounds, juce:
                juce::Justification::topLeft, true);
 
     // Draw mini piano roll preview
-    if (!midiData.isEmpty())
+    if (midiData.getNumEvents() > 0)
     {
         int numNotes = midiData.getNumEvents();
         float noteH = juce::jmax(1.0f, clipBounds.getHeight() / 16.0f);

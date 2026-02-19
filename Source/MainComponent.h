@@ -37,7 +37,10 @@ public:
     juce::ApplicationCommandTarget* getNextCommandTarget() override { return nullptr; }
     void getAllCommands(juce::Array<juce::CommandID>&) override;
     void getCommandInfo(juce::CommandID, juce::ApplicationCommandInfo&) override;
-    bool perform(const juce::InvocationInfo&) override;
+
+    bool perform(const InvocationInfo&) override;
+
+    juce::ApplicationCommandManager& getCommandManager();
 
     enum CommandIDs
     {

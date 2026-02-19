@@ -267,3 +267,13 @@ void TimelineComponent::scrollToPosition(double posSeconds)
         (int)(horizontalScrollOffset * pixelsPerSecond), (int)verticalScrollOffset);
     repaint();
 }
+
+bool TimelineComponent::isInterestedInFileDrag(const juce::StringArray& files)
+{
+    return true; 
+}
+
+void TimelineComponent::filesDropped(const juce::StringArray& files, int x, int y)
+{
+    // TODO: Create new track(s) from dropped files
+}

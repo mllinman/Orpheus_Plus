@@ -44,10 +44,10 @@ target_sources(OrpheusPlus PRIVATE
     Source/Audio/PluginManager.cpp
 
     # Timeline
-    # Source/Timeline/TimelineComponent.cpp
-    # Source/Timeline/TrackLaneComponent.cpp
-    # Source/Timeline/AudioClip.cpp
-    # Source/Timeline/MidiClip.cpp
+    Source/Timeline/TimelineComponent.cpp
+    Source/Timeline/TrackLaneComponent.cpp
+    Source/Timeline/AudioClip.cpp
+    Source/Timeline/MidiClip.cpp
     Source/Timeline/TransportController.cpp
 
     # Piano Roll
@@ -55,8 +55,8 @@ target_sources(OrpheusPlus PRIVATE
 
 
     # Mastering
-    # Source/Mastering/MasteringModule.cpp
-    # Source/Mastering/MultibandCompressor.cpp
+    Source/Mastering/MasteringModule.cpp
+    Source/Mastering/MultibandCompressor.cpp
 
     # AI Features
     # Source/StemSeparation/StemSeparator.cpp
@@ -92,10 +92,10 @@ target_link_libraries(OrpheusPlus PRIVATE
     juce::juce_audio_devices
     juce::juce_audio_formats
     juce::juce_audio_processors
-    # juce::juce_audio_utils
+    juce::juce_audio_utils
     juce::juce_core
     juce::juce_data_structures
-    # juce::juce_dsp
+    juce::juce_dsp
     juce::juce_events
     juce::juce_graphics
     juce::juce_gui_basics

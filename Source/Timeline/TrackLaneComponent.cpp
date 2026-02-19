@@ -66,7 +66,7 @@ TrackLaneComponent::TrackLaneComponent(int idx, AudioEngine& e, AppState& s,
     };
     addAndMakeVisible(trackNameLabel);
 
-    setAcceptedMouseButtons(juce::MouseButton::allButtons);
+
 }
 
 TrackLaneComponent::~TrackLaneComponent() {}
