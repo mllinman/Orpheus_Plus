@@ -1,20 +1,20 @@
 #pragma once
 #include <JuceHeader.h>
-#include "../StemSeparation/StemSeparator.h"
-#include "../AudioToMidi/AudioToMidiConverter.h"
-#include "../PitchCorrection/AutoTuneProcessor.h"
-#include "../AudioCleanup/AudioCleanupProcessor.h"
+// #include "../StemSeparation/StemSeparator.h"
+// #include "../AudioToMidi/AudioToMidiConverter.h"
+// #include "../PitchCorrection/AutoTuneProcessor.h"
+// #include "../AudioCleanup/AudioCleanupProcessor.h"
 
 class TrackProcessor;
 class MixerProcessor;
-struct TrackInfo;
+struct OrpheusTrackInfo;
 class SpectrumAnalyzer;
 class PluginManager;
 
 
 //==============================================================================
 // Represents a single track in the engine
-struct TrackInfo
+struct OrpheusTrackInfo
 {
     enum class Type { Audio, Midi, Bus, Master };
 
@@ -68,8 +68,8 @@ public:
     int  addBusTrack(const juce::String& name = "Bus");
     void removeTrack(int trackIndex);
     int  getNumTracks() const;
-    TrackInfo& getTrackInfo(int index);
-    const juce::Array<TrackInfo>& getAllTracks() const { return tracks; }
+    OrpheusTrackInfo& getTrackInfo(int index);
+    const juce::Array<OrpheusTrackInfo>& getAllTracks() const { return tracks; }
 
     void setTrackVolume(int trackIndex, float vol);
     void setTrackPan(int trackIndex, float pan);
@@ -86,10 +86,10 @@ public:
     float getMasterVolume() const   { return masterVolume.load(); }
 
     //── AI / DSP Features ────────────────────────────────────────────────────
-    StemSeparator&       getStemSeparator()        { return *stemSeparator; }
-    AudioToMidiConverter& getAudioToMidiConverter() { return *audioToMidi; }
-    AutoTuneProcessor&   getAutoTune()             { return *autoTune; }
-    AudioCleanupProcessor& getAudioCleanup()       { return *audioCleanup; }
+    // StemSeparator&       getStemSeparator()        { return *stemSeparator; }
+    // AudioToMidiConverter& getAudioToMidiConverter() { return *audioToMidi; }
+    // AutoTuneProcessor&   getAutoTune()             { return *autoTune; }
+    // AudioCleanupProcessor& getAudioCleanup()       { return *audioCleanup; }
 
     //── Export ───────────────────────────────────────────────────────────────
     void exportMix(const juce::File& outputFile,
@@ -155,12 +155,12 @@ private:
     juce::MidiBuffer           midiBuffer;
     juce::UndoManager          undoManager { 50 };
 
-    juce::Array<TrackInfo> tracks;
+    juce::Array<OrpheusTrackInfo> tracks;
     std::unique_ptr<PluginManager>         pluginManager;
-    std::unique_ptr<StemSeparator>         stemSeparator;
-    std::unique_ptr<AudioToMidiConverter>  audioToMidi;
-    std::unique_ptr<AutoTuneProcessor>     autoTune;
-    std::unique_ptr<AudioCleanupProcessor> audioCleanup;
+    // std::unique_ptr<StemSeparator>         stemSeparator;
+    // std::unique_ptr<AudioToMidiConverter>  audioToMidi;
+    // std::unique_ptr<AutoTuneProcessor>     autoTune;
+    // std::unique_ptr<AudioCleanupProcessor> audioCleanup;
 
     // Transport state (lock-free)
     std::atomic<bool>   playing   { false };

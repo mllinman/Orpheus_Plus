@@ -201,7 +201,7 @@ void TrackLaneComponent::mouseDoubleClick(const juce::MouseEvent& e)
     double clickTime = timeline.pixelToTime(e.x + HEADER_WIDTH);
     if (auto* clip = getClipAt(clickTime))
     {
-        if (clip->type == Clip::Type::Midi)
+        if (clip->getType() == Clip::Type::Midi)
         {
             // TODO: open piano roll with this clip
         }

@@ -1,15 +1,15 @@
 #pragma once
 #include <JuceHeader.h>
 #include "Audio/AudioEngine.h"
-#include "Timeline/TimelineComponent.h"
-#include "Timeline/TransportController.h"
-#include "PianoRoll/PianoRollComponent.h"
+// #include "Timeline/TimelineComponent.h"
+// #include "Timeline/TransportController.h"
+// #include "PianoRoll/PianoRollComponent.h"
 // #include "Mastering/MasteringModule.h"
-#include "UI/OrpheusLookAndFeel.h"
-#include "UI/TransportBar.h"
-#include "UI/MixerPanel.h"
-#include "UI/SpectrumAnalyzer.h"
-#include "UI/PluginBrowser.h"
+// #include "UI/OrpheusLookAndFeel.h"
+// #include "UI/TransportBar.h"
+// #include "UI/MixerPanel.h"
+// #include "UI/SpectrumAnalyzer.h"
+// #include "UI/PluginBrowser.h"
 #include "Project/ProjectManager.h"
 #include "Project/AppState.h"
 
@@ -69,7 +69,7 @@ private:
     void updateLayout();
 
     // Core systems
-    OrpheusLookAndFeel lookAndFeel;
+    // OrpheusLookAndFeel lookAndFeel;
     AppState appState;
     std::unique_ptr<AudioEngine> audioEngine;
     std::unique_ptr<ProjectManager> projectManager;
@@ -77,13 +77,13 @@ private:
 
     // Main UI panels
     std::unique_ptr<juce::MenuBarComponent> menuBar;
-    std::unique_ptr<TransportBar> transportBar;
-    std::unique_ptr<TimelineComponent> timeline;
-    std::unique_ptr<MixerPanel> mixerPanel;
-    std::unique_ptr<SpectrumAnalyzer> spectrumAnalyzer;
-    std::unique_ptr<PianoRollComponent> pianoRoll;
+    // std::unique_ptr<TransportBar> transportBar;
+    // std::unique_ptr<TimelineComponent> timeline;
+    // std::unique_ptr<MixerPanel> mixerPanel;
+    // std::unique_ptr<SpectrumAnalyzer> spectrumAnalyzer;
+    // std::unique_ptr<PianoRollComponent> pianoRoll;
     // std::unique_ptr<MasteringModule> masteringModule;
-    std::unique_ptr<PluginBrowser> pluginBrowser;
+    // std::unique_ptr<PluginBrowser> pluginBrowser;
 
     // Layout state
     bool showMixer        = true;

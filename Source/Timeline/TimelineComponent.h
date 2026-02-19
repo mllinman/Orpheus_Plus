@@ -7,6 +7,7 @@ class TrackLaneComponent;
 
 //==============================================================================
 class TimelineComponent : public juce::Component,
+                          public juce::FileDragAndDropTarget,
                           public juce::ScrollBar::Listener,
                           public AudioEngine::Listener,
                           private juce::Timer
@@ -21,6 +22,10 @@ public:
     void mouseDown(const juce::MouseEvent&) override;
     void mouseDrag(const juce::MouseEvent&) override;
     void mouseWheelMove(const juce::MouseEvent&, const juce::MouseWheelDetails&) override;
+
+    // FileDragAndDropTarget
+    bool isInterestedInFileDrag(const juce::StringArray& files) override;
+    void filesDropped(const juce::StringArray& files, int x, int y) override;
 
     // Rebuild track lanes from AppState
     void rebuildTracks();

@@ -43,8 +43,8 @@ private:
     std::atomic<bool>  muted        { false };
     std::atomic<bool>  soloed       { false };
 
-    juce::dsp::Gain<float> gain;
-    juce::dsp::Panner<float> panner;
+    // juce::dsp::Gain<float> gain;
+    // juce::dsp::Panner<float> panner;
     
     // Smoothed values for ramp
     juce::LinearSmoothedValue<float> smoothVolume { 1.0f };

@@ -36,8 +36,11 @@ void PluginManager::scanForPlugins()
         auto deadMansPedal = juce::File::getSpecialLocation(juce::File::userApplicationDataDirectory)
                                .getChildFile("OrpheusPlus/deadmanspedal.txt");
 
-        scanner.reset(new juce::PluginDirectoryScanner(
-            knownPlugins, formatManager, paths, true, deadMansPedal, true));
+        if (formatManager.getNumFormats() > 0)
+        {
+            scanner.reset(new juce::PluginDirectoryScanner(
+                knownPlugins, *formatManager.getFormat(0), paths, true, deadMansPedal));
+        }
 
         juce::String currentPluginName;
         while (scanner->scanNextFile(true, currentPluginName))

@@ -15,6 +15,7 @@ class TimelineComponent;
 
 //==============================================================================
 class TrackLaneComponent : public juce::Component,
+                           public juce::FileDragAndDropTarget,
                            private juce::ChangeListener
 {
 public:

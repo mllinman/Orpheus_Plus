@@ -2,7 +2,7 @@
 #include "PluginManager.h"
 #include "TrackProcessor.h"
 #include "MixerProcessor.h"
-#include "../UI/SpectrumAnalyzer.h"
+// #include "../UI/SpectrumAnalyzer.h"
 
 
 AudioEngine::AudioEngine()
@@ -10,10 +10,10 @@ AudioEngine::AudioEngine()
     formatManager.registerBasicFormats();
 
     pluginManager  = std::make_unique<PluginManager>(*this);
-    stemSeparator  = std::make_unique<StemSeparator>();
-    audioToMidi    = std::make_unique<AudioToMidiConverter>();
-    autoTune       = std::make_unique<AutoTuneProcessor>();
-    audioCleanup   = std::make_unique<AudioCleanupProcessor>();
+    // stemSeparator  = std::make_unique<StemSeparator>();
+    // audioToMidi    = std::make_unique<AudioToMidiConverter>();
+    // autoTune       = std::make_unique<AutoTuneProcessor>();
+    // audioCleanup   = std::make_unique<AudioCleanupProcessor>();
 
     initialise();
 }
@@ -111,15 +111,15 @@ void AudioEngine::setPlayheadPosition(double posSeconds)
 //──────────────────────────────────────────────────────────────────────────────
 int AudioEngine::addAudioTrack(const juce::String& name)
 {
-    TrackInfo info;
+    OrpheusTrackInfo info;
     info.name   = name;
-    info.type   = TrackInfo::Type::Audio;
+    info.type   = OrpheusTrackInfo::Type::Audio;
     info.colour = juce::Colours::cornflowerblue.withSaturation(0.7f);
 
     // Create Track Processor
     auto trackProc = std::make_unique<TrackProcessor>();
     auto node = processorGraph.addNode(std::move(trackProc));
-    info.nodeID = node->nodeID;
+    info.nodeID = (int)node->nodeID.uid;
 
     // Connect Track -> Master
     if (node && masterNode)
@@ -136,9 +136,9 @@ int AudioEngine::addAudioTrack(const juce::String& name)
 
 int AudioEngine::addMidiTrack(const juce::String& name)
 {
-    TrackInfo info;
+    OrpheusTrackInfo info;
     info.name   = name;
-    info.type   = TrackInfo::Type::Midi;
+    info.type   = OrpheusTrackInfo::Type::Midi;
     info.colour = juce::Colours::mediumpurple;
     tracks.add(info);
 
@@ -148,9 +148,9 @@ int AudioEngine::addMidiTrack(const juce::String& name)
 
 int AudioEngine::addBusTrack(const juce::String& name)
 {
-    TrackInfo info;
+    OrpheusTrackInfo info;
     info.name   = name;
-    info.type   = TrackInfo::Type::Bus;
+    info.type   = OrpheusTrackInfo::Type::Bus;
     info.colour = juce::Colours::darkorange;
     tracks.add(info);
 
@@ -173,7 +173,7 @@ void AudioEngine::removeTrack(int index)
 
 int AudioEngine::getNumTracks() const { return tracks.size(); }
 
-TrackInfo& AudioEngine::getTrackInfo(int index) { return tracks.getReference(index); }
+OrpheusTrackInfo& AudioEngine::getTrackInfo(int index) { return tracks.getReference(index); }
 
 void AudioEngine::setTrackVolume(int i, float vol) { tracks.getReference(i).volume = vol; }
 void AudioEngine::setTrackPan(int i, float pan)    { tracks.getReference(i).pan    = pan; }
@@ -245,11 +245,11 @@ void AudioEngine::processAudioBlock(juce::AudioBuffer<float>& buffer)
     processorGraph.processBlock(buffer, midiBuffer);
 
     // Update analyzers
-    for (auto* analyzer : analyzers)
-    {
-        if (analyzer)
-            analyzer->pushBuffer(buffer);
-    }
+    // for (auto* analyzer : analyzers)
+    // {
+    //     if (analyzer)
+    //         analyzer->pushBuffer(buffer);
+    // }
 }
 
 void AudioEngine::handleIncomingMidiMessage(juce::MidiInput*, const juce::MidiMessage& message)

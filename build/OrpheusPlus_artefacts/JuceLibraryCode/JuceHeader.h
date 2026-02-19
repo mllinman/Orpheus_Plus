@@ -22,8 +22,6 @@
 #include <juce_graphics/juce_graphics.h>
 #include <juce_data_structures/juce_data_structures.h>
 #include <juce_audio_processors_headless/juce_audio_processors_headless.h>
-#include <juce_audio_utils/juce_audio_utils.h>
-#include <juce_dsp/juce_dsp.h>
 
 
 #if JUCE_TARGET_HAS_BINARY_DATA

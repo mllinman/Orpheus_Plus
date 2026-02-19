@@ -110,7 +110,7 @@ bool ProjectManager::saveProjectFile(const juce::File& file)
 
 juce::StringArray ProjectManager::getRecentFiles() const
 {
-    auto* props = juce::PropertiesFile::Options().getDefaultFile().getParentDirectory()
+    auto props = juce::PropertiesFile::Options().getDefaultFile().getParentDirectory()
                       .getChildFile("OrpheusPlus/settings.xml").getParentDirectory();
     (void)props;
     // TODO: load from application properties

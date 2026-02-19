@@ -6,10 +6,10 @@ class Clip
 public:
     enum class Type { Audio, Midi };
 
-    Clip(Type t) : type(t) {}
+    Clip(Type t) : clipType(t) {}
     virtual ~Clip() = default;
 
-    Type getType() const { return type; }
+    Type getType() const { return clipType; }
     
     // Common properties
     double startTime = 0.0;    // seconds
@@ -22,5 +22,5 @@ public:
     virtual void paint(juce::Graphics& g, juce::Rectangle<float> bounds, juce::Rectangle<int> clipArea) = 0;
 
 private:
-    Type type;
+    Type clipType;
 };
