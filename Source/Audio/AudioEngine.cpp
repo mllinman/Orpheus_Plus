@@ -111,24 +111,24 @@ void AudioEngine::setPlayheadPosition(double posSeconds)
 //──────────────────────────────────────────────────────────────────────────────
 int AudioEngine::addAudioTrack(const juce::String& name)
 {
-    OrpheusTrackInfo info;
-    info.name   = name;
-    info.type   = OrpheusTrackInfo::Type::Audio;
-    info.colour = juce::Colours::cornflowerblue.withSaturation(0.7f);
-
     // Create Track Processor
     auto trackProc = std::make_unique<TrackProcessor>();
     auto node = processorGraph.addNode(std::move(trackProc));
-    info.nodeID = (int)node->nodeID.uid;
+    int nodeID = (int)node->nodeID.uid;
 
-    // Connect Track -> Master
     if (node && masterNode)
     {
         for (int ch = 0; ch < 2; ++ch)
             processorGraph.addConnection({ { node->nodeID, ch }, { masterNode->nodeID, ch } });
     }
 
-    tracks.add(info);
+    auto* t = new OrpheusTrackInfo();
+    t->name = name;
+    t->type = OrpheusTrackInfo::Type::Audio;
+    t->colour = juce::Colours::cornflowerblue.withSaturation(0.7f);
+    t->nodeID = nodeID;
+    
+    tracks.add(t);
 
     juce::MessageManager::callAsync([this]{ listeners.call(&Listener::trackListChanged); });
     return tracks.size() - 1;
@@ -136,11 +136,11 @@ int AudioEngine::addAudioTrack(const juce::String& name)
 
 int AudioEngine::addMidiTrack(const juce::String& name)
 {
-    OrpheusTrackInfo info;
-    info.name   = name;
-    info.type   = OrpheusTrackInfo::Type::Midi;
-    info.colour = juce::Colours::mediumpurple;
-    tracks.add(info);
+    tracks.add(new OrpheusTrackInfo());
+    auto& t = *tracks.getLast();
+    t.name   = name;
+    t.type   = OrpheusTrackInfo::Type::Midi;
+    t.colour = juce::Colours::mediumpurple;
 
     juce::MessageManager::callAsync([this]{ listeners.call(&Listener::trackListChanged); });
     return tracks.size() - 1;
@@ -148,11 +148,11 @@ int AudioEngine::addMidiTrack(const juce::String& name)
 
 int AudioEngine::addBusTrack(const juce::String& name)
 {
-    OrpheusTrackInfo info;
-    info.name   = name;
-    info.type   = OrpheusTrackInfo::Type::Bus;
-    info.colour = juce::Colours::darkorange;
-    tracks.add(info);
+    auto* t = new OrpheusTrackInfo();
+    t->name   = name;
+    t->type   = OrpheusTrackInfo::Type::Bus;
+    t->colour = juce::Colours::darkorange;
+    tracks.add(t);
 
     juce::MessageManager::callAsync([this]{ listeners.call(&Listener::trackListChanged); });
     return tracks.size() - 1;
@@ -162,9 +162,9 @@ void AudioEngine::removeTrack(int index)
 {
     if (juce::isPositiveAndBelow(index, tracks.size()))
     {
-        auto& track = tracks.getReference(index);
-        if (track.nodeID != -1)
-            processorGraph.removeNode(juce::AudioProcessorGraph::NodeID(track.nodeID));
+        auto* track = tracks[index];
+        if (track->nodeID != -1)
+            processorGraph.removeNode(juce::AudioProcessorGraph::NodeID(track->nodeID));
 
         tracks.remove(index);
         listeners.call(&Listener::trackListChanged);
@@ -173,22 +173,22 @@ void AudioEngine::removeTrack(int index)
 
 int AudioEngine::getNumTracks() const { return tracks.size(); }
 
-OrpheusTrackInfo& AudioEngine::getTrackInfo(int index) { return tracks.getReference(index); }
+OrpheusTrackInfo& AudioEngine::getTrackInfo(int index) { return *tracks[index]; }
 
-void AudioEngine::setTrackVolume(int i, float vol) { tracks.getReference(i).volume = vol; }
-void AudioEngine::setTrackPan(int i, float pan)    { tracks.getReference(i).pan    = pan; }
-void AudioEngine::setTrackMute(int i, bool mute)   { tracks.getReference(i).mute   = mute; updateSoloState(); }
-void AudioEngine::setTrackSolo(int i, bool solo)   { tracks.getReference(i).solo   = solo; updateSoloState(); }
-void AudioEngine::armTrack(int i, bool armed)      { tracks.getReference(i).armed  = armed; }
+void AudioEngine::setTrackVolume(int i, float vol) { tracks[i]->volume = vol; }
+void AudioEngine::setTrackPan(int i, float pan)    { tracks[i]->pan    = pan; }
+void AudioEngine::setTrackMute(int i, bool mute)   { tracks[i]->mute   = mute; updateSoloState(); }
+void AudioEngine::setTrackSolo(int i, bool solo)   { tracks[i]->solo   = solo; updateSoloState(); }
+void AudioEngine::armTrack(int i, bool armed)      { tracks[i]->armed  = armed; }
 
 void AudioEngine::updateSoloState()
 {
     bool anySolo = false;
-    for (auto& t : tracks)
-        if (t.solo) { anySolo = true; break; }
+    for (auto* t : tracks)
+        if (t->solo) { anySolo = true; break; }
 
-    for (auto& t : tracks)
-        t.mute = anySolo ? !t.solo : false;
+    for (auto* t : tracks)
+        t->mute = anySolo ? !t->solo : false;
 }
 
 //──────────────────────────────────────────────────────────────────────────────
@@ -307,7 +307,7 @@ void AudioEngine::exportStems(const juce::File& outputDirectory)
     for (int i = 0; i < tracks.size(); ++i)
     {
         auto stemFile = outputDirectory.getChildFile(
-            juce::File::createLegalFileName(tracks[i].name) + ".wav");
+            juce::File::createLegalFileName(tracks[i]->name) + ".wav");
         exportMix(stemFile); // TODO: solo individual track
     }
 }

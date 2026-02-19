@@ -3,7 +3,9 @@
 // #include "../StemSeparation/StemSeparator.h"
 // #include "../AudioToMidi/AudioToMidiConverter.h"
 // #include "../PitchCorrection/AutoTuneProcessor.h"
-// #include "../AudioCleanup/AudioCleanupProcessor.h"
+#include "../Timeline/Clip.h"
+#include "../Timeline/AudioClip.h"
+#include "../Timeline/MidiClip.h"
 
 class TrackProcessor;
 class MixerProcessor;
@@ -29,6 +31,8 @@ struct OrpheusTrackInfo
     bool armed   = false;    // Record-armed
     juce::String inputBus;
     juce::String outputBus;
+
+    juce::OwnedArray<Clip> clips;
 };
 
 //==============================================================================
@@ -69,7 +73,7 @@ public:
     void removeTrack(int trackIndex);
     int  getNumTracks() const;
     OrpheusTrackInfo& getTrackInfo(int index);
-    const juce::Array<OrpheusTrackInfo>& getAllTracks() const { return tracks; }
+    const juce::OwnedArray<OrpheusTrackInfo>& getAllTracks() const { return tracks; }
 
     void setTrackVolume(int trackIndex, float vol);
     void setTrackPan(int trackIndex, float pan);
@@ -155,7 +159,7 @@ private:
     juce::MidiBuffer           midiBuffer;
     juce::UndoManager          undoManager { 50 };
 
-    juce::Array<OrpheusTrackInfo> tracks;
+    juce::OwnedArray<OrpheusTrackInfo> tracks;
     std::unique_ptr<PluginManager>         pluginManager;
     // std::unique_ptr<StemSeparator>         stemSeparator;
     // std::unique_ptr<AudioToMidiConverter>  audioToMidi;

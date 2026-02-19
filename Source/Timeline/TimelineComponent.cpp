@@ -270,10 +270,68 @@ void TimelineComponent::scrollToPosition(double posSeconds)
 
 bool TimelineComponent::isInterestedInFileDrag(const juce::StringArray& files)
 {
-    return true; 
+    for (auto& f : files)
+    {
+        auto ext = juce::File(f).getFileExtension().toLowerCase();
+        if (ext == ".wav" || ext == ".aiff" || ext == ".mp3" || ext == ".flac" || ext == ".mid")
+            return true;
+    }
+    return false;
 }
 
 void TimelineComponent::filesDropped(const juce::StringArray& files, int x, int y)
 {
-    // TODO: Create new track(s) from dropped files
+    // Calculate time from x position
+    // x is relative to TimelineComponent
+    double dropTime = pixelToTime(x);
+
+    // Filter valid files
+    for (auto& f : files)
+    {
+        juce::File file(f);
+        auto ext = file.getFileExtension().toLowerCase();
+        bool isMidi  = (ext == ".mid" || ext == ".midi");
+        bool isAudio = (ext == ".wav" || ext == ".aiff" || ext == ".mp3" || ext == ".flac");
+
+        if (!isMidi && !isAudio) continue;
+
+        if (isMidi)
+        {
+            int trackIdx = audioEngine.addMidiTrack(file.getFileNameWithoutExtension());
+            auto* clip = new MidiClip(dropTime, 4.0); // Default duration, should load from file if possible
+            // TODO: Load MIDI content
+            audioEngine.getTrackInfo(trackIdx).clips.add(clip);
+        }
+        else
+        {
+            int trackIdx = audioEngine.addAudioTrack(file.getFileNameWithoutExtension());
+            auto* clip = new AudioClip(file, dropTime);
+            clip->colour = audioEngine.getTrackInfo(trackIdx).colour;
+            
+            // Setup thumbnail (requires cache, but TimelineComponent doesn't own one?)
+            // TrackLaneComponent owns cache.
+            // But now AudioClip is created here.
+            // We can't set thumbnail cache here easily unless TimelineComponent has one shared or we defer it.
+            // AudioClip::setThumbnailCache updates immediately.
+            // Ideally, AudioClip created in AudioEngine context shouldn't depend on UI cache?
+            // But AudioClip is a UI-hybrid.
+            // We can skip thumbnail setup here, and let TrackLaneComponent do it on rebuild?
+            // No, TrackLaneComponent paints expecting thumbnail.
+            // TrackLaneComponent::paintClips calls clip->paint.
+            // AudioClip::paint uses thumbnail.
+            // If thumbnail not set, likely empty.
+            
+            // Workaround: TrackLaneComponent constructor could set cache on all clips in track?
+            // Yes, let's update TrackLaneComponent constructor to iterate clips and set cache.
+            
+            // Get duration
+            if (auto* reader = audioEngine.getFormatManager().createReaderFor(file))
+            {
+                clip->duration = reader->lengthInSamples / reader->sampleRate;
+                delete reader;
+            }
+
+            audioEngine.getTrackInfo(trackIdx).clips.add(clip);
+        }
+    }
 }

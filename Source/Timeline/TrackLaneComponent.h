@@ -54,7 +54,7 @@ private:
     AppState&    appState;
     TimelineComponent& timeline;
 
-    juce::OwnedArray<Clip> clips;
+    // juce::OwnedArray<Clip> clips; // specific clips owned by AudioEngine now
     Clip* draggedClip    = nullptr;
     Clip* selectedClip   = nullptr;
     double dragStartTime = 0.0;

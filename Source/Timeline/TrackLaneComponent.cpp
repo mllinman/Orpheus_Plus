@@ -58,6 +58,17 @@ TrackLaneComponent::TrackLaneComponent(int idx, AudioEngine& e, AppState& s,
 
     // Name label
     trackNameLabel.setText(info.name, juce::dontSendNotification);
+    
+    // Init thumbnails for existing clips
+    for (auto* clip : info.clips)
+    {
+        if (auto* audioClip = dynamic_cast<AudioClip*>(clip))
+        {
+            audioClip->setThumbnailCache(thumbnailCache, audioEngine.getFormatManager());
+            if (audioClip->thumbnail)
+                audioClip->thumbnail->addChangeListener(this);
+        }
+    }
     trackNameLabel.setFont(juce::Font(12.0f, juce::Font::bold));
     trackNameLabel.setColour(juce::Label::textColourId, juce::Colours::white);
     trackNameLabel.setEditable(true);
@@ -116,7 +127,8 @@ void TrackLaneComponent::paint(juce::Graphics& g)
 
 void TrackLaneComponent::paintClips(juce::Graphics& g, juce::Rectangle<int> clipArea)
 {
-    for (auto* clip : clips)
+    auto& info = audioEngine.getTrackInfo(trackIndex);
+    for (auto* clip : info.clips)
     {
         auto clipBounds = getClipScreenBounds(*clip);
         if (clipBounds.getRight() < clipArea.getX() ||
@@ -244,20 +256,21 @@ void TrackLaneComponent::addAudioClip(const juce::File& file, double startTime)
         delete reader;
     }
 
-    clips.add(clip);
+    audioEngine.getTrackInfo(trackIndex).clips.add(clip);
     repaint();
 }
 
 void TrackLaneComponent::addMidiClip(double startTime, double duration)
 {
     auto* clip = new MidiClip(startTime, duration);
-    clips.add(clip);
+    audioEngine.getTrackInfo(trackIndex).clips.add(clip);
     repaint();
 }
 
 Clip* TrackLaneComponent::getClipAt(double timeSeconds)
 {
-    for (auto* clip : clips)
+    auto& info = audioEngine.getTrackInfo(trackIndex);
+    for (auto* clip : info.clips)
         if (timeSeconds >= clip->startTime &&
             timeSeconds < clip->startTime + clip->duration)
             return clip;
