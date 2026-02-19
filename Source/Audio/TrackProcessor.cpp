@@ -31,7 +31,7 @@ void TrackProcessor::releaseResources()
 {
 }
 
-void TrackProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer&)
+void TrackProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
     juce::ScopedNoDenormals noDenormals;
 
@@ -51,23 +51,14 @@ void TrackProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBu
     smoothVolume.setTargetValue(currentVolume.load());
     smoothPan.setTargetValue(currentPan.load());
 
-    // Apply processing via DSP module
-    // juce::dsp::AudioBlock<float> block(buffer);
-    // juce::dsp::ProcessContextReplacing<float> context(block);
-
-    // Manual ramp application if needed, or use DSP classes if they support it.
-    // JUCE DSP Gain/Panner usually perform per-block, but we want per-sample smoothing or small block smoothing.
-    // For simplicity in this implementation, we'll apply gain manually with smoothing.
+    // 1. Process Insert FX Chain
+    for (auto* fx : insertFX)
+    {
+        // Simple internal bypass check if the processor supports it, or just process
+        fx->processBlock(buffer, midiMessages);
+    }
     
-    // Panning
-    // panner.setPan(smoothPan.getNextValue()); // Simplified: setting pan once per block for now, or we can iterate.
-    // panner.process(context);
-
-    // Gain
-    // gain.setGainLinear(smoothVolume.getNextValue());
-    // gain.process(context);
-    
-    // Manual gain for sample-accurate smoothing
+    // 2. Track Volume
     if (smoothVolume.isSmoothing())
     {
         smoothVolume.applyGain(buffer, buffer.getNumSamples());
@@ -75,6 +66,16 @@ void TrackProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBu
     else
     {
         buffer.applyGain(smoothVolume.getTargetValue());
+    }
+    
+    // 3. Track Pan (basic L/R multiplier for simplicity, actual panning requires a Panner or math)
+    float pan = smoothPan.getCurrentValue();
+    if (buffer.getNumChannels() == 2)
+    {
+        float leftGain = (pan <= 0.0f) ? 1.0f : 1.0f - pan;
+        float rightGain = (pan >= 0.0f) ? 1.0f : 1.0f + pan;
+        buffer.applyGain(0, 0, buffer.getNumSamples(), leftGain);
+        buffer.applyGain(1, 0, buffer.getNumSamples(), rightGain);
     }
 }
 

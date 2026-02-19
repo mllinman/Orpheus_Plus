@@ -43,12 +43,26 @@ private:
     std::atomic<bool>  muted        { false };
     std::atomic<bool>  soloed       { false };
 
-    // juce::dsp::Gain<float> gain;
-    // juce::dsp::Panner<float> panner;
-    
     // Smoothed values for ramp
     juce::LinearSmoothedValue<float> smoothVolume { 1.0f };
     juce::LinearSmoothedValue<float> smoothPan    { 0.0f };
+
+    // Insert FX chain
+    juce::OwnedArray<juce::AudioProcessor> insertFX;
+
+public:
+    void addInsertFX(std::unique_ptr<juce::AudioProcessor> p) 
+    {
+        p->prepareToPlay(getSampleRate(), getBlockSize());
+        insertFX.add(p.release());
+    }
+    
+    void clearInsertFX()
+    {
+        insertFX.clear();
+    }
+    
+    juce::OwnedArray<juce::AudioProcessor>& getInsertFX() { return insertFX; }
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(TrackProcessor)
 };

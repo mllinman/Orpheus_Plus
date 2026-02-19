@@ -4,8 +4,8 @@
 #include <memory>
 #include <atomic>
 #include <array>
-// #include "../StemSeparation/StemSeparator.h"
-// #include "../AudioToMidi/AudioToMidiConverter.h"
+#include "../StemSeparation/StemSeparator.h"
+#include "../AudioToMidi/AudioToMidiConverter.h"
 // #include "../PitchCorrection/AutoTuneProcessor.h"
 #include "../Timeline/Clip.h"
 #include "../Timeline/AudioClip.h"
@@ -124,10 +124,11 @@ public:
     float getMasterVolume() const   { return masterVolume.load(); }
 
     //── AI / DSP Features ────────────────────────────────────────────────────
-    // StemSeparator&       getStemSeparator()        { return *stemSeparator; }
-    // AudioToMidiConverter& getAudioToMidiConverter() { return *audioToMidi; }
-    // AutoTuneProcessor&   getAutoTune()             { return *autoTune; }
-    // AudioCleanupProcessor& getAudioCleanup()       { return *audioCleanup; }
+    void addAutoTuneToTrack(int trackIndex);
+    void addAudioCleanupToTrack(int trackIndex);
+    
+    StemSeparator&       getStemSeparator()        { return *stemSeparator; }
+    AudioToMidiConverter& getAudioToMidiConverter() { return *audioToMidi; }
 
     //── Export ───────────────────────────────────────────────────────────────
     void exportMix(const juce::File& outputFile,
@@ -195,8 +196,8 @@ private:
 
     juce::OwnedArray<OrpheusTrackInfo> tracks;
     std::unique_ptr<PluginManager>         pluginManager;
-    // std::unique_ptr<StemSeparator>         stemSeparator;
-    // std::unique_ptr<AudioToMidiConverter>  audioToMidi;
+    std::unique_ptr<StemSeparator>         stemSeparator;
+    std::unique_ptr<AudioToMidiConverter>  audioToMidi;
     // std::unique_ptr<AutoTuneProcessor>     autoTune;
     // std::unique_ptr<AudioCleanupProcessor> audioCleanup;
 

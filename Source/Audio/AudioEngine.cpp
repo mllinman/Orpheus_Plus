@@ -3,6 +3,8 @@
 #include "PluginManager.h"
 #include "TrackProcessor.h"
 #include "MixerProcessor.h"
+#include "../PitchCorrection/AutoTuneProcessor.h"
+#include "../AudioCleanup/AudioCleanupProcessor.h"
 // #include "../UI/SpectrumAnalyzer.h"
 
 
@@ -11,8 +13,8 @@ AudioEngine::AudioEngine()
     formatManager.registerBasicFormats();
 
     pluginManager  = std::make_unique<PluginManager>(*this);
-    // stemSeparator  = std::make_unique<StemSeparator>();
-    // audioToMidi    = std::make_unique<AudioToMidiConverter>();
+    stemSeparator  = std::make_unique<StemSeparator>();
+    audioToMidi    = std::make_unique<AudioToMidiConverter>();
     // autoTune       = std::make_unique<AutoTuneProcessor>();
     // audioCleanup   = std::make_unique<AudioCleanupProcessor>();
 
@@ -190,6 +192,44 @@ void AudioEngine::updateSoloState()
 
     for (auto* t : tracks)
         t->mute = anySolo ? !t->solo : false;
+}
+
+//──────────────────────────────────────────────────────────────────────────────
+// Insert FX
+//──────────────────────────────────────────────────────────────────────────────
+
+void AudioEngine::addAutoTuneToTrack(int trackIndex)
+{
+    if (!juce::isPositiveAndBelow(trackIndex, tracks.size())) return;
+    auto* track = tracks[trackIndex];
+    if (track->nodeID == -1) return;
+    
+    if (auto* node = processorGraph.getNodeForId(juce::AudioProcessorGraph::NodeID(track->nodeID)))
+    {
+        if (auto* proc = dynamic_cast<TrackProcessor*>(node->getProcessor()))
+        {
+            auto autoTune = std::make_unique<AutoTuneProcessor>();
+            autoTune->setEnabled(true);
+            proc->addInsertFX(std::move(autoTune));
+        }
+    }
+}
+
+void AudioEngine::addAudioCleanupToTrack(int trackIndex)
+{
+    if (!juce::isPositiveAndBelow(trackIndex, tracks.size())) return;
+    auto* track = tracks[trackIndex];
+    if (track->nodeID == -1) return;
+    
+    if (auto* node = processorGraph.getNodeForId(juce::AudioProcessorGraph::NodeID(track->nodeID)))
+    {
+        if (auto* proc = dynamic_cast<TrackProcessor*>(node->getProcessor()))
+        {
+            auto cleanup = std::make_unique<AudioCleanupProcessor>();
+            cleanup->setNoiseReductionEnabled(true);
+            proc->addInsertFX(std::move(cleanup));
+        }
+    }
 }
 
 //──────────────────────────────────────────────────────────────────────────────

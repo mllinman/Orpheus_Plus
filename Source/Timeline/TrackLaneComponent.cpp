@@ -283,7 +283,7 @@ void TrackLaneComponent::mouseDown(const juce::MouseEvent& e)
     // Check Automation Mode First
     if (currentAutomationParam.isNotEmpty())
     {
-        double clickTime = timeline.absolutePixelToTime(e.x); // X is Absolute
+        double automationClickTime = timeline.absolutePixelToTime(e.x); // X is Absolute
         auto& info = audioEngine.getTrackInfo(trackIndex);
 
         
@@ -351,7 +351,7 @@ void TrackLaneComponent::mouseDown(const juce::MouseEvent& e)
             if (currentAutomationParam == "vol") newVal = normY * 1.5f;
             else if (currentAutomationParam == "pan") newVal = normY * 2.0f - 1.0f;
 
-            targetCurve->addPoint(clickTime, newVal);
+            targetCurve->addPoint(automationClickTime, newVal);
             repaint();
             
             // Immediately start dragging the new point?
@@ -384,8 +384,58 @@ void TrackLaneComponent::mouseDown(const juce::MouseEvent& e)
             for (auto* c : info.clips) c->selected = false;
         }
         draggingClip->selected = true;
-        
-        repaint();
+        // Right Click Menu on Clip
+        if (e.mods.isRightButtonDown())
+        {
+            juce::PopupMenu menu;
+            if (draggingClip->getType() == Clip::Type::Audio)
+            {
+                auto* ac = static_cast<AudioClip*>(draggingClip);
+                menu.addItem(1, "Extract Stems (AI)...");
+                menu.addItem(2, "Convert to MIDI (AI)...");
+                menu.addSeparator();
+                menu.addItem(3, "Apply Pitch Correction");
+                menu.addItem(4, "Apply Audio Cleanup");
+                menu.addSeparator();
+
+                menu.showMenuAsync(juce::PopupMenu::Options{}, [this, ac](int result) {
+                    if (result == 1)
+                    {
+                        // Trigger Stem Separator
+                        audioEngine.getStemSeparator().separate(ac->sourceFile, appState, [this](StemSeparationResult res) {
+                            juce::MessageManager::callAsync([this, res] {
+                                double t = draggingClip ? draggingClip->startTime : 0.0;
+                                if (res.vocals.existsAsFile()) addAudioClip(res.vocals, t);
+                                if (res.drums.existsAsFile())  addAudioClip(res.drums, t);
+                                if (res.bass.existsAsFile())   addAudioClip(res.bass, t);
+                                if (res.other.existsAsFile())  addAudioClip(res.other, t);
+                            });
+                        });
+                    }
+                    else if (result == 2)
+                    {
+                        // Trigger Audio To Midi
+                        audioEngine.getAudioToMidiConverter().convert(ac->sourceFile, appState, [this](AudioToMidiResult res) {
+                            juce::MessageManager::callAsync([this, res] {
+                                double t = draggingClip ? draggingClip->startTime : 0.0;
+                                if (res.midiFileOnDisk.existsAsFile())
+                                {
+                                    addMidiClip(t, 4.0);
+                                }
+                            });
+                        });
+                    }
+                    else if (result == 3)
+                    {
+                        audioEngine.addAutoTuneToTrack(trackIndex);
+                    }
+                    else if (result == 4)
+                    {
+                        audioEngine.addAudioCleanupToTrack(trackIndex);
+                    }
+                });
+            }
+        }
     }
     else
     {
@@ -396,7 +446,7 @@ void TrackLaneComponent::mouseDown(const juce::MouseEvent& e)
         for (auto* c : info.clips) c->selected = false;
         repaint();
 
-        // Right Click Menu (Add Clip)
+        // Right Click Menu (Add Clip) on Empty Space
         if (e.mods.isRightButtonDown())
         {
             juce::PopupMenu menu;
