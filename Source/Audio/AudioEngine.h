@@ -112,6 +112,7 @@ public:
 
     void setTrackVolume(int trackIndex, float vol);
     void setTrackPan(int trackIndex, float pan);
+    void setTrackSweetener(int trackIndex, float amount);
     void setTrackMute(int trackIndex, bool mute);
     void setTrackSolo(int trackIndex, bool solo);
     void armTrack(int trackIndex, bool armed);
@@ -140,6 +141,10 @@ public:
     //── MIDI ─────────────────────────────────────────────────────────────────
     juce::MidiMessageCollector& getMidiCollector() { return midiCollector; }
     const juce::MidiBuffer& getCurrentMidiBuffer() const { return midiBuffer; }
+
+    //── Mono Sum ─────────────────────────────────────────────────────────────
+    void setMonoSum(bool shouldSum) { monoSum.store(shouldSum); }
+    bool getMonoSum() const { return monoSum.load(); }
 
     //── Level Metering ───────────────────────────────────────────────────────
     float getMasterPeakLeft()  const { return masterPeakL.load(); }
@@ -202,9 +207,9 @@ private:
     // std::unique_ptr<AutoTuneProcessor>     autoTune;
     // std::unique_ptr<AudioCleanupProcessor> audioCleanup;
 
-    // Transport state (lock-free)
     std::atomic<bool>   playing   { false };
     std::atomic<bool>   recording { false };
+    std::atomic<bool>   exporting { false };
     std::atomic<double> playheadPosition { 0.0 };
     std::atomic<double> bpm             { 120.0 };
     int timeSigNum = 4, timeSigDen = 4;
@@ -212,6 +217,7 @@ private:
     // Metering
     std::atomic<float> masterPeakL { 0.0f };
     std::atomic<float> masterPeakR { 0.0f };
+    std::atomic<bool>  monoSum { false };
     std::atomic<float> currentLUFS { -70.0f };
     std::atomic<float> masterVolume { 1.0f };
 

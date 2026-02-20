@@ -43,6 +43,12 @@ private:
     std::atomic<bool>  muted        { false };
     std::atomic<bool>  soloed       { false };
 
+    std::atomic<double> currentPlayhead { 0.0 };
+
+public:
+    std::function<void(juce::AudioBuffer<float>&, double)> renderAudioCallback;
+    void setPlayhead(double pos) { currentPlayhead.store(pos); }
+
     // Smoothed values for ramp
     juce::LinearSmoothedValue<float> smoothVolume { 1.0f };
     juce::LinearSmoothedValue<float> smoothPan    { 0.0f };
@@ -63,6 +69,25 @@ public:
     }
     
     juce::OwnedArray<juce::AudioProcessor>& getInsertFX() { return insertFX; }
+
+    void setSweetener(float amount) { sweetenerAmount.store(amount); updateSweetener(); }
+    float getSweetener() const { return sweetenerAmount.load(); }
+
+    float getPeakL() const { return peakL.load(); }
+    float getPeakR() const { return peakR.load(); }
+
+private:
+    void updateSweetener();
+
+    std::atomic<float> sweetenerAmount { 0.0f };
+
+    juce::dsp::Compressor<float> compressor;
+    using Filter = juce::dsp::ProcessorDuplicator<juce::dsp::IIR::Filter<float>, juce::dsp::IIR::Coefficients<float>>;
+    Filter highShelf;
+    Filter lowShelf;
+
+    std::atomic<float> peakL { 0.0f };
+    std::atomic<float> peakR { 0.0f };
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(TrackProcessor)
 };

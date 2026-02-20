@@ -1,6 +1,7 @@
 #include <JuceHeader.h>
 #include "MixerPanel.h"
 #include "../Audio/PluginManager.h"
+#include "../Audio/TrackProcessor.h"
 
 //==============================================================================
 MixerPanel::ChannelStrip::ChannelStrip(int idx, AudioEngine& e) : trackIndex(idx), engine(e)
@@ -82,10 +83,12 @@ MixerPanel::ChannelStrip::ChannelStrip(int idx, AudioEngine& e) : trackIndex(idx
     addAndMakeVisible(nameLabel);
 
     fader.setSliderStyle(juce::Slider::LinearVertical);
-    fader.setRange(0.0, 1.5, 0.001);
+    fader.setRange(0.0001, 2.0, 0.001); // Avoid 0 for log ease, visually mapped to -inf to +6dB
+    fader.setSkewFactorFromMidPoint(0.25); // Logarithmic feel centered around unity gain (1.0)
     fader.setValue(1.0, juce::dontSendNotification);
     fader.setTextBoxStyle(juce::Slider::NoTextBox, false, 0, 0);
     fader.onValueChange = [this] { engine.setTrackVolume(trackIndex, (float)fader.getValue()); };
+    fader.setDoubleClickReturnValue(true, 1.0);
     addAndMakeVisible(fader);
 
     panKnob.setSliderStyle(juce::Slider::Rotary);
@@ -93,6 +96,14 @@ MixerPanel::ChannelStrip::ChannelStrip(int idx, AudioEngine& e) : trackIndex(idx
     panKnob.setTextBoxStyle(juce::Slider::NoTextBox, false, 0, 0);
     panKnob.onValueChange = [this] { engine.setTrackPan(trackIndex, (float)panKnob.getValue()); };
     addAndMakeVisible(panKnob);
+
+    sweetenerKnob.setSliderStyle(juce::Slider::Rotary);
+    sweetenerKnob.setRange(0.0, 1.0, 0.001);
+    sweetenerKnob.setValue(0.0, juce::dontSendNotification);
+    sweetenerKnob.setTextBoxStyle(juce::Slider::NoTextBox, false, 0, 0);
+    sweetenerKnob.onValueChange = [this] { engine.setTrackSweetener(trackIndex, (float)sweetenerKnob.getValue()); };
+    sweetenerKnob.setDoubleClickReturnValue(true, 0.0);
+    addAndMakeVisible(sweetenerKnob);
 
     muteBtn.setToggleable(true);
     muteBtn.setColour(juce::TextButton::buttonOnColourId, juce::Colour(0xffFFB300));
@@ -123,7 +134,8 @@ void MixerPanel::ChannelStrip::resized()
     auto btnRow = b.removeFromBottom(24);
     muteBtn.setBounds(btnRow.removeFromLeft(btnRow.getWidth() / 2).reduced(1));
     soloBtn.setBounds(btnRow.reduced(1));
-    panKnob.setBounds(b.removeFromTop(40).reduced(4));
+    sweetenerKnob.setBounds(b.removeFromTop(36).reduced(2));
+    panKnob.setBounds(b.removeFromTop(36).reduced(2));
     fader.setBounds(b.reduced(4, 0));
 }
 
@@ -169,6 +181,16 @@ void MixerPanel::ChannelStrip::paint(juce::Graphics& g)
                peak > 0.7f ? juce::Colour(0xffffd54f) :
                              juce::Colour(0xff4caf50);
     };
+
+    // Grab peak from graph via node -> processor
+    if (auto* node = engine.getGraph().getNodeForId(juce::AudioProcessorGraph::NodeID(info.nodeID)))
+    {
+        if (auto* tp = dynamic_cast<TrackProcessor*>(node->getProcessor()))
+        {
+             peakL = tp->getPeakL();
+             peakR = tp->getPeakR();
+        }
+    }
 
     g.setColour(meterColour(peakL));
     g.fillRect(meterX, meterY + meterH * (1.0f - peakL), meterW, meterH * peakL);

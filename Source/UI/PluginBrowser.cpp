@@ -1,5 +1,6 @@
 #include <JuceHeader.h>
 #include "PluginBrowser.h"
+#include "../Audio/AudioEngine.h"
 
 PluginBrowser::PluginBrowser(AudioEngine& e, AppState& s)
     : audioEngine(e), appState(s), progressBar(scanProgress_)

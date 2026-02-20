@@ -34,6 +34,7 @@ private:
 
         juce::Slider     fader;
         juce::Slider     panKnob;
+        juce::Slider     sweetenerKnob;
         juce::TextButton muteBtn  { "M" };
         juce::TextButton soloBtn  { "S" };
         juce::Label      nameLabel;

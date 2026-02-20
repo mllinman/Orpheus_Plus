@@ -74,7 +74,7 @@ target_sources(OrpheusPlus PRIVATE
     Source/UI/OrpheusLookAndFeel.cpp
     Source/UI/TransportBar.cpp
     Source/UI/MixerPanel.cpp
-    # Source/UI/SpectrumAnalyzer.cpp
+    Source/UI/SpectrumAnalyzer.cpp
     Source/UI/PluginBrowser.cpp
 
 )

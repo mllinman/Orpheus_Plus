@@ -34,6 +34,12 @@ public:
     void mouseDown(const juce::MouseEvent&) override;
     void mouseDrag(const juce::MouseEvent&) override;
     void mouseWheelMove(const juce::MouseEvent&, const juce::MouseWheelDetails&) override;
+    bool keyPressed(const juce::KeyPress& key) override;
+
+    // Selection & Clipboard
+    void clearAllSelections();
+    void copySelection();
+    void pasteSelection();
 
     // FileDragAndDropTarget
     bool isInterestedInFileDrag(const juce::StringArray& files) override;
@@ -100,6 +106,12 @@ private:
     double pixelsPerSecond       = 100.0;
     double horizontalScrollOffset = 0.0;
     double verticalScrollOffset   = 0.0;
+    
+    struct ClipboardItem {
+        std::unique_ptr<Clip> clip;
+        int trackIndex;
+    };
+    std::vector<ClipboardItem> clipboard;
 
     // Loop region
     bool   loopEnabled = false;

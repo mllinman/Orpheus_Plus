@@ -11,6 +11,30 @@ AudioClip::~AudioClip()
 {
 }
 
+std::unique_ptr<Clip> AudioClip::clone() const
+{
+    auto copy = std::make_unique<AudioClip>(sourceFile, startTime);
+    copy->duration = duration;
+    copy->offset = offset;
+    copy->name = name;
+    copy->colour = colour;
+    copy->fadeIn = fadeIn;
+    copy->fadeOut = fadeOut;
+    copy->gain = gain;
+    copy->muted = muted;
+    copy->loopEnabled = loopEnabled;
+
+    if (isLoaded)
+    {
+        copy->audioData = audioData; // juce::AudioBuffer copies its data underneath or shares? Actually juce::AudioBuffer operator= makes a deep copy or we can just deep copy.
+        // Wait, juce::AudioBuffer copy constructor makes a deep copy.
+        copy->sampleRate = sampleRate;
+        copy->isLoaded = true;
+    }
+
+    return copy;
+}
+
 void AudioClip::setThumbnailCache(juce::AudioThumbnailCache& cache, juce::AudioFormatManager& formatManager)
 {
     thumbnail = std::make_unique<juce::AudioThumbnail>(512, formatManager, cache);
@@ -18,6 +42,23 @@ void AudioClip::setThumbnailCache(juce::AudioThumbnailCache& cache, juce::AudioF
     
     // Estimate duration using reader usually, but thumbnail also approximates it.
     // Ideally we should open a reader to get exact duration, but for now we rely on thumbnail or external setter.
+}
+
+void AudioClip::loadAudioData(juce::AudioFormatManager& formatManager)
+{
+    if (isLoaded) return;
+    
+    std::unique_ptr<juce::AudioFormatReader> reader(formatManager.createReaderFor(sourceFile));
+    if (reader)
+    {
+        sampleRate = reader->sampleRate;
+        auto lengthInSamples = (int)reader->lengthInSamples;
+        audioData.setSize(reader->numChannels, lengthInSamples);
+        reader->read(&audioData, 0, lengthInSamples, 0, true, true);
+        
+        duration = lengthInSamples / sampleRate;
+        isLoaded = true;
+    }
 }
 
 void AudioClip::paint(juce::Graphics& g, juce::Rectangle<float> clipBounds, juce::Rectangle<int> clipArea)
@@ -39,9 +80,36 @@ void AudioClip::paint(juce::Graphics& g, juce::Rectangle<float> clipBounds, juce
         auto waveArea = clipBounds.reduced(0, 14);
         
         // Draw the visible portion
-        // We need to map time to x
-        // For simplicity, just draw the whole clip's thumbnail in the bounds
-        thumbnail->drawChannel(g, waveArea.toNearestInt(), 0.0, thumbnail->getTotalLength(), 0, 1.0f);
+        double sourceLen = thumbnail->getTotalLength();
+        if (sourceLen <= 0.0) sourceLen = duration;
+        
+        if (loopEnabled && sourceLen > 0.0 && duration > sourceLen)
+        {
+            double currentT = 0.0;
+            while (currentT < duration)
+            {
+                double segmentLen = juce::jmin(sourceLen, duration - currentT);
+                
+                float pixelX = clipBounds.getX() + (float)(currentT / duration * clipBounds.getWidth());
+                float pixelW = (float)(segmentLen / duration * clipBounds.getWidth());
+                
+                auto segmentRect = juce::Rectangle<int>((int)pixelX, (int)waveArea.getY(), (int)pixelW, (int)waveArea.getHeight());
+                thumbnail->drawChannel(g, segmentRect, 0.0, segmentLen, 0, 1.0f);
+                
+                if (currentT > 0.0)
+                {
+                    g.setColour(juce::Colours::white.withAlpha(0.3f));
+                    g.drawVerticalLine((int)pixelX, waveArea.getY(), waveArea.getBottom());
+                    g.setColour(juce::Colours::white.withAlpha(0.6f));
+                }
+                
+                currentT += sourceLen;
+            }
+        }
+        else
+        {
+            thumbnail->drawChannel(g, waveArea.toNearestInt(), 0.0, duration, 0, 1.0f);
+        }
     }
 
     // Border

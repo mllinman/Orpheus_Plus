@@ -61,6 +61,7 @@ TimelineComponent::TimelineComponent(AudioEngine& e, AppState& s,
     horizontalScrollBar.addListener(this);
     verticalScrollBar.addListener(this);
 
+    setWantsKeyboardFocus(true);
     startTimerHz(60);
 }
 
@@ -257,28 +258,51 @@ void TimelineComponent::mouseDrag(const juce::MouseEvent& e)
 void TimelineComponent::mouseWheelMove(const juce::MouseEvent& e,
                                         const juce::MouseWheelDetails& wheel)
 {
-    if (e.mods.isCommandDown())
+    if (e.mods.isCommandDown() || e.mods.isCtrlDown()) // Ctrl for Windows/Linux
     {
-        // Zoom
-        double zoomFactor = 1.0 + wheel.deltaY * 0.3;
-        setPixelsPerSecond(pixelsPerSecond * zoomFactor);
-    }
-    else if (e.mods.isShiftDown())
-    {
-        // Horizontal scroll
-        horizontalScrollOffset -= wheel.deltaY * 2.0;
-        horizontalScrollOffset = juce::jmax(0.0, horizontalScrollOffset);
-        trackViewport.setViewPosition(
-            (int)(horizontalScrollOffset * pixelsPerSecond), (int)verticalScrollOffset);
-        repaint();
+        // Zoom towards mouse pointer
+        if (e.x >= TRACK_HEADER_W)
+        {
+            double timeAtMouse = pixelToTime(e.x);
+            double zoomFactor = std::pow(2.0, wheel.deltaY * 2.0); // Smooth zoom factor
+            double newPPS = juce::jlimit(5.0, 5000.0, pixelsPerSecond * zoomFactor);
+            
+            // Recalculate offset so the time under the mouse stays the same
+            double newOffset = timeAtMouse - (e.x - TRACK_HEADER_W) / newPPS;
+            horizontalScrollOffset = juce::jmax(0.0, newOffset);
+            
+            pixelsPerSecond = newPPS;
+            
+            resized(); 
+            trackViewport.setViewPosition((int)(horizontalScrollOffset * pixelsPerSecond), (int)verticalScrollOffset);
+            horizontalScrollBar.setCurrentRange(horizontalScrollOffset, trackViewport.getWidth() / pixelsPerSecond);
+            repaint();
+        }
     }
     else
     {
-        // Vertical scroll
-        verticalScrollOffset -= wheel.deltaY * 30.0;
+        // Pan
+        double dx = wheel.deltaX;
+        double dy = wheel.deltaY;
+        
+        if (e.mods.isShiftDown())
+        {
+            dx += dy;
+            dy = 0.0;
+        }
+        
+        if (dx != 0.0)
+            horizontalScrollOffset -= dx * 100.0 / pixelsPerSecond;
+            
+        if (dy != 0.0)
+            verticalScrollOffset -= dy * 100.0;
+            
+        horizontalScrollOffset = juce::jmax(0.0, horizontalScrollOffset);
         verticalScrollOffset = juce::jmax(0.0, verticalScrollOffset);
-        trackViewport.setViewPosition(
-            (int)(horizontalScrollOffset * pixelsPerSecond), (int)verticalScrollOffset);
+        
+        trackViewport.setViewPosition((int)(horizontalScrollOffset * pixelsPerSecond), (int)verticalScrollOffset);
+        horizontalScrollBar.setCurrentRange(horizontalScrollOffset, trackViewport.getWidth() / pixelsPerSecond);
+        verticalScrollBar.setCurrentRange(verticalScrollOffset, trackViewport.getHeight());
         repaint();
     }
 }
@@ -460,4 +484,95 @@ void TimelineComponent::filesDropped(const juce::StringArray& files, int x, int 
             audioEngine.getTrackInfo(trackIdx).clips.add(clip);
         }
     }
+}
+
+void TimelineComponent::clearAllSelections()
+{
+    for (int i = 0; i < audioEngine.getNumTracks(); ++i)
+    {
+        auto& info = audioEngine.getTrackInfo(i);
+        for (auto* c : info.clips)
+            c->selected = false;
+    }
+    repaint();
+}
+
+void TimelineComponent::copySelection()
+{
+    clipboard.clear();
+    for (int i = 0; i < audioEngine.getNumTracks(); ++i)
+    {
+        auto& info = audioEngine.getTrackInfo(i);
+        for (auto* c : info.clips)
+        {
+            if (c->selected)
+            {
+                ClipboardItem item;
+                item.clip = c->clone();
+                item.trackIndex = i;
+                clipboard.push_back(std::move(item));
+            }
+        }
+    }
+}
+
+void TimelineComponent::pasteSelection()
+{
+    if (clipboard.empty()) return;
+    
+    double minStartTime = std::numeric_limits<double>::max();
+    for (const auto& item : clipboard)
+    {
+        if (item.clip->startTime < minStartTime)
+            minStartTime = item.clip->startTime;
+    }
+
+    double pasteTime = snapToGrid(audioEngine.getPlayheadPosition());
+
+    for (const auto& item : clipboard)
+    {
+        if (item.trackIndex >= 0 && item.trackIndex < audioEngine.getNumTracks())
+        {
+            double relativeStart = item.clip->startTime - minStartTime;
+            std::unique_ptr<Clip> newClip = item.clip->clone();
+            newClip->startTime = pasteTime + relativeStart;
+            newClip->selected = true; 
+            
+            audioEngine.getTrackInfo(item.trackIndex).clips.add(newClip.release());
+        }
+    }
+    repaint();
+}
+
+bool TimelineComponent::keyPressed(const juce::KeyPress& key)
+{
+    if (key.getModifiers().isCommandDown() || key.getModifiers().isCtrlDown())
+    {
+        if (key.getKeyCode() == 'c' || key.getKeyCode() == 'C')
+        {
+            copySelection();
+            return true;
+        }
+        else if (key.getKeyCode() == 'v' || key.getKeyCode() == 'V')
+        {
+            clearAllSelections();
+            pasteSelection();
+            return true;
+        }
+    }
+    else if (key.getKeyCode() == juce::KeyPress::deleteKey || key.getKeyCode() == juce::KeyPress::backspaceKey)
+    {
+        for (int i = 0; i < audioEngine.getNumTracks(); ++i)
+        {
+            auto& info = audioEngine.getTrackInfo(i);
+            for (int c = info.clips.size(); --c >= 0;)
+            {
+                if (info.clips[c]->selected)
+                    info.clips.remove(c);
+            }
+        }
+        repaint();
+        return true;
+    }
+    return false;
 }

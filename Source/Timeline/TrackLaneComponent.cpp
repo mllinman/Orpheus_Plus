@@ -409,8 +409,7 @@ void TrackLaneComponent::mouseDown(const juce::MouseEvent& e)
         // Selection
         if (!e.mods.isShiftDown())
         {
-            auto& info = audioEngine.getTrackInfo(trackIndex);
-            for (auto* c : info.clips) c->selected = false;
+            timeline.clearAllSelections();
         }
         draggingClip->selected = true;
         // Right Click Menu on Clip

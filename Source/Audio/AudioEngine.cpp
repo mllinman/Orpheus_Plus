@@ -220,8 +220,89 @@ void AudioEngine::syncWithAppState(AppState& state)
 
 int AudioEngine::addAudioTrack(const juce::String& name)
 {
+    auto* t = new OrpheusTrackInfo();
+    t->name = name;
+    t->type = OrpheusTrackInfo::Type::Audio;
+    t->colour = juce::Colours::cornflowerblue.withSaturation(0.7f);
+
     // Create Track Processor
     auto trackProc = std::make_unique<TrackProcessor>();
+    
+    // Wire up playback callback
+    trackProc->renderAudioCallback = [this, t](juce::AudioBuffer<float>& buffer, double playhead) {
+        if (!this->playing.load() && !this->exporting.load()) return;
+        
+        double sr = this->currentSampleRate;
+        if (sr <= 0) sr = 44100.0;
+        
+        int numSamples = buffer.getNumSamples();
+        double endTime = playhead + (numSamples / sr);
+        
+        for (auto* clip : t->clips)
+        {
+            if (auto* ac = dynamic_cast<AudioClip*>(clip))
+            {
+                if (!ac->isLoaded) continue;
+                
+                double clipStart = ac->startTime;
+                double clipEnd = ac->startTime + ac->duration;
+                
+                if (playhead < clipEnd && endTime > clipStart)
+                {
+                    int bufferStartSample = 0;
+                    int numSamplesToCopy = numSamples;
+                    
+                    double offsetInClip = playhead - clipStart;
+                    int sampleOffsetInClip = (int)(offsetInClip * sr);
+                    
+                    if (sampleOffsetInClip < 0)
+                    {
+                        bufferStartSample = -sampleOffsetInClip;
+                        sampleOffsetInClip = 0;
+                        numSamplesToCopy -= bufferStartSample;
+                    }
+                    
+                    int remainingInClip = (int)((ac->duration * sr) - sampleOffsetInClip);
+                    if (numSamplesToCopy > remainingInClip)
+                        numSamplesToCopy = remainingInClip;
+                        
+                    int sourceNumSamples = ac->audioData.getNumSamples();
+                    if (sourceNumSamples == 0) continue;
+                    
+                    if (numSamplesToCopy > 0)
+                    {
+                        if (ac->loopEnabled)
+                        {
+                            // Wrap read pointer manually for looping
+                            for (int i = 0; i < numSamplesToCopy; ++i)
+                            {
+                                int readPos = (sampleOffsetInClip + i) % sourceNumSamples;
+                                for (int ch = 0; ch < buffer.getNumChannels(); ++ch)
+                                {
+                                    int sourceCh = ch % ac->audioData.getNumChannels();
+                                    buffer.addSample(ch, bufferStartSample + i, ac->audioData.getSample(sourceCh, readPos));
+                                }
+                            }
+                        }
+                        else
+                        {
+                            int available = sourceNumSamples - sampleOffsetInClip;
+                            if (available > 0)
+                            {
+                                int toCopy = juce::jmin(numSamplesToCopy, available);
+                                for (int ch = 0; ch < buffer.getNumChannels(); ++ch)
+                                {
+                                    int sourceCh = ch % ac->audioData.getNumChannels();
+                                    buffer.addFrom(ch, bufferStartSample, ac->audioData, sourceCh, sampleOffsetInClip, toCopy);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    };
+
     auto node = processorGraph.addNode(std::move(trackProc));
     int nodeID = (int)node->nodeID.uid;
 
@@ -231,10 +312,6 @@ int AudioEngine::addAudioTrack(const juce::String& name)
             processorGraph.addConnection({ { node->nodeID, ch }, { masterNode->nodeID, ch } });
     }
 
-    auto* t = new OrpheusTrackInfo();
-    t->name = name;
-    t->type = OrpheusTrackInfo::Type::Audio;
-    t->colour = juce::Colours::cornflowerblue.withSaturation(0.7f);
     t->nodeID = nodeID;
     
     tracks.add(t);
@@ -286,6 +363,14 @@ OrpheusTrackInfo& AudioEngine::getTrackInfo(int index) { return *tracks[index]; 
 
 void AudioEngine::setTrackVolume(int i, float vol) { tracks[i]->volume = vol; }
 void AudioEngine::setTrackPan(int i, float pan)    { tracks[i]->pan    = pan; }
+
+void AudioEngine::setTrackSweetener(int i, float amount)
+{
+    if (auto* node = processorGraph.getNodeForId(juce::AudioProcessorGraph::NodeID(tracks[i]->nodeID)))
+        if (auto* tp = dynamic_cast<TrackProcessor*>(node->getProcessor()))
+            tp->setSweetener(amount);
+}
+
 void AudioEngine::setTrackMute(int i, bool mute)   { tracks[i]->mute   = mute; updateSoloState(); }
 void AudioEngine::setTrackSolo(int i, bool solo)   { tracks[i]->solo   = solo; updateSoloState(); }
 void AudioEngine::armTrack(int i, bool armed)      { tracks[i]->armed  = armed; }
@@ -384,15 +469,31 @@ void AudioEngine::audioDeviceIOCallbackWithContext(
 
     processAudioBlock(buffer);
 
+    // Apply master volume
+    buffer.applyGain(masterVolume.load());
+
+    // Apply Mono Sum
+    if (monoSum.load() && numOutputChannels >= 2)
+    {
+        auto* chL = buffer.getWritePointer(0);
+        auto* chR = buffer.getWritePointer(1);
+        for (int i = 0; i < numSamples; ++i)
+        {
+            float mono = (chL[i] + chR[i]) * 0.5f;
+            chL[i] = mono;
+            chR[i] = mono;
+        }
+    }
+
     // Advance playhead
     double advance = numSamples / currentSampleRate;
     playheadPosition.fetch_add(advance);
 
     // Update meters
     if (numOutputChannels >= 1)
-        masterPeakL.store(buffer.getMagnitude(0, 0, numSamples) * masterVolume.load());
+        masterPeakL.store(buffer.getMagnitude(0, 0, numSamples));
     if (numOutputChannels >= 2)
-        masterPeakR.store(buffer.getMagnitude(1, 0, numSamples) * masterVolume.load());
+        masterPeakR.store(buffer.getMagnitude(1, 0, numSamples));
 }
 
 void AudioEngine::processAudioBlock(juce::AudioBuffer<float>& buffer)
@@ -543,6 +644,7 @@ void AudioEngine::exportMix(const juce::File& outputFile, int sampleRate, int bi
     const int64_t totalSamples = (int64_t)(totalDuration * sampleRate);
 
     processorGraph.prepareToPlay(sampleRate, blockSize);
+    exporting.store(true);
 
     for (int64_t pos = 0; pos < totalSamples; pos += blockSize)
     {
@@ -555,6 +657,7 @@ void AudioEngine::exportMix(const juce::File& outputFile, int sampleRate, int bi
         writer->writeFromAudioSampleBuffer(buffer, 0, thisBlock);
     }
 
+    exporting.store(false);
     processorGraph.releaseResources();
 }
 

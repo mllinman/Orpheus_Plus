@@ -26,6 +26,7 @@ public:
     bool   muted   = false;
 
     virtual void paint(juce::Graphics& g, juce::Rectangle<float> bounds, juce::Rectangle<int> clipArea) = 0;
+    virtual std::unique_ptr<Clip> clone() const = 0;
 
 private:
     Type clipType;

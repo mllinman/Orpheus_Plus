@@ -30,6 +30,7 @@ private:
     juce::TextButton stopButton      { "■" };
     juce::TextButton recordButton    { "●" };
     juce::TextButton loopButton      { "⟳" };
+    juce::TextButton settingsButton  { "⚙" };
 
     // BPM
     juce::Label  bpmLabel         { {}, "BPM" };
@@ -46,6 +47,7 @@ private:
     // Master volume
     juce::Label  masterVolumeLabel { {}, "MASTER" };
     juce::Slider masterVolumeSlider;
+    juce::TextButton monoButton { "MONO" };
 
     // Level meters
     juce::Component meterL, meterR;

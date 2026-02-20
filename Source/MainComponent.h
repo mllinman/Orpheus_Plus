@@ -11,7 +11,7 @@
 
 #include "UI/TransportBar.h"
 #include "UI/MixerPanel.h"
-// #include "UI/SpectrumAnalyzer.h"
+#include "UI/SpectrumAnalyzer.h"
 #include "UI/PluginBrowser.h"
 #include "Project/ProjectManager.h"
 #include "Project/AppState.h"
@@ -69,6 +69,7 @@ public:
         cmdExportMix,
         cmdExportStems,
         cmdOpenPluginBrowser,
+        cmdOpenSettings,
     };
 
 private:
@@ -76,6 +77,7 @@ private:
     void showStemSeparationDialog();
     void showAudioToMidiDialog();
     void showExportDialog();
+    void showSettingsDialog();
     void updateLayout();
 
     // Core systems
@@ -91,7 +93,7 @@ private:
     std::unique_ptr<TransportBar> transportBar;
     std::unique_ptr<TimelineComponent> timeline;
     std::unique_ptr<MixerPanel> mixerPanel;
-    // std::unique_ptr<SpectrumAnalyzer> spectrumAnalyzer;
+    std::unique_ptr<SpectrumAnalyzer> spectrumAnalyzer;
     std::unique_ptr<PianoRollComponent> pianoRoll;
     std::unique_ptr<MasteringModule> masteringModule;
     std::unique_ptr<PluginBrowser> pluginBrowser;

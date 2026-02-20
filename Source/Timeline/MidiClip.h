@@ -8,6 +8,7 @@ public:
     ~MidiClip() override;
 
     void paint(juce::Graphics& g, juce::Rectangle<float> bounds, juce::Rectangle<int> clipArea) override;
+    std::unique_ptr<Clip> clone() const override;
 
     juce::MidiMessageSequence midiData;
     

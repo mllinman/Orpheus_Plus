@@ -12,6 +12,20 @@ MidiClip::~MidiClip()
 {
 }
 
+std::unique_ptr<Clip> MidiClip::clone() const
+{
+    auto copy = std::make_unique<MidiClip>(startTime, duration);
+    copy->offset = offset;
+    copy->name = name;
+    copy->colour = colour;
+    copy->fadeIn = fadeIn;
+    copy->fadeOut = fadeOut;
+    copy->gain = gain;
+    copy->muted = muted;
+    copy->midiData = midiData;
+    return copy;
+}
+
 void MidiClip::paint(juce::Graphics& g, juce::Rectangle<float> clipBounds, juce::Rectangle<int> clipArea)
 {
     g.setColour(selected ? juce::Colour(0xffbb86fc) : juce::Colour(0xff7b2d8b));

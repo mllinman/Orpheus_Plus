@@ -23,8 +23,12 @@ TransportBar::TransportBar(AudioEngine& e, juce::ApplicationCommandManager& c)
     stopButton.onClick   = [this] { audioEngine.stop(); };
     recordButton.onClick = [this] { audioEngine.toggleRecord(); };
     loopButton.setToggleable(true);
+    settingsButton.setTooltip("Audio/MIDI Settings");
+    
+    // Command ID 5 is cmdOpenSettings from MainComponent
+    settingsButton.onClick = [this] { commandManager.invokeDirectly(5, true); };
 
-    for (auto* btn : { &rewindButton, &playButton, &stopButton, &recordButton, &loopButton })
+    for (auto* btn : { &rewindButton, &playButton, &stopButton, &recordButton, &loopButton, &settingsButton })
         addAndMakeVisible(btn);
 
     // BPM slider
@@ -80,6 +84,13 @@ TransportBar::TransportBar(AudioEngine& e, juce::ApplicationCommandManager& c)
     addAndMakeVisible(masterVolumeLabel);
     addAndMakeVisible(masterVolumeSlider);
 
+    monoButton.setToggleable(true);
+    monoButton.setColour(juce::TextButton::buttonOnColourId, juce::Colour(0xffFFB300));
+    monoButton.onClick = [this] {
+        audioEngine.setMonoSum(monoButton.getToggleState());
+    };
+    addAndMakeVisible(monoButton);
+
     startTimerHz(30);
 }
 
@@ -94,13 +105,14 @@ void TransportBar::resized()
     auto bounds = getLocalBounds().reduced(4);
 
     // Transport buttons
-    auto btnArea = bounds.removeFromLeft(200);
-    int btnW = btnArea.getWidth() / 5;
+    auto btnArea = bounds.removeFromLeft(240);
+    int btnW = btnArea.getWidth() / 6;
     rewindButton.setBounds(btnArea.removeFromLeft(btnW).reduced(2));
     playButton.setBounds(  btnArea.removeFromLeft(btnW).reduced(2));
     stopButton.setBounds(  btnArea.removeFromLeft(btnW).reduced(2));
     recordButton.setBounds(btnArea.removeFromLeft(btnW).reduced(2));
-    loopButton.setBounds(  btnArea.reduced(2));
+    loopButton.setBounds(  btnArea.removeFromLeft(btnW).reduced(2));
+    settingsButton.setBounds(btnArea.reduced(2));
 
     // BPM
     auto bpmArea = bounds.removeFromLeft(120);
@@ -118,8 +130,9 @@ void TransportBar::resized()
     barBeatLabel.setBounds(posArea);
 
     // Master volume (right side)
-    auto volArea = bounds.removeFromRight(160);
+    auto volArea = bounds.removeFromRight(200);
     masterVolumeLabel.setBounds(volArea.removeFromTop(16));
+    monoButton.setBounds(volArea.removeFromLeft(40).reduced(2));
     masterVolumeSlider.setBounds(volArea);
 }
 
