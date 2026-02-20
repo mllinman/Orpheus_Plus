@@ -59,10 +59,10 @@ target_sources(OrpheusPlus PRIVATE
     Source/Mastering/MultibandCompressor.cpp
 
     # AI Features
-    # Source/StemSeparation/StemSeparator.cpp
-    # Source/AudioToMidi/AudioToMidiConverter.cpp
-    # Source/PitchCorrection/AutoTuneProcessor.cpp
-    # Source/AudioCleanup/AudioCleanupProcessor.cpp
+    Source/StemSeparation/StemSeparator.cpp
+    Source/AudioToMidi/AudioToMidiConverter.cpp
+    Source/PitchCorrection/AutoTuneProcessor.cpp
+    Source/AudioCleanup/AudioCleanupProcessor.cpp
 
     # Project Management
     Source/Project/ProjectManager.cpp
