@@ -12,6 +12,8 @@ C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Timeline\TransportC
 C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\PianoRoll\PianoRollComponent.cpp;C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.dir\Debug\PianoRollComponent.obj
 C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Mastering\MasteringModule.cpp;C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.dir\Debug\MasteringModule.obj
 C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Mastering\MultibandCompressor.cpp;C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.dir\Debug\MultibandCompressor.obj
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Mastering\LinearPhaseEQ.cpp;C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.dir\Debug\LinearPhaseEQ.obj
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Mastering\LUFSMeter.cpp;C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.dir\Debug\LUFSMeter.obj
 C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\StemSeparation\StemSeparator.cpp;C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.dir\Debug\StemSeparator.obj
 C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\AudioToMidi\AudioToMidiConverter.cpp;C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.dir\Debug\AudioToMidiConverter.obj
 C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\PitchCorrection\AutoTuneProcessor.cpp;C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.dir\Debug\AutoTuneProcessor.obj

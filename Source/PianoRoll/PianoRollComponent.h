@@ -28,9 +28,12 @@ public:
     void mouseDrag(const juce::MouseEvent&) override;
     void mouseUp(const juce::MouseEvent&) override;
     void mouseWheelMove(const juce::MouseEvent&, const juce::MouseWheelDetails&) override;
+    bool keyPressed(const juce::KeyPress& key) override;
 
     void loadMidiSequence(const juce::MidiMessageSequence& seq);
     juce::MidiMessageSequence getMidiSequence() const;
+    void setActiveClip(class MidiClip* clip);
+    void syncToClip();
 
     void setQuantization(double beatDivision) { quantizeDivision = beatDivision; }
     void selectAll();
@@ -60,6 +63,7 @@ private:
     AudioEngine& audioEngine;
 
     juce::OwnedArray<MidiNote> notes;
+    class MidiClip* activeClip = nullptr;
     MidiNote* draggingNote    = nullptr;
     MidiNote* resizingNote    = nullptr;
     bool      isDrawingMode   = true;

@@ -3,6 +3,7 @@
 #include "PluginManager.h"
 #include "TrackProcessor.h"
 #include "MixerProcessor.h"
+#include "../Project/AppState.h"
 #include "../PitchCorrection/AutoTuneProcessor.h"
 #include "../AudioCleanup/AudioCleanupProcessor.h"
 // #include "../UI/SpectrumAnalyzer.h"
@@ -37,6 +38,7 @@ void AudioEngine::initialise()
     deviceManager.addMidiInputDeviceCallback({}, this);
 
     midiCollector.reset(44100.0);
+    audioWriterThread.startThread(juce::Thread::Priority::high); // Priority slightly above normal
 
     // Initialize Graph
     processorGraph.clear();
@@ -59,6 +61,9 @@ void AudioEngine::initialise()
 
 void AudioEngine::shutdown()
 {
+    if (audioWriter) audioWriter.reset();
+    audioWriterThread.stopThread(2000);
+
     deviceManager.removeAudioCallback(this);
     deviceManager.removeMidiInputDeviceCallback({}, this);
 }
@@ -78,7 +83,32 @@ void AudioEngine::play()
 void AudioEngine::stop()
 {
     playing.store(false);
-    recording.store(false);
+    
+    if (recording.load())
+    {
+        recording.store(false);
+        // Finalize recording
+        if (audioWriter)
+        {
+            audioWriter.reset(); // flushes and closes file
+            
+            // Add new AudioClip to track
+            if (armedTrackIndex >= 0 && armedTrackIndex < tracks.size())
+            {
+                auto* clip = new AudioClip(currentRecordingFile, 0.0 /* start position */);
+                tracks[armedTrackIndex]->clips.add(clip);
+            }
+        }
+        
+        if (recordedMidi.getNumEvents() > 0 && armedTrackIndex >= 0 && armedTrackIndex < tracks.size())
+        {
+            // Add new MidiClip
+            auto* clip = new MidiClip(0.0, recordedMidi.getEndTime());
+            clip->midiData = recordedMidi;
+            tracks[armedTrackIndex]->clips.add(clip);
+        }
+    }
+    
     playheadPosition.store(0.0);
     listeners.call(&Listener::playbackStopped);
 }
@@ -100,8 +130,49 @@ void AudioEngine::togglePlayback()
 
 void AudioEngine::toggleRecord()
 {
-    if (!playing.load()) play();
-    recording.store(!recording.load());
+    if (!recording.load())
+    {
+        // START RECORDING
+        armedTrackIndex = -1;
+        for (int i = 0; i < tracks.size(); ++i)
+        {
+            if (tracks[i]->armed) { armedTrackIndex = i; break; }
+        }
+
+        if (armedTrackIndex >= 0)
+        {
+            if (tracks[armedTrackIndex]->type == OrpheusTrackInfo::Type::Audio)
+            {
+                juce::File docsDir = juce::File::getSpecialLocation(juce::File::userDocumentsDirectory);
+                juce::File projectFolder = docsDir.getChildFile("OrpheusPlus_Projects");
+                projectFolder.createDirectory();
+                
+                currentRecordingFile = projectFolder.getNonexistentChildFile("Recording", ".wav");
+                
+                juce::WavAudioFormat wavFormat;
+                auto stream = currentRecordingFile.createOutputStream();
+                if (stream != nullptr)
+                {
+                    auto* writer = wavFormat.createWriterFor(stream.release(), currentSampleRate, 1, 24, {}, 0);
+                    if (writer)
+                        audioWriter = std::make_unique<juce::AudioFormatWriter::ThreadedWriter>(writer, audioWriterThread, 32768);
+                }
+            }
+            else if (tracks[armedTrackIndex]->type == OrpheusTrackInfo::Type::Midi)
+            {
+                recordedMidi.clear();
+            }
+        }
+        
+        recording.store(true);
+        if (!playing.load()) play();
+    }
+    else
+    {
+        // Stop recording
+        recording.store(false);
+        stop(); // this will trigger the finalize logic in stop()
+    }
 }
 
 void AudioEngine::setPlayheadPosition(double posSeconds)
@@ -112,6 +183,41 @@ void AudioEngine::setPlayheadPosition(double posSeconds)
 //──────────────────────────────────────────────────────────────────────────────
 // Track management
 //──────────────────────────────────────────────────────────────────────────────
+void AudioEngine::syncWithAppState(AppState& state)
+{
+    // Clear existing tracks
+    const auto trackCount = tracks.size();
+    for (int i = trackCount - 1; i >= 0; --i)
+        removeTrack(i);
+
+    bpm.store(state.getBpm());
+    timeSigNum = state.getTimeSigNum();
+    timeSigDen = state.getTimeSigDen();
+    
+    auto vt = state.getValueTree();
+    for (int i = 0; i < vt.getNumChildren(); ++i)
+    {
+        auto child = vt.getChild(i);
+        if (child.hasType("Track"))
+        {
+            juce::String type = child.getProperty("type");
+            juce::String name = child.getProperty("name");
+            int idx = -1;
+            
+            if (type == "audio") idx = addAudioTrack(name);
+            else if (type == "midi") idx = addMidiTrack(name);
+            
+            if (idx >= 0)
+            {
+                setTrackVolume(idx, static_cast<float>(child.getProperty("vol", 1.0f)));
+                setTrackPan(idx, static_cast<float>(child.getProperty("pan", 0.0f)));
+                setTrackMute(idx, static_cast<bool>(child.getProperty("mute", false)));
+                setTrackSolo(idx, static_cast<bool>(child.getProperty("solo", false)));
+            }
+        }
+    }
+}
+
 int AudioEngine::addAudioTrack(const juce::String& name)
 {
     // Create Track Processor
@@ -261,6 +367,21 @@ void AudioEngine::audioDeviceIOCallbackWithContext(
     if (!playing.load()) return;
 
     juce::AudioBuffer<float> buffer(outputChannelData, numOutputChannels, numSamples);
+    
+    // Recording Logic
+    if (recording.load())
+    {
+        if (audioWriter != nullptr)
+        {
+            // Just record from input 0 for now (mono mic)
+            if (numInputChannels > 0 && inputChannelData[0] != nullptr)
+            {
+                const float* inputPtrs[1] = { inputChannelData[0] };
+                audioWriter->write(inputPtrs, numSamples);
+            }
+        }
+    }
+
     processAudioBlock(buffer);
 
     // Advance playhead
@@ -364,6 +485,16 @@ void AudioEngine::processAudioBlock(juce::AudioBuffer<float>& buffer)
 void AudioEngine::handleIncomingMidiMessage(juce::MidiInput*, const juce::MidiMessage& message)
 {
     midiCollector.addMessageToQueue(message);
+    
+    if (recording.load() && armedTrackIndex >= 0)
+    {
+        if (tracks[armedTrackIndex]->type == OrpheusTrackInfo::Type::Midi)
+        {
+            // Timestamp based on playhead position
+            double timeInBeats = playheadPosition.load() * (bpm.load() / 60.0);
+            recordedMidi.addEvent(message, timeInBeats);
+        }
+    }
 }
 
 //──────────────────────────────────────────────────────────────────────────────
@@ -382,7 +513,7 @@ void AudioEngine::unregisterAnalyzer(SpectrumAnalyzer* analyzer)
 //──────────────────────────────────────────────────────────────────────────────
 void AudioEngine::exportMix(const juce::File& outputFile, int sampleRate, int bitDepth)
 {
-    // Offline render: collect all clips, process through full graph, write to file
+    // Offline render: write to file
     juce::WavAudioFormat wavFormat;
     auto stream = outputFile.createOutputStream();
     if (!stream) return;
@@ -394,7 +525,21 @@ void AudioEngine::exportMix(const juce::File& outputFile, int sampleRate, int bi
 
     const int blockSize = 2048;
     juce::AudioBuffer<float> buffer(2, blockSize);
-    const double totalDuration = 180.0; // placeholder - should derive from clip lengths
+    juce::MidiBuffer midiBuf; // empty for offline graph processing right now unless we inject timeline events
+
+    // Find the total duration
+    double maxDuration = 0.0;
+    for (auto* track : tracks)
+    {
+        for (auto* clip : track->clips)
+        {
+            if (clip->startTime + clip->duration > maxDuration)
+                maxDuration = clip->startTime + clip->duration;
+        }
+    }
+    
+    // Add 1 second tail
+    const double totalDuration = maxDuration > 0.0 ? maxDuration + 1.0 : 1.0; 
     const int64_t totalSamples = (int64_t)(totalDuration * sampleRate);
 
     processorGraph.prepareToPlay(sampleRate, blockSize);
@@ -403,7 +548,10 @@ void AudioEngine::exportMix(const juce::File& outputFile, int sampleRate, int bi
     {
         int thisBlock = (int)juce::jmin((int64_t)blockSize, totalSamples - pos);
         buffer.clear();
-        // TODO: fill buffer from timeline clips at position pos
+        
+        // This invokes all track processors, plugins, and master bus
+        processorGraph.processBlock(buffer, midiBuf);
+        
         writer->writeFromAudioSampleBuffer(buffer, 0, thisBlock);
     }
 

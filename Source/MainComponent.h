@@ -21,6 +21,7 @@ class MainComponent : public juce::Component,
                       public juce::DragAndDropContainer,
                       public juce::MenuBarModel,
                       public juce::ApplicationCommandTarget,
+                      public juce::ChangeListener,
                       private juce::Timer
 {
 public:
@@ -29,6 +30,8 @@ public:
 
     void paint(juce::Graphics&) override;
     void resized() override;
+    
+    void changeListenerCallback(juce::ChangeBroadcaster* source) override;
 
     bool hasUnsavedChanges() const;
 

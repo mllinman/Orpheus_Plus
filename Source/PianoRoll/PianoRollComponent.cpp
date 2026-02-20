@@ -4,6 +4,7 @@ PianoRollComponent::PianoRollComponent(AppState& s, AudioEngine& e)
     : appState(s), audioEngine(e)
 {
     setOpaque(true);
+    setWantsKeyboardFocus(true);
     startTimerHz(30);
 }
 
@@ -136,49 +137,119 @@ void PianoRollComponent::timerCallback()
 }
 
 //──────────────────────────────────────────────────────────────────────────────
-// Mouse interaction
+// Mouse & Keyboard interaction
 //──────────────────────────────────────────────────────────────────────────────
 void PianoRollComponent::mouseDown(const juce::MouseEvent& e)
 {
     if (e.x < PIANO_KEY_WIDTH) return;
+    grabKeyboardFocus();
 
-    int   pitch = pixelToPitch(e.y + (int)verticalOffset);
+    int pitch = pixelToPitch(e.y + (int)verticalOffset);
     double beat = pixelToBeat(e.x - PIANO_KEY_WIDTH + (int)horizontalOffset);
-    beat = std::round(beat / quantizeDivision) * quantizeDivision;
+    double qBeat = std::round(beat / quantizeDivision) * quantizeDivision;
 
-    if (e.mods.isRightButtonDown())
+    auto* n = getNoteAt(beat, pitch);
+
+    if (e.mods.isRightButtonDown() || e.mods.isCommandDown())
     {
         // Delete note under cursor
-        if (auto* n = getNoteAt(beat, pitch))
+        if (n) {
             notes.removeObject(n);
+            repaint();
+        }
+    }
+    else if (n != nullptr)
+    {
+        // Clicked an existing note
+        if (!e.mods.isShiftDown())
+            for (auto* other : notes) other->selected = false;
+            
+        n->selected = true;
+
+        // Check if we clicked the right edge for resizing
+        auto bounds = getNoteBounds(*n);
+        float rightEdge = bounds.getRight() + PIANO_KEY_WIDTH - (float)horizontalOffset;
+        
+        if (std::abs(e.x - rightEdge) < 10.0f) {
+            resizingNote = n;
+        } else {
+            draggingNote = n;
+        }
+        repaint();
     }
     else
     {
-        // Add new note
-        auto* n       = notes.add(new MidiNote());
-        n->pitch      = pitch;
-        n->startBeat  = beat;
-        n->duration   = quantizeDivision;
-        n->velocity   = 100;
-        draggingNote  = n;
+        // Deselect all
+        for (auto* other : notes) other->selected = false;
+
+        // Add new note if double clicked or if we enforce drawing mode
+        // For now, let's say single click on empty space creates a note
+        auto* newNote       = notes.add(new MidiNote());
+        newNote->pitch      = pitch;
+        newNote->startBeat  = qBeat;
+        newNote->duration   = quantizeDivision;
+        newNote->velocity   = 100;
+        newNote->selected   = true;
+        draggingNote        = newNote;
+        repaint();
     }
-    repaint();
 }
 
 void PianoRollComponent::mouseDrag(const juce::MouseEvent& e)
 {
-    if (!draggingNote || e.x < PIANO_KEY_WIDTH) return;
+    if (e.x < PIANO_KEY_WIDTH) return;
 
+    int pitch = pixelToPitch(e.y + (int)verticalOffset);
     double beat = pixelToBeat(e.x - PIANO_KEY_WIDTH + (int)horizontalOffset);
-    double endBeat = std::round(beat / quantizeDivision) * quantizeDivision + quantizeDivision;
-    draggingNote->duration = juce::jmax(quantizeDivision, endBeat - draggingNote->startBeat);
-    repaint();
+    double qBeat = std::round(beat / quantizeDivision) * quantizeDivision;
+
+    if (resizingNote)
+    {
+        double newDuration = qBeat - resizingNote->startBeat + quantizeDivision;
+        resizingNote->duration = juce::jmax(quantizeDivision, newDuration);
+        repaint();
+    }
+    else if (draggingNote)
+    {
+        // Simple move (doesn't handle multi-selection move yet)
+        draggingNote->pitch = pitch;
+        draggingNote->startBeat = qBeat;
+        repaint();
+    }
 }
 
 void PianoRollComponent::mouseUp(const juce::MouseEvent&)
 {
+    if (draggingNote || resizingNote)
+        syncToClip();
+
     draggingNote = nullptr;
+    resizingNote = nullptr;
 }
+
+bool PianoRollComponent::keyPressed(const juce::KeyPress& key)
+{
+    if (key == juce::KeyPress::deleteKey || key == juce::KeyPress::backspaceKey)
+    {
+        deleteSelected();
+        syncToClip();
+        return true;
+    }
+    if (key == juce::KeyPress('a', juce::ModifierKeys::commandModifier, 0))
+    {
+        selectAll();
+        return true;
+    }
+    if (key == juce::KeyPress('q', juce::ModifierKeys::commandModifier, 0))
+    {
+        quantizeSelected();
+        syncToClip();
+        return true;
+    }
+
+    return false;
+}
+
 
 void PianoRollComponent::mouseWheelMove(const juce::MouseEvent& e,
                                          const juce::MouseWheelDetails& wheel)
@@ -275,6 +346,21 @@ void PianoRollComponent::loadMidiSequence(const juce::MidiMessageSequence& seq)
         }
     }
     repaint();
+}
+
+void PianoRollComponent::setActiveClip(MidiClip* clip)
+{
+    activeClip = clip;
+    if (activeClip)
+        loadMidiSequence(activeClip->midiData);
+    else
+        notes.clear();
+}
+
+void PianoRollComponent::syncToClip()
+{
+    if (activeClip)
+        activeClip->midiData = getMidiSequence();
 }
 
 juce::MidiMessageSequence PianoRollComponent::getMidiSequence() const

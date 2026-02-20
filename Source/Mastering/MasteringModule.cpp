@@ -9,6 +9,8 @@ MasteringModule::MasteringModule(AudioEngine& e) : audioEngine(e)
         if (i == 0) eqBands[i].type = EQBand::Type::LowShelf;
         else if (i == NUM_EQ_BANDS - 1) eqBands[i].type = EQBand::Type::HighShelf;
         else eqBands[i].type = EQBand::Type::Peak;
+        
+        linearPhaseEQ.setBandParameters(i, static_cast<float>(eqBands[i].frequency), static_cast<float>(eqBands[i].q), static_cast<float>(eqBands[i].gain));
     }
 
     buildUI();
@@ -38,7 +40,8 @@ void MasteringModule::prepare(const juce::dsp::ProcessSpec& spec)
 {
     currentSampleRate = spec.sampleRate;
     
-    eqChain.prepare(spec);
+    linearPhaseEQ.prepare(spec);
+    lufsMeter.prepare(spec.sampleRate, spec.maximumBlockSize);
     
     if (!mbCompInitialized) {
         multibandComp.prepare(spec);
@@ -79,7 +82,7 @@ void MasteringModule::processEQ(juce::AudioBuffer<float>& buffer)
 {
     juce::dsp::AudioBlock<float> block(buffer);
     juce::dsp::ProcessContextReplacing<float> context(block);
-    eqChain.process(context);
+    linearPhaseEQ.process(context);
 }
 
 void MasteringModule::processMidSide(juce::AudioBuffer<float>& buffer, bool encode) 
@@ -168,20 +171,9 @@ void MasteringModule::updateMeters(const juce::AudioBuffer<float>& buffer)
     float alpha = 0.2f; // smoothing
     truePeak.store(truePeak.load() * (1.0f - alpha) + peakDb * alpha);
     
-    // LUFS approx (RMS)
-    currentLUFS.store(computeLUFS(buffer));
-}
-
-float MasteringModule::computeLUFS(const juce::AudioBuffer<float>& buffer) 
-{
-    // A highly simplified LUFS (just RMS for now)
-    float rms = 0.0f;
-    for (int ch = 0; ch < buffer.getNumChannels(); ++ch) {
-        rms += buffer.getRMSLevel(ch, 0, buffer.getNumSamples());
-    }
-    if (buffer.getNumChannels() > 0) rms /= buffer.getNumChannels();
-    
-    return juce::Decibels::gainToDecibels(rms, -70.0f);
+    // LUFS calc
+    lufsMeter.process(buffer);
+    currentLUFS.store(lufsMeter.getMomentaryLUFS());
 }
 
 void MasteringModule::buildUI() 
@@ -214,14 +206,7 @@ void MasteringModule::setEQBand(int band, double freq, double gainDB, double q, 
     eqBands[band].q = q;
     eqBands[band].type = type;
     
-    // Update underlying DSP filter here based on band index.
-    // For juce::dsp::ProcessorChain, we'd use get<N>() but it needs a template parameter.
-    // In a real scenario, we'd use an array of filters instead of a static chain, 
-    // or unroll the switch case.
-    
-    // To keep it simple and compileable, we will skip mapping to the exact IIR in the chain here,
-    // as juce::dsp::ProcessorChain requires compile-time indices. 
-    // A better approach is using std::array<juce::dsp::IIR::Filter<float>, 8> arrays for dynamic access.
+    linearPhaseEQ.setBandParameters(band, static_cast<float>(freq), static_cast<float>(q), static_cast<float>(gainDB));
 }
 
 void MasteringModule::setMBThreshold(int band, float thresh) { multibandComp.setThreshold(band, thresh); }

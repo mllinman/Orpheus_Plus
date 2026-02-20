@@ -436,6 +436,8 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
     <ClCompile Include="C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\PianoRoll\PianoRollComponent.cpp" />
     <ClCompile Include="C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Mastering\MasteringModule.cpp" />
     <ClCompile Include="C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Mastering\MultibandCompressor.cpp" />
+    <ClCompile Include="C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Mastering\LinearPhaseEQ.cpp" />
+    <ClCompile Include="C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Mastering\LUFSMeter.cpp" />
     <ClCompile Include="C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\StemSeparation\StemSeparator.cpp" />
     <ClCompile Include="C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\AudioToMidi\AudioToMidiConverter.cpp" />
     <ClCompile Include="C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\PitchCorrection\AutoTuneProcessor.cpp" />

@@ -2,6 +2,8 @@
 #include <JuceHeader.h>
 #include "../Audio/AudioEngine.h"
 #include "MultibandCompressor.h"
+#include "LinearPhaseEQ.h"
+#include "LUFSMeter.h"
 
 //==============================================================================
 // Linear Phase EQ Band
@@ -62,7 +64,6 @@ private:
     void processSaturation(juce::AudioBuffer<float>& buffer);
     void processLimiter(juce::AudioBuffer<float>& buffer);
     void updateMeters(const juce::AudioBuffer<float>& buffer);
-    float computeLUFS(const juce::AudioBuffer<float>& buffer);
 
     void buildUI();
 
@@ -78,16 +79,7 @@ private:
     // EQ
     static constexpr int NUM_EQ_BANDS = 8;
     std::array<EQBand, NUM_EQ_BANDS> eqBands;
-    juce::dsp::ProcessorChain<
-        juce::dsp::IIR::Filter<float>,
-        juce::dsp::IIR::Filter<float>,
-        juce::dsp::IIR::Filter<float>,
-        juce::dsp::IIR::Filter<float>,
-        juce::dsp::IIR::Filter<float>,
-        juce::dsp::IIR::Filter<float>,
-        juce::dsp::IIR::Filter<float>,
-        juce::dsp::IIR::Filter<float>
-    > eqChain;
+    LinearPhaseEQ linearPhaseEQ;
 
     // Limiter state
     float limiterCeiling = -0.1f; // dBFS
@@ -103,6 +95,7 @@ private:
     std::atomic<float> currentLUFS  { -70.0f };
     std::atomic<float> truePeak     { -70.0f };
     std::atomic<float> correlation  {  1.0f  };
+    LUFSMeter lufsMeter;
 
     double currentSampleRate = 44100.0;
 

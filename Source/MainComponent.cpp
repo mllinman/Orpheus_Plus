@@ -38,12 +38,23 @@ MainComponent::MainComponent()
     masteringModule = std::make_unique<MasteringModule>(*audioEngine);
     addChildComponent(masteringModule.get());
 
+    appState.addChangeListener(this);
     setSize(1024, 768);
 }
 
 MainComponent::~MainComponent()
 {
+    appState.removeChangeListener(this);
     juce::LookAndFeel::setDefaultLookAndFeel(nullptr);
+}
+
+void MainComponent::changeListenerCallback(juce::ChangeBroadcaster* source)
+{
+    if (source == &appState)
+    {
+        // When state changes (e.g., project loaded), sync the audio engine
+        audioEngine->syncWithAppState(appState);
+    }
 }
 
 void MainComponent::paint(juce::Graphics& g)

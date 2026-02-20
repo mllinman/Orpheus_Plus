@@ -2,12 +2,31 @@
 
   Checking File Globs
   OrpheusPlus_rc_lib.vcxproj -> C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus_rc_lib.dir\Debug\OrpheusPlus_rc_lib.lib
-AudioEngine.obj : error LNK2019: unresolved external symbol "public: __cdecl StemSeparator::StemSeparator(void)" (??0StemSeparator@@QEAA@XZ) referenced in function "class std::unique_ptr<class StemSeparator,struct std::default_delete<class StemSeparator> > __cdecl std::make_unique<class StemSeparator,0>(void)" (??$make_unique@VStemSeparator@@$$V$0A@@std@@YA?AV?$unique_ptr@VStemSeparator@@U?$default_delete@VStemSeparator@@@std@@@0@XZ) [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
-AudioEngine.obj : error LNK2019: unresolved external symbol "public: __cdecl StemSeparator::~StemSeparator(void)" (??1StemSeparator@@QEAA@XZ) referenced in function "public: void * __cdecl StemSeparator::`scalar deleting destructor'(unsigned int)" (??_GStemSeparator@@QEAAPEAXI@Z) [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
-AudioEngine.obj : error LNK2019: unresolved external symbol "public: __cdecl AudioToMidiConverter::AudioToMidiConverter(void)" (??0AudioToMidiConverter@@QEAA@XZ) referenced in function "class std::unique_ptr<class AudioToMidiConverter,struct std::default_delete<class AudioToMidiConverter> > __cdecl std::make_unique<class AudioToMidiConverter,0>(void)" (??$make_unique@VAudioToMidiConverter@@$$V$0A@@std@@YA?AV?$unique_ptr@VAudioToMidiConverter@@U?$default_delete@VAudioToMidiConverter@@@std@@@0@XZ) [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
-AudioEngine.obj : error LNK2019: unresolved external symbol "public: __cdecl AudioToMidiConverter::~AudioToMidiConverter(void)" (??1AudioToMidiConverter@@QEAA@XZ) referenced in function "public: void * __cdecl AudioToMidiConverter::`scalar deleting destructor'(unsigned int)" (??_GAudioToMidiConverter@@QEAAPEAXI@Z) [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
-AudioEngine.obj : error LNK2019: unresolved external symbol "public: __cdecl AutoTuneProcessor::AutoTuneProcessor(void)" (??0AutoTuneProcessor@@QEAA@XZ) referenced in function "class std::unique_ptr<class AutoTuneProcessor,struct std::default_delete<class AutoTuneProcessor> > __cdecl std::make_unique<class AutoTuneProcessor,0>(void)" (??$make_unique@VAutoTuneProcessor@@$$V$0A@@std@@YA?AV?$unique_ptr@VAutoTuneProcessor@@U?$default_delete@VAutoTuneProcessor@@@std@@@0@XZ) [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
-AudioEngine.obj : error LNK2019: unresolved external symbol "public: __cdecl AudioCleanupProcessor::AudioCleanupProcessor(void)" (??0AudioCleanupProcessor@@QEAA@XZ) referenced in function "class std::unique_ptr<class AudioCleanupProcessor,struct std::default_delete<class AudioCleanupProcessor> > __cdecl std::make_unique<class AudioCleanupProcessor,0>(void)" (??$make_unique@VAudioCleanupProcessor@@$$V$0A@@std@@YA?AV?$unique_ptr@VAudioCleanupProcessor@@U?$default_delete@VAudioCleanupProcessor@@@std@@@0@XZ) [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
-TrackLaneComponent.obj : error LNK2019: unresolved external symbol "public: void __cdecl StemSeparator::separate(class juce::File const &,class AppState &,class std::function<void __cdecl(struct StemSeparationResult)>)" (?separate@StemSeparator@@QEAAXAEBVFile@juce@@AEAVAppState@@V?$function@$$A6AXUStemSeparationResult@@@Z@std@@@Z) referenced in function "public: __cdecl `public: virtual void __cdecl TrackLaneComponent::mouseDown(class juce::MouseEvent const &)'::`78'::<lambda_1>::operator()(int)const " (??R<lambda_1>@?EO@??mouseDown@TrackLaneComponent@@UEAAXAEBVMouseEvent@juce@@@Z@QEBA@H@Z) [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
-TrackLaneComponent.obj : error LNK2019: unresolved external symbol "public: void __cdecl AudioToMidiConverter::convert(class juce::File const &,class AppState &,class std::function<void __cdecl(struct AudioToMidiResult)>)" (?convert@AudioToMidiConverter@@QEAAXAEBVFile@juce@@AEAVAppState@@V?$function@$$A6AXUAudioToMidiResult@@@Z@std@@@Z) referenced in function "public: __cdecl `public: virtual void __cdecl TrackLaneComponent::mouseDown(class juce::MouseEvent const &)'::`78'::<lambda_1>::operator()(int)const " (??R<lambda_1>@?EO@??mouseDown@TrackLaneComponent@@UEAAXAEBVMouseEvent@juce@@@Z@QEBA@H@Z) [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
-C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus_artefacts\Debug\Orpheus Plus.exe : fatal error LNK1120: 8 unresolved externals [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+  AudioEngine.cpp
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\StemSeparation\StemSeparator.h(45,51): warning C4100: 'progress': unreferenced parameter [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+  (compiling source file '../Source/Audio/AudioEngine.cpp')
+  
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\StemSeparation\StemSeparator.h(46,73): warning C4100: 'result': unreferenced parameter [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+  (compiling source file '../Source/Audio/AudioEngine.cpp')
+  
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\StemSeparation\StemSeparator.h(47,63): warning C4100: 'error': unreferenced parameter [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+  (compiling source file '../Source/Audio/AudioEngine.cpp')
+  
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Audio\PluginManager.h(42,71): warning C4100: 'currentPlugin': unreferenced parameter [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+  (compiling source file '../Source/Audio/AudioEngine.cpp')
+  
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Audio\PluginManager.h(42,41): warning C4100: 'progress': unreferenced parameter [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+  (compiling source file '../Source/Audio/AudioEngine.cpp')
+  
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Audio\AudioEngine.cpp(41,23): error C2665: 'juce::Thread::startThread': no overloaded function could convert all the argument types [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+      C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\JUCE\modules\juce_core\threads\juce_Thread.h(286,10):
+      could be 'bool juce::Thread::startThread(juce::Thread::Priority)'
+          C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Audio\AudioEngine.cpp(41,23):
+          'bool juce::Thread::startThread(juce::Thread::Priority)': cannot convert argument 1 from 'int' to 'juce::Thread::Priority'
+              C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Audio\AudioEngine.cpp(41,35):
+              Conversion to enumeration type requires an explicit cast (static_cast, C-style cast or parenthesized function-style cast)
+      C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Audio\AudioEngine.cpp(41,23):
+      while trying to match the argument list '(int)'
+  
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Audio\AudioEngine.cpp(156,46): warning C4996: 'juce::AudioFormat::createWriterFor': Use the function taking an AudioFormatWriterOptions instead. [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Audio\AudioEngine.cpp(522,19): warning C4996: 'juce::AudioFormat::createWriterFor': Use the function taking an AudioFormatWriterOptions instead. [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]

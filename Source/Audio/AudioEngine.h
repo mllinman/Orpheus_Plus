@@ -101,6 +101,7 @@ public:
     void   setTimeSignature(int num, int den) { timeSigNum = num; timeSigDen = den; }
 
     //── Track Management ─────────────────────────────────────────────────────
+    void syncWithAppState(class AppState& state);
     int  addAudioTrack(const juce::String& name = "Audio Track");
     int  addMidiTrack(const juce::String& name = "MIDI Track");
     int  addBusTrack(const juce::String& name = "Bus");
@@ -213,6 +214,14 @@ private:
     std::atomic<float> masterPeakR { 0.0f };
     std::atomic<float> currentLUFS { -70.0f };
     std::atomic<float> masterVolume { 1.0f };
+
+    // Record Setup
+    juce::TimeSliceThread audioWriterThread { "Audio Recording Thread" };
+    // Recording Buffers
+    std::unique_ptr<juce::AudioFormatWriter::ThreadedWriter> audioWriter;
+    juce::File currentRecordingFile;
+    int armedTrackIndex = -1;
+    juce::MidiMessageSequence recordedMidi;
 
     double currentSampleRate = 44100.0;
     int    currentBlockSize  = 512;

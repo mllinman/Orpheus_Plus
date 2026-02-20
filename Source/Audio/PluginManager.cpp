@@ -101,7 +101,8 @@ void PluginManager::openPluginEditor(int trackIndex, int pluginSlot)
     auto* editor = processor->createEditor();
     
     // Create window (self-deletes on close)
-    new PluginWindow(*processor, editor);
+    auto* window = new PluginWindow(*processor, editor);
+    window->onClose = [window] {  };
 }
 
 juce::String PluginManager::getPluginName(int nodeID) const

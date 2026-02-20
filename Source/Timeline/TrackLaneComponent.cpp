@@ -139,6 +139,35 @@ void TrackLaneComponent::paint(juce::Graphics& g)
 
     // Clip area
     paintClips(g, bounds);
+
+    // Record Progress Area
+    if (info.armed && audioEngine.isRecording())
+    {
+        double currentPos = audioEngine.getPlayheadPosition();
+        double startPixel = timeline.timeToAbsolutePixel(0.0) - HEADER_WIDTH; // Simplified: Assuming we began recording at 0.0 or track the true start
+        double currentPixel = timeline.timeToAbsolutePixel(currentPos) - HEADER_WIDTH;
+
+        // More accurate start time of recording:
+        // By default we lack a "recordStartTime" in AudioEngine right now, 
+        // so we'll visually draw from the first clip end, or 0.0 if empty for a simple representation.
+        // Actually, let's just draw from where playhead is MINUS current capture length.
+        // For a quick MVP, draw from 0.0 to current playhead if recording.
+        // Actually we should just draw a red block from the last clip's end to the playhead.
+        
+        double recordStart = 0.0;
+        if (!info.clips.isEmpty())
+            recordStart = info.clips.getLast()->startTime + info.clips.getLast()->duration;
+            
+        double startP = timeline.timeToAbsolutePixel(recordStart) - HEADER_WIDTH;
+        
+        if (currentPixel > startP)
+        {
+            g.setColour(juce::Colours::red.withAlpha(0.4f));
+            g.fillRect((float)startP, 4.0f, (float)(currentPixel - startP), (float)(getHeight() - 8));
+            g.setColour(juce::Colours::red);
+            g.drawRect((float)startP, 4.0f, (float)(currentPixel - startP), (float)(getHeight() - 8), 1.0f);
+        }
+    }
 }
 
 void TrackLaneComponent::paintClips(juce::Graphics& g, juce::Rectangle<int> clipArea)

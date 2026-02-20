@@ -57,6 +57,8 @@ target_sources(OrpheusPlus PRIVATE
     # Mastering
     Source/Mastering/MasteringModule.cpp
     Source/Mastering/MultibandCompressor.cpp
+    Source/Mastering/LinearPhaseEQ.cpp
+    Source/Mastering/LUFSMeter.cpp
 
     # AI Features
     Source/StemSeparation/StemSeparator.cpp
