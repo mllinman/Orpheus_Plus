@@ -2,6 +2,7 @@
 #include <JuceHeader.h>
 #include "PluginManager.h"
 #include "ClipGeneratorProcessor.h"
+#include "MidiGeneratorProcessor.h"
 #include "TrackFaderProcessor.h"
 #include "MixerProcessor.h"
 #include "MidiLearnManager.h"
@@ -229,9 +230,15 @@ int AudioEngine::addAudioTrack(const juce::String& name)
     t->colour = juce::Colours::cornflowerblue.withSaturation(0.7f);
 
     // 1. Create Generator
-    auto genProc = std::make_unique<ClipGeneratorProcessor>(*t, *this);
-    auto genNode = processorGraph.addNode(std::move(genProc));
-    t->generatorNodeID = (int)genNode->nodeID.uid;
+    std::unique_ptr<juce::AudioProcessor> generator;
+    generator = std::make_unique<ClipGeneratorProcessor>(*t, *this);
+
+    juce::AudioProcessorGraph::Node::Ptr genNode;
+    if (generator)
+    {
+        genNode = processorGraph.addNode(std::move(generator));
+        t->generatorNodeID = (int)genNode->nodeID.uid;
+    }
 
     // 2. Create Fader
     auto faderProc = std::make_unique<TrackFaderProcessor>();
@@ -260,11 +267,36 @@ int AudioEngine::addAudioTrack(const juce::String& name)
 
 int AudioEngine::addMidiTrack(const juce::String& name)
 {
-    tracks.add(new OrpheusTrackInfo());
-    auto& t = *tracks.getLast();
-    t.name   = name;
-    t.type   = OrpheusTrackInfo::Type::Midi;
-    t.colour = juce::Colours::mediumpurple;
+    auto* t = new OrpheusTrackInfo();
+    t->name = name;
+    t->type = OrpheusTrackInfo::Type::Midi;
+    t->colour = juce::Colours::mediumpurple;
+
+    // 1. Create Generator
+    auto generator = std::make_unique<MidiGeneratorProcessor>(*t, *this);
+    auto genNode = processorGraph.addNode(std::move(generator));
+    t->generatorNodeID = (int)genNode->nodeID.uid;
+
+    // 2. Create Fader
+    auto faderProc = std::make_unique<TrackFaderProcessor>();
+    auto faderNode = processorGraph.addNode(std::move(faderProc));
+    t->faderNodeID = (int)faderNode->nodeID.uid;
+
+    // 3. Connect Generator -> Fader
+    if (genNode && faderNode)
+    {
+        for (int ch = 0; ch < 2; ++ch)
+            processorGraph.addConnection({ { genNode->nodeID, ch }, { faderNode->nodeID, ch } });
+    }
+
+    // 4. Connect Fader -> Master
+    if (faderNode && masterNode)
+    {
+        for (int ch = 0; ch < 2; ++ch)
+            processorGraph.addConnection({ { faderNode->nodeID, ch }, { masterNode->nodeID, ch } });
+    }
+    
+    tracks.add(t);
 
     juce::MessageManager::callAsync([this]{ listeners.call(&Listener::trackListChanged); });
     return tracks.size() - 1;

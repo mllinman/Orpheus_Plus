@@ -45,6 +45,9 @@ target_sources(OrpheusPlus PRIVATE
     Source/Audio/PluginManager.cpp
     Source/Audio/MidiLearnManager.cpp
     Source/Audio/TimeStretcher.cpp
+    Source/Audio/ConvolutionReverbProcessor.cpp
+    Source/Audio/OrpheusSynth.cpp
+    Source/Audio/MidiGeneratorProcessor.cpp
 
     # Timeline
     Source/Timeline/TimelineComponent.cpp

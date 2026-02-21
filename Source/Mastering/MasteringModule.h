@@ -4,6 +4,7 @@
 #include "MultibandCompressor.h"
 #include "LinearPhaseEQ.h"
 #include "LUFSMeter.h"
+#include "../Audio/ConvolutionReverbProcessor.h"
 
 //==============================================================================
 // Linear Phase EQ Band
@@ -36,6 +37,7 @@ public:
     void setEQEnabled(bool e)            { eqEnabled = e; updateChain(); }
     void setMultibandCompEnabled(bool e) { mbCompEnabled = e; updateChain(); }
     void setSaturationEnabled(bool e)    { satEnabled = e; updateChain(); }
+    void setReverbEnabled(bool e)        { reverbEnabled = e; updateChain(); }
     void setLimiterEnabled(bool e)       { limiterEnabled = e; updateChain(); }
 
     // EQ
@@ -56,12 +58,16 @@ public:
     float getTruePeak()   const { return truePeak.load(); }
     float getCorrelation() const { return correlation.load(); }
 
+    void loadReverbIR(const juce::File& file) { reverbProcessor.loadImpulseResponse(file); }
+    void setReverbDryWet(float wet)           { reverbProcessor.setDryWet(wet); }
+
 private:
     void updateChain();
     void processEQ(juce::AudioBuffer<float>& buffer);
     void processMidSide(juce::AudioBuffer<float>& buffer, bool encode);
     void processMultibandComp(juce::AudioBuffer<float>& buffer);
     void processSaturation(juce::AudioBuffer<float>& buffer);
+    void processReverb(juce::AudioBuffer<float>& buffer);
     void processLimiter(juce::AudioBuffer<float>& buffer);
     void updateMeters(const juce::AudioBuffer<float>& buffer);
 
@@ -70,11 +76,15 @@ private:
     AudioEngine& audioEngine;
 
     // Chain flags
+    bool msToggleEnabled = false; // Internal flag rename or keep? The header had midSideEnabled
     bool midSideEnabled = false;
     bool eqEnabled      = true;
     bool mbCompEnabled  = true;
     bool satEnabled     = false;
+    bool reverbEnabled  = false;
     bool limiterEnabled = true;
+
+    ConvolutionReverbProcessor reverbProcessor;
 
     // EQ
     static constexpr int NUM_EQ_BANDS = 8;
@@ -104,6 +114,7 @@ private:
     juce::ToggleButton compToggle    { "COMP" };
     juce::ToggleButton msToggle      { "M/S" };
     juce::ToggleButton satToggle     { "SAT" };
+    juce::ToggleButton reverbToggle  { "REVERB" };
     juce::ToggleButton limiterToggle { "LIMIT" };
 
     juce::Slider lufsSlider;  // display only

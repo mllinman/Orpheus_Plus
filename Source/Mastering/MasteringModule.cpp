@@ -31,6 +31,7 @@ void MasteringModule::resized()
     compToggle.setBounds(topArea.removeFromLeft(60).reduced(5));
     msToggle.setBounds(topArea.removeFromLeft(60).reduced(5));
     satToggle.setBounds(topArea.removeFromLeft(60).reduced(5));
+    reverbToggle.setBounds(topArea.removeFromLeft(60).reduced(5));
     limiterToggle.setBounds(topArea.removeFromLeft(60).reduced(5));
     
     // Layout for the rest of UI would go here
@@ -41,6 +42,7 @@ void MasteringModule::prepare(const juce::dsp::ProcessSpec& spec)
     currentSampleRate = spec.sampleRate;
     
     linearPhaseEQ.prepare(spec);
+    reverbProcessor.prepareToPlay(spec.sampleRate, (int)spec.maximumBlockSize);
     lufsMeter.prepare(spec.sampleRate, spec.maximumBlockSize);
     
     if (!mbCompInitialized) {
@@ -64,6 +66,7 @@ void MasteringModule::processBlock(juce::AudioBuffer<float>& buffer, double samp
     if (eqEnabled) processEQ(buffer);
     if (mbCompEnabled) processMultibandComp(buffer);
     if (satEnabled) processSaturation(buffer);
+    if (reverbEnabled) processReverb(buffer);
     
     if (midSideEnabled) processMidSide(buffer, false); // decode back to L/R
     
@@ -129,6 +132,12 @@ void MasteringModule::processSaturation(juce::AudioBuffer<float>& buffer)
     }
 }
 
+void MasteringModule::processReverb(juce::AudioBuffer<float>& buffer)
+{
+    juce::MidiBuffer dummy;
+    reverbProcessor.processBlock(buffer, dummy);
+}
+
 void MasteringModule::processLimiter(juce::AudioBuffer<float>& buffer) 
 {
     const float ceilingLin = juce::Decibels::decibelsToGain(limiterCeiling);
@@ -182,18 +191,21 @@ void MasteringModule::buildUI()
     addAndMakeVisible(compToggle);
     addAndMakeVisible(msToggle);
     addAndMakeVisible(satToggle);
+    addAndMakeVisible(reverbToggle);
     addAndMakeVisible(limiterToggle);
     
     eqToggle.onClick = [this] { setEQEnabled(eqToggle.getToggleState()); };
     compToggle.onClick = [this] { setMultibandCompEnabled(compToggle.getToggleState()); };
     msToggle.onClick = [this] { setMidSideEnabled(msToggle.getToggleState()); };
     satToggle.onClick = [this] { setSaturationEnabled(satToggle.getToggleState()); };
+    reverbToggle.onClick = [this] { setReverbEnabled(reverbToggle.getToggleState()); };
     limiterToggle.onClick = [this] { setLimiterEnabled(limiterToggle.getToggleState()); };
     
     eqToggle.setToggleState(eqEnabled, juce::dontSendNotification);
     compToggle.setToggleState(mbCompEnabled, juce::dontSendNotification);
     msToggle.setToggleState(midSideEnabled, juce::dontSendNotification);
     satToggle.setToggleState(satEnabled, juce::dontSendNotification);
+    reverbToggle.setToggleState(reverbEnabled, juce::dontSendNotification);
     limiterToggle.setToggleState(limiterEnabled, juce::dontSendNotification);
 }
 

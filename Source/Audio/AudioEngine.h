@@ -65,6 +65,7 @@ struct OrpheusTrackInfo
     
     static constexpr int MAX_PLUGINS = 8;
     std::array<int, MAX_PLUGINS> pluginSlots; 
+    std::array<int, MAX_PLUGINS> sidechainSources; // Track index providing sidechain
 
     struct Take
     {
@@ -79,7 +80,10 @@ struct OrpheusTrackInfo
     std::vector<AutomationCurve> automationCurves;
     std::vector<juce::String> visibleAutomationLanes; // e.g. "vol", "pan", "sweet"
     
-    OrpheusTrackInfo() { pluginSlots.fill(-1); }
+    OrpheusTrackInfo() { 
+        pluginSlots.fill(-1); 
+        sidechainSources.fill(-1);
+    }
 };
 
 //==============================================================================
@@ -128,6 +132,7 @@ public:
     void setTrackVolume(int trackIndex, float vol);
     void setTrackPan(int trackIndex, float pan);
     void setTrackSweetener(int trackIndex, float amount);
+    void setSidechainSource(int targetTrack, int slot, int sourceTrack);
     void setTrackMute(int trackIndex, bool mute);
     void setTrackSolo(int trackIndex, bool solo);
     void armTrack(int trackIndex, bool armed);
