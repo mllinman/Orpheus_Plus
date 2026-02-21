@@ -252,50 +252,44 @@ int AudioEngine::addAudioTrack(const juce::String& name)
                     int bufferStartSample = 0;
                     int numSamplesToCopy = numSamples;
                     
-                    double offsetInClip = playhead - clipStart;
-                    int sampleOffsetInClip = (int)(offsetInClip * sr);
-                    
-                    if (sampleOffsetInClip < 0)
-                    {
-                        bufferStartSample = -sampleOffsetInClip;
-                        sampleOffsetInClip = 0;
-                        numSamplesToCopy -= bufferStartSample;
-                    }
-                    
-                    int remainingInClip = (int)((ac->duration * sr) - sampleOffsetInClip);
-                    if (numSamplesToCopy > remainingInClip)
-                        numSamplesToCopy = remainingInClip;
-                        
+                    float stretch = ac->getStretchFactor(this->bpm.load());
+                    double sourceSr = ac->sampleRate;
+                    if (sourceSr <= 0) sourceSr = sr;
+
                     int sourceNumSamples = ac->audioData.getNumSamples();
                     if (sourceNumSamples == 0) continue;
-                    
-                    if (numSamplesToCopy > 0)
+
+                    // Manual loop for interpolation and stretching
+                    for (int i = 0; i < numSamples; ++i)
                     {
+                        double currentSessionTime = playhead + (i / sr);
+                        if (currentSessionTime < clipStart || currentSessionTime >= clipEnd)
+                            continue;
+
+                        double offsetInSession = currentSessionTime - clipStart;
+                        double sourcePosSamples = offsetInSession * sourceSr * stretch;
+
                         if (ac->loopEnabled)
                         {
-                            // Wrap read pointer manually for looping
-                            for (int i = 0; i < numSamplesToCopy; ++i)
-                            {
-                                int readPos = (sampleOffsetInClip + i) % sourceNumSamples;
-                                for (int ch = 0; ch < buffer.getNumChannels(); ++ch)
-                                {
-                                    int sourceCh = ch % ac->audioData.getNumChannels();
-                                    buffer.addSample(ch, bufferStartSample + i, ac->audioData.getSample(sourceCh, readPos));
-                                }
-                            }
+                            sourcePosSamples = std::fmod(sourcePosSamples, (double)sourceNumSamples);
                         }
-                        else
+                        else if (sourcePosSamples >= sourceNumSamples)
                         {
-                            int available = sourceNumSamples - sampleOffsetInClip;
-                            if (available > 0)
-                            {
-                                int toCopy = juce::jmin(numSamplesToCopy, available);
-                                for (int ch = 0; ch < buffer.getNumChannels(); ++ch)
-                                {
-                                    int sourceCh = ch % ac->audioData.getNumChannels();
-                                    buffer.addFrom(ch, bufferStartSample, ac->audioData, sourceCh, sampleOffsetInClip, toCopy);
-                                }
-                            }
+                            continue;
+                        }
+
+                        int idx1 = (int)sourcePosSamples;
+                        int idx2 = (idx1 + 1) % sourceNumSamples;
+                        float fract = (float)(sourcePosSamples - idx1);
+
+                        for (int ch = 0; ch < buffer.getNumChannels(); ++ch)
+                        {
+                            int sourceCh = ch % ac->audioData.getNumChannels();
+                            float s1 = ac->audioData.getSample(sourceCh, idx1);
+                            float s2 = ac->audioData.getSample(sourceCh, idx2);
+                            float interpolated = s1 + fract * (s2 - s1);
+                            
+                            buffer.addSample(ch, i, interpolated);
                         }
                     }
                 }

@@ -62,7 +62,16 @@ struct OrpheusTrackInfo
     static constexpr int MAX_PLUGINS = 4;
     std::array<int, MAX_PLUGINS> pluginSlots; // Stores NodeID of plugin in graph. -1 if empty.
 
-    juce::OwnedArray<Clip> clips;
+    struct Take
+    {
+        juce::String name;
+        juce::OwnedArray<Clip> clips;
+    };
+
+    juce::OwnedArray<Clip> clips; // The "Comped" or primary clips
+    juce::OwnedArray<Take> takes; // Sub-lanes / Takes
+    bool showTakes = false;       // Toggle for UI
+    
     std::vector<AutomationCurve> automationCurves;
     
     OrpheusTrackInfo() { pluginSlots.fill(-1); }

@@ -114,13 +114,22 @@ void TimelineComponent::resized()
     trackViewport.setBounds(viewport);
 
     // Layout track container
-    int totalHeight = audioEngine.getNumTracks() * DEFAULT_TRACK_H;
+    int currentY = 0;
+    for (int i = 0; i < trackLanes.size(); ++i)
+    {
+        auto& info = audioEngine.getTrackInfo(i);
+        int h = DEFAULT_TRACK_H;
+        if (info.showTakes)
+            h += (int)info.takes.size() * TAKE_LANE_H;
+        
+        trackLanes[i]->setBounds(0, currentY, totalWidth, h);
+        currentY += h;
+    }
+    int totalHeight = currentY;
+
     double totalSeconds = 300.0;
     int totalWidth = TRACK_HEADER_W + (int)(totalSeconds * pixelsPerSecond);
     trackContainer.setSize(totalWidth, totalHeight);
-
-    for (int i = 0; i < trackLanes.size(); ++i)
-        trackLanes[i]->setBounds(0, i * DEFAULT_TRACK_H, totalWidth, DEFAULT_TRACK_H);
 
     // Update scroll bars
     horizontalScrollBar.setRangeLimits(0.0, totalSeconds);

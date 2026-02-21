@@ -24,17 +24,9 @@ TrackLaneComponent::TrackLaneComponent(int idx, AudioEngine& e, AppState& s,
     soloButton.onClick = [this] {
         bool s = soloButton.getToggleState();
         audioEngine.setTrackSolo(trackIndex, s);
+        audioEngine.setTrackSolo(trackIndex, soloButton.getToggleState());
     };
     addAndMakeVisible(soloButton);
-
-    // Arm
-    armButton.setColour(juce::TextButton::buttonColourId,   juce::Colour(0xff2d2d44));
-    armButton.setColour(juce::TextButton::buttonOnColourId, juce::Colour(0xffe94560));
-    armButton.setToggleable(true);
-    armButton.onClick = [this] {
-        audioEngine.armTrack(trackIndex, armButton.getToggleState());
-    };
-    addAndMakeVisible(armButton);
 
     // Volume
     volumeSlider.setSliderStyle(juce::Slider::LinearHorizontal);
@@ -109,6 +101,8 @@ void TrackLaneComponent::resized()
     soloButton.setBounds(buttonRow.removeFromLeft(22));
     buttonRow.removeFromLeft(2);
     armButton.setBounds(buttonRow.removeFromLeft(22));
+    buttonRow.removeFromLeft(2);
+    showTakesButton.setBounds(buttonRow.removeFromLeft(22));
 
     auto sliderRow = header.removeFromTop(20);
     panSlider.setBounds(sliderRow.removeFromRight(30));
@@ -138,7 +132,26 @@ void TrackLaneComponent::paint(juce::Graphics& g)
     g.drawLine(0, (float)getHeight() - 1, (float)getWidth(), (float)getHeight() - 1);
 
     // Clip area
-    paintClips(g, bounds);
+    auto clipArea = bounds;
+    clipArea.setHeight(TimelineComponent::DEFAULT_TRACK_H);
+    paintClips(g, clipArea, info.clips, false);
+
+    if (info.showTakes)
+    {
+        for (int i = 0; i < info.takes.size(); ++i)
+        {
+            auto takeArea = bounds.withTop(TimelineComponent::DEFAULT_TRACK_H + i * TimelineComponent::TAKE_LANE_H)
+                                  .withHeight(TimelineComponent::TAKE_LANE_H);
+            
+            // Draw take lane background
+            g.setColour(juce::Colour(0xff22223a));
+            g.fillRect(takeArea);
+            g.setColour(juce::Colour(0xff0f0f1a));
+            g.drawHorizontalLine(takeArea.getBottom() - 1, (float)takeArea.getX(), (float)takeArea.getRight());
+            
+            paintClips(g, takeArea, info.takes[i]->clips, true);
+        }
+    }
 
     // Record Progress Area
     if (info.armed && audioEngine.isRecording())
@@ -170,17 +183,25 @@ void TrackLaneComponent::paint(juce::Graphics& g)
     }
 }
 
-void TrackLaneComponent::paintClips(juce::Graphics& g, juce::Rectangle<int> clipArea)
+void TrackLaneComponent::paintClips(juce::Graphics& g, juce::Rectangle<int> clipArea, juce::OwnedArray<Clip>& clipsToPaint, bool isTake)
 {
-    auto& info = audioEngine.getTrackInfo(trackIndex);
-    for (auto* clip : info.clips)
-    {
-        auto clipBounds = getClipScreenBounds(*clip);
-        if (clipBounds.getRight() < clipArea.getX() ||
-            clipBounds.getX() > clipArea.getRight())
-            continue;
+    g.setColour(juce::Colours::white.withAlpha(0.1f));
+    g.drawRect(clipArea);
 
-        clip->paint(g, clipBounds, clipArea);
+    for (auto* clip : clipsToPaint)
+    {
+        auto bounds = getClipScreenBounds(*clip);
+        // Intersect with clipArea (which might be a sub-lane)
+        bounds = bounds.withY((float)clipArea.getY() + 4).withHeight((float)clipArea.getHeight() - 8);
+
+        clip->paint(g, bounds, clipArea);
+
+        if (isTake)
+        {
+            // Dim takes slightly
+            g.setColour(juce::Colours::black.withAlpha(0.3f));
+            g.fillRect(bounds);
+        }
     }
 }
 
@@ -392,12 +413,30 @@ void TrackLaneComponent::mouseDown(const juce::MouseEvent& e)
         return; 
     }
 
+    auto& trackInfo = audioEngine.getTrackInfo(trackIndex);
+    
+    // Check if click is in a Take Lane
+    if (trackInfo.showTakes && e.y > TimelineComponent::DEFAULT_TRACK_H)
+    {
+        int relativeY = e.y - TimelineComponent::DEFAULT_TRACK_H;
+        int takeIdx = relativeY / TimelineComponent::TAKE_LANE_H;
+        
+        if (takeIdx >= 0 && takeIdx < trackInfo.takes.size())
+        {
+            currentDragMode = DragMode::SwipeComp;
+            draggingTakeIndex = takeIdx;
+            dragStartPos = e.getPosition();
+            return;
+        }
+    }
+
     draggingClip = getClipAt(e.x, e.y); // Pixel hit test
     
     if (draggingClip)
     {
         // Drag Mode / Zone
         currentDragMode = getZoneAt(e.x, e.y, draggingClip);
+        draggingTakeIndex = -1; // Comp lane
         
         dragStartPos = e.getPosition();
         dragStartTime = draggingClip->startTime;
@@ -405,6 +444,9 @@ void TrackLaneComponent::mouseDown(const juce::MouseEvent& e)
         dragStartOffset = draggingClip->offset;
         dragStartFadeIn = draggingClip->fadeIn;
         dragStartFadeOut = draggingClip->fadeOut;
+        dragStartSourceBpm = 120.0;
+        if (auto* ac = dynamic_cast<AudioClip*>(draggingClip))
+            dragStartSourceBpm = ac->sourceBpm;
 
         // Selection
         if (!e.mods.isShiftDown())
@@ -582,7 +624,16 @@ void TrackLaneComponent::mouseDrag(const juce::MouseEvent& e)
         double newEnd = snappedMouseTime;
         if (newEnd <= draggingClip->startTime + 0.1) newEnd = draggingClip->startTime + 0.1;
         
-        draggingClip->duration = newEnd - draggingClip->startTime;
+        double newDuration = newEnd - draggingClip->startTime;
+        
+        if (e.mods.isAltDown() && draggingClip->getType() == Clip::Type::Audio)
+        {
+            auto* ac = static_cast<AudioClip*>(draggingClip);
+            // newBpm = oldBpm * (oldDuration / newDuration)
+            ac->sourceBpm = dragStartSourceBpm * (dragStartDuration / newDuration);
+        }
+
+        draggingClip->duration = newDuration;
     }
     else if (currentDragMode == DragMode::FadeIn)
     {
@@ -604,12 +655,88 @@ void TrackLaneComponent::mouseDrag(const juce::MouseEvent& e)
         draggingClip->fadeOut = fade;
     }
 
+    else if (currentDragMode == DragMode::SwipeComp)
+    {
+        // Highlight range logic (maybe store current swipe range and repaint)
+        repaint();
+    }
+
     repaint();
 }
 
-void TrackLaneComponent::mouseUp(const juce::MouseEvent&)
+void TrackLaneComponent::mouseUp(const juce::MouseEvent& e)
 {
+    if (currentDragMode == DragMode::SwipeComp)
+    {
+        auto& info = audioEngine.getTrackInfo(trackIndex);
+        double startTime = timeline.absolutePixelToTime(juce::jmin(dragStartPos.x, e.x));
+        double endTime   = timeline.snapToGrid(timeline.absolutePixelToTime(juce::jmax(dragStartPos.x, e.x)));
+        double duration  = endTime - startTime;
+
+        if (duration > 0.01 && draggingTakeIndex >= 0 && draggingTakeIndex < info.takes.size())
+        {
+            // Perform Comping
+            // 1. Remove/Split existing clips in range
+            juce::OwnedArray<Clip> newClips;
+            for (auto* c : info.clips)
+            {
+                double cEnd = c->startTime + c->duration;
+                if (cEnd <= startTime || c->startTime >= endTime)
+                {
+                    // No overlap
+                    newClips.add(c->clone());
+                }
+                else
+                {
+                    // Overlap: Split or Trim
+                    if (c->startTime < startTime)
+                    {
+                        auto left = c->clone();
+                        left->duration = startTime - c->startTime;
+                        newClips.add(std::move(left));
+                    }
+                    if (cEnd > endTime)
+                    {
+                        auto right = c->clone();
+                        double shift = endTime - c->startTime;
+                        right->startTime = endTime;
+                        right->duration = cEnd - endTime;
+                        right->offset += shift;
+                        newClips.add(std::move(right));
+                    }
+                }
+            }
+            
+            // 2. Add segments from take
+            for (auto* takeClip : info.takes[draggingTakeIndex]->clips)
+            {
+                double tcEnd = takeClip->startTime + takeClip->duration;
+                double overlapStart = juce::jmax(startTime, takeClip->startTime);
+                double overlapEnd   = juce::jmin(endTime, tcEnd);
+                
+                if (overlapEnd > overlapStart)
+                {
+                    auto segment = takeClip->clone();
+                    segment->startTime = overlapStart;
+                    segment->duration  = overlapEnd - overlapStart;
+                    segment->offset   += (overlapStart - takeClip->startTime);
+                    newClips.add(std::move(segment));
+                }
+            }
+
+            // Sync back to info.clips
+            info.clips.clear();
+            for (auto* c : newClips) info.clips.add(c->clone()); // clones because we use OwnedArray and might want to keep newClips local? No, just transfer.
+            // Wait, info.clips.add adds ownership.
+            info.clips.clear();
+            while (newClips.size() > 0) info.clips.add(newClips.removeAndReturn(0));
+            
+            repaint();
+        }
+    }
+
     draggingClip = nullptr;
+    draggingTakeIndex = -1;
     currentDragMode = DragMode::None;
 }
 
@@ -660,13 +787,9 @@ void TrackLaneComponent::addAudioClip(const juce::File& file, double startTime)
     if (clip->thumbnail)
         clip->thumbnail->addChangeListener(this);
     
-    // Update duration
-    if (auto* reader = audioEngine.getFormatManager().createReaderFor(file))
-    {
-        clip->duration = reader->lengthInSamples / reader->sampleRate;
-        delete reader;
-    }
-
+    // Load audio data for playback
+    clip->loadAudioData(audioEngine.getFormatManager());
+    
     audioEngine.getTrackInfo(trackIndex).clips.add(clip);
     repaint();
 }

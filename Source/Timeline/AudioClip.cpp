@@ -58,6 +58,20 @@ void AudioClip::loadAudioData(juce::AudioFormatManager& formatManager)
         
         duration = lengthInSamples / sampleRate;
         isLoaded = true;
+
+        // Try to detect BPM from filename (e.g. "loop_120bpm.wav")
+        auto filename = sourceFile.getFileNameWithoutExtension().toLowerCase();
+        int bpmIdx = filename.indexOf("bpm");
+        if (bpmIdx > 0)
+        {
+            int start = bpmIdx - 1;
+            while (start >= 0 && juce::CharacterFunctions::isDigit(filename[start]))
+                --start;
+            
+            auto bpmStr = filename.substring(start + 1, bpmIdx);
+            if (bpmStr.isNotEmpty())
+                sourceBpm = bpmStr.getDoubleValue();
+        }
     }
 }
 

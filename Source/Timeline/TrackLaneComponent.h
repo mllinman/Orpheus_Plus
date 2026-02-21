@@ -41,16 +41,17 @@ public:
 private:
     void changeListenerCallback(juce::ChangeBroadcaster*) override;
     void paintHeader(juce::Graphics& g, juce::Rectangle<int> headerBounds);
-    void paintClips(juce::Graphics& g, juce::Rectangle<int> clipArea);
+    void paintClips(juce::Graphics& g, juce::Rectangle<int> clipArea, juce::OwnedArray<Clip>& clips, bool isTake = false);
     void paintVolumeAutomation(juce::Graphics& g, juce::Rectangle<int> clipArea);
 
     Clip* getClipAt(double timeSeconds);
     // Interaction
     Clip* getClipAt(int x, int y);
     
-    enum class DragMode { None, Move, ResizeLeft, ResizeRight, FadeIn, FadeOut, MoveAutomationPoint };
+    enum class DragMode { None, Move, ResizeLeft, ResizeRight, FadeIn, FadeOut, MoveAutomationPoint, SwipeComp };
     DragMode currentDragMode = DragMode::None;
     Clip*    draggingClip    = nullptr;
+    int      draggingTakeIndex = -1; // -1 = comp lane, 0+ = take lane
     
     // Automation
     juce::String currentAutomationParam = ""; // "" = off, "vol", "pan"
@@ -61,6 +62,7 @@ private:
     double dragStartTime     = 0.0;
     double dragStartDuration = 0.0;
     double dragStartOffset   = 0.0;
+    double dragStartSourceBpm;
     double dragStartFadeIn   = 0.0;
     double dragStartFadeOut  = 0.0;
     double dragStartVal      = 0.0; // Automation value
@@ -86,7 +88,9 @@ private:
     // Header controls
     juce::TextButton muteButton  { "M" };
     juce::TextButton soloButton  { "S" };
-    juce::TextButton armButton   { "R" };
+    juce::TextButton armButton     { "R" };
+    juce::TextButton showTakesButton { "T" };
+    
     juce::Slider     volumeSlider;
     juce::Slider     panSlider;
     juce::Label      trackNameLabel;

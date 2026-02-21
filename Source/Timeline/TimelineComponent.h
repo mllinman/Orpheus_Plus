@@ -82,6 +82,7 @@ private:
     static constexpr int  RULER_HEIGHT    = 30;
     static constexpr int  TRACK_HEADER_W  = 180;
     static constexpr int  DEFAULT_TRACK_H = 80;
+    static constexpr int  TAKE_LANE_H     = 40;
 
     EditTool currentTool = EditTool::Select;
     juce::TextButton selectButton { "Select" };

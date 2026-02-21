@@ -19,8 +19,13 @@ public:
     void loadAudioData(juce::AudioFormatManager& formatManager);
     juce::AudioBuffer<float> audioData;
     double sampleRate { 0.0 };
+    double sourceBpm { 120.0 };
     bool isLoaded { false };
     bool loopEnabled { true };
+    
+    float getStretchFactor(double sessionBpm) const { 
+        return (float)(sessionBpm / sourceBpm); 
+    }
     
 private:
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(AudioClip)
