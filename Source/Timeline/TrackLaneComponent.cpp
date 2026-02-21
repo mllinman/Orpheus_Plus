@@ -113,7 +113,7 @@ void TrackLaneComponent::resized()
 
 void TrackLaneComponent::paint(juce::Graphics& g)
 {
-    auto& info = audioEngine.getTrackInfo(trackIndex);
+    auto& trackInfo = audioEngine.getTrackInfo(trackIndex);
     auto bounds = getLocalBounds();
 
     // Track background
@@ -122,9 +122,9 @@ void TrackLaneComponent::paint(juce::Graphics& g)
 
     // Header background
     auto header = bounds.removeFromLeft(HEADER_WIDTH);
-    g.setColour(info.colour.withBrightness(0.25f));
+    g.setColour(trackInfo.colour.withBrightness(0.25f));
     g.fillRect(header);
-    g.setColour(info.colour.withAlpha(0.8f));
+    g.setColour(trackInfo.colour.withAlpha(0.8f));
     g.drawLine(0, 0, 0, (float)getHeight(), 3.0f);
 
     // Divider line
@@ -134,11 +134,11 @@ void TrackLaneComponent::paint(juce::Graphics& g)
     // Clip area
     auto clipArea = bounds;
     clipArea.setHeight(TimelineComponent::DEFAULT_TRACK_H);
-    paintClips(g, clipArea, info.clips, false);
+    paintClips(g, clipArea, trackInfo.clips, false);
 
-    if (info.showTakes)
+    if (trackInfo.showTakes)
     {
-        for (int i = 0; i < info.takes.size(); ++i)
+        for (int i = 0; i < trackInfo.takes.size(); ++i)
         {
             auto takeArea = bounds.withTop(TimelineComponent::DEFAULT_TRACK_H + i * TimelineComponent::TAKE_LANE_H)
                                   .withHeight(TimelineComponent::TAKE_LANE_H);
@@ -149,12 +149,12 @@ void TrackLaneComponent::paint(juce::Graphics& g)
             g.setColour(juce::Colour(0xff0f0f1a));
             g.drawHorizontalLine(takeArea.getBottom() - 1, (float)takeArea.getX(), (float)takeArea.getRight());
             
-            paintClips(g, takeArea, info.takes[i]->clips, true);
+            paintClips(g, takeArea, trackInfo.takes[i]->clips, true);
         }
     }
 
     // Record Progress Area
-    if (info.armed && audioEngine.isRecording())
+    if (trackInfo.armed && audioEngine.isRecording())
     {
         double currentPos = audioEngine.getPlayheadPosition();
         double startPixel = timeline.timeToAbsolutePixel(0.0) - HEADER_WIDTH; // Simplified: Assuming we began recording at 0.0 or track the true start
@@ -668,17 +668,17 @@ void TrackLaneComponent::mouseUp(const juce::MouseEvent& e)
 {
     if (currentDragMode == DragMode::SwipeComp)
     {
-        auto& info = audioEngine.getTrackInfo(trackIndex);
+        auto& trackInfo = audioEngine.getTrackInfo(trackIndex);
         double startTime = timeline.absolutePixelToTime(juce::jmin(dragStartPos.x, e.x));
         double endTime   = timeline.snapToGrid(timeline.absolutePixelToTime(juce::jmax(dragStartPos.x, e.x)));
         double duration  = endTime - startTime;
 
-        if (duration > 0.01 && draggingTakeIndex >= 0 && draggingTakeIndex < info.takes.size())
+        if (duration > 0.01 && draggingTakeIndex >= 0 && draggingTakeIndex < trackInfo.takes.size())
         {
             // Perform Comping
             // 1. Remove/Split existing clips in range
             juce::OwnedArray<Clip> newClips;
-            for (auto* c : info.clips)
+            for (auto* c : trackInfo.clips)
             {
                 double cEnd = c->startTime + c->duration;
                 if (cEnd <= startTime || c->startTime >= endTime)
@@ -708,7 +708,7 @@ void TrackLaneComponent::mouseUp(const juce::MouseEvent& e)
             }
             
             // 2. Add segments from take
-            for (auto* takeClip : info.takes[draggingTakeIndex]->clips)
+            for (auto* takeClip : trackInfo.takes[draggingTakeIndex]->clips)
             {
                 double tcEnd = takeClip->startTime + takeClip->duration;
                 double overlapStart = juce::jmax(startTime, takeClip->startTime);
@@ -724,12 +724,9 @@ void TrackLaneComponent::mouseUp(const juce::MouseEvent& e)
                 }
             }
 
-            // Sync back to info.clips
-            info.clips.clear();
-            for (auto* c : newClips) info.clips.add(c->clone()); // clones because we use OwnedArray and might want to keep newClips local? No, just transfer.
-            // Wait, info.clips.add adds ownership.
-            info.clips.clear();
-            while (newClips.size() > 0) info.clips.add(newClips.removeAndReturn(0));
+            // Sync back to trackInfo.clips
+            trackInfo.clips.clear();
+            while (newClips.size() > 0) trackInfo.clips.add(newClips.removeAndReturn(0));
             
             repaint();
         }

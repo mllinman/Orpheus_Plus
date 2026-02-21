@@ -72,17 +72,17 @@ public:
     // AudioEngine::Listener
     void trackListChanged() override { rebuildTracks(); }
 
+    static constexpr int  RULER_HEIGHT    = 30;
+    static constexpr int  TRACK_HEADER_W  = 180;
+    static constexpr int  DEFAULT_TRACK_H = 80;
+    static constexpr int  TAKE_LANE_H     = 40;
+
 private:
     void timerCallback() override;
     void scrollBarMoved(juce::ScrollBar* bar, double newRange) override;
     void paintRuler(juce::Graphics& g, juce::Rectangle<int> rulerBounds);
     void paintPlayhead(juce::Graphics& g);
     void paintLoopRegion(juce::Graphics& g);
-
-    static constexpr int  RULER_HEIGHT    = 30;
-    static constexpr int  TRACK_HEADER_W  = 180;
-    static constexpr int  DEFAULT_TRACK_H = 80;
-    static constexpr int  TAKE_LANE_H     = 40;
 
     EditTool currentTool = EditTool::Select;
     juce::TextButton selectButton { "Select" };
