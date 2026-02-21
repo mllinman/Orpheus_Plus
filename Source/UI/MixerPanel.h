@@ -52,6 +52,7 @@ private:
             
             bool isInterestedInDragSource(const SourceDetails& dragSourceDetails) override;
             void itemDropped(const SourceDetails& dragSourceDetails) override;
+            void mouseDrag(const juce::MouseEvent& e) override;
         };
 
         juce::OwnedArray<PluginSlot> pluginSlots;

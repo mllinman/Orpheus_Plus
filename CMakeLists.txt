@@ -39,7 +39,8 @@ target_sources(OrpheusPlus PRIVATE
 
     # Audio Engine
     Source/Audio/AudioEngine.cpp
-    Source/Audio/TrackProcessor.cpp
+    Source/Audio/ClipGeneratorProcessor.cpp
+    Source/Audio/TrackFaderProcessor.cpp
     Source/Audio/MixerProcessor.cpp
     Source/Audio/PluginManager.cpp
 

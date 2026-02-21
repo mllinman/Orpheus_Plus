@@ -42,7 +42,7 @@ private:
     void changeListenerCallback(juce::ChangeBroadcaster*) override;
     void paintHeader(juce::Graphics& g, juce::Rectangle<int> headerBounds);
     void paintClips(juce::Graphics& g, juce::Rectangle<int> clipArea, juce::OwnedArray<Clip>& clips, bool isTake = false);
-    void paintVolumeAutomation(juce::Graphics& g, juce::Rectangle<int> clipArea);
+    void paintAutomationLane(juce::Graphics& g, juce::Rectangle<int> bounds, const juce::String& paramID);
 
     Clip* getClipAt(double timeSeconds);
     // Interaction

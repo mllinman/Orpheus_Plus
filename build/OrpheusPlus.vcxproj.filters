@@ -10,7 +10,10 @@
     <ClCompile Include="C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Audio\AudioEngine.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Audio\TrackProcessor.cpp">
+    <ClCompile Include="C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Audio\ClipGeneratorProcessor.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Audio\TrackFaderProcessor.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Audio\MixerProcessor.cpp">

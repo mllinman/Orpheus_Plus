@@ -1,7 +1,8 @@
 #include "AudioEngine.h"
 #include <JuceHeader.h>
 #include "PluginManager.h"
-#include "TrackProcessor.h"
+#include "ClipGeneratorProcessor.h"
+#include "TrackFaderProcessor.h"
 #include "MixerProcessor.h"
 #include "../Project/AppState.h"
 #include "../PitchCorrection/AutoTuneProcessor.h"
@@ -225,88 +226,29 @@ int AudioEngine::addAudioTrack(const juce::String& name)
     t->type = OrpheusTrackInfo::Type::Audio;
     t->colour = juce::Colours::cornflowerblue.withSaturation(0.7f);
 
-    // Create Track Processor
-    auto trackProc = std::make_unique<TrackProcessor>();
-    
-    // Wire up playback callback
-    trackProc->renderAudioCallback = [this, t](juce::AudioBuffer<float>& buffer, double playhead) {
-        if (!this->playing.load() && !this->exporting.load()) return;
-        
-        double sr = this->currentSampleRate;
-        if (sr <= 0) sr = 44100.0;
-        
-        int numSamples = buffer.getNumSamples();
-        double endTime = playhead + (numSamples / sr);
-        
-        for (auto* clip : t->clips)
-        {
-            if (auto* ac = dynamic_cast<AudioClip*>(clip))
-            {
-                if (!ac->isLoaded) continue;
-                
-                double clipStart = ac->startTime;
-                double clipEnd = ac->startTime + ac->duration;
-                
-                if (playhead < clipEnd && endTime > clipStart)
-                {
-                    int bufferStartSample = 0;
-                    int numSamplesToCopy = numSamples;
-                    
-                    float stretch = ac->getStretchFactor(this->bpm.load());
-                    double sourceSr = ac->sampleRate;
-                    if (sourceSr <= 0) sourceSr = sr;
+    // 1. Create Generator
+    auto genProc = std::make_unique<ClipGeneratorProcessor>(*t, *this);
+    auto genNode = processorGraph.addNode(std::move(genProc));
+    t->generatorNodeID = (int)genNode->nodeID.uid;
 
-                    int sourceNumSamples = ac->audioData.getNumSamples();
-                    if (sourceNumSamples == 0) continue;
+    // 2. Create Fader
+    auto faderProc = std::make_unique<TrackFaderProcessor>();
+    auto faderNode = processorGraph.addNode(std::move(faderProc));
+    t->faderNodeID = (int)faderNode->nodeID.uid;
 
-                    // Manual loop for interpolation and stretching
-                    for (int i = 0; i < numSamples; ++i)
-                    {
-                        double currentSessionTime = playhead + (i / sr);
-                        if (currentSessionTime < clipStart || currentSessionTime >= clipEnd)
-                            continue;
-
-                        double offsetInSession = currentSessionTime - clipStart;
-                        double sourcePosSamples = offsetInSession * sourceSr * stretch;
-
-                        if (ac->loopEnabled)
-                        {
-                            sourcePosSamples = std::fmod(sourcePosSamples, (double)sourceNumSamples);
-                        }
-                        else if (sourcePosSamples >= sourceNumSamples)
-                        {
-                            continue;
-                        }
-
-                        int idx1 = (int)sourcePosSamples;
-                        int idx2 = (idx1 + 1) % sourceNumSamples;
-                        float fract = (float)(sourcePosSamples - idx1);
-
-                        for (int ch = 0; ch < buffer.getNumChannels(); ++ch)
-                        {
-                            int sourceCh = ch % ac->audioData.getNumChannels();
-                            float s1 = ac->audioData.getSample(sourceCh, idx1);
-                            float s2 = ac->audioData.getSample(sourceCh, idx2);
-                            float interpolated = s1 + fract * (s2 - s1);
-                            
-                            buffer.addSample(ch, i, interpolated);
-                        }
-                    }
-                }
-            }
-        }
-    };
-
-    auto node = processorGraph.addNode(std::move(trackProc));
-    int nodeID = (int)node->nodeID.uid;
-
-    if (node && masterNode)
+    // 3. Connect Generator -> Fader (for now, no plugins)
+    if (genNode && faderNode)
     {
         for (int ch = 0; ch < 2; ++ch)
-            processorGraph.addConnection({ { node->nodeID, ch }, { masterNode->nodeID, ch } });
+            processorGraph.addConnection({ { genNode->nodeID, ch }, { faderNode->nodeID, ch } });
     }
 
-    t->nodeID = nodeID;
+    // 4. Connect Fader -> Master
+    if (faderNode && masterNode)
+    {
+        for (int ch = 0; ch < 2; ++ch)
+            processorGraph.addConnection({ { faderNode->nodeID, ch }, { masterNode->nodeID, ch } });
+    }
     
     tracks.add(t);
 
@@ -343,8 +285,14 @@ void AudioEngine::removeTrack(int index)
     if (juce::isPositiveAndBelow(index, tracks.size()))
     {
         auto* track = tracks[index];
-        if (track->nodeID != -1)
-            processorGraph.removeNode(juce::AudioProcessorGraph::NodeID(track->nodeID));
+        if (track->generatorNodeID != -1)
+            processorGraph.removeNode(juce::AudioProcessorGraph::NodeID(track->generatorNodeID));
+        if (track->faderNodeID != -1)
+            processorGraph.removeNode(juce::AudioProcessorGraph::NodeID(track->faderNodeID));
+        
+        for (int slot : track->pluginSlots)
+            if (slot != -1)
+                processorGraph.removeNode(juce::AudioProcessorGraph::NodeID(slot));
 
         tracks.remove(index);
         listeners.call(&Listener::trackListChanged);
@@ -355,17 +303,34 @@ int AudioEngine::getNumTracks() const { return tracks.size(); }
 
 OrpheusTrackInfo& AudioEngine::getTrackInfo(int index) { return *tracks[index]; }
 
-void AudioEngine::setTrackVolume(int i, float vol) { tracks[i]->volume = vol; }
-void AudioEngine::setTrackPan(int i, float pan)    { tracks[i]->pan    = pan; }
+void AudioEngine::setTrackVolume(int i, float vol) { 
+    tracks[i]->volume = vol; 
+    if (auto* node = processorGraph.getNodeForId(juce::AudioProcessorGraph::NodeID(tracks[i]->faderNodeID)))
+        if (auto* fader = dynamic_cast<TrackFaderProcessor*>(node->getProcessor()))
+            fader->setVolume(vol);
+}
+
+void AudioEngine::setTrackPan(int i, float pan) { 
+    tracks[i]->pan = pan; 
+    if (auto* node = processorGraph.getNodeForId(juce::AudioProcessorGraph::NodeID(tracks[i]->faderNodeID)))
+        if (auto* fader = dynamic_cast<TrackFaderProcessor*>(node->getProcessor()))
+            fader->setPan(pan);
+}
 
 void AudioEngine::setTrackSweetener(int i, float amount)
 {
-    if (auto* node = processorGraph.getNodeForId(juce::AudioProcessorGraph::NodeID(tracks[i]->nodeID)))
-        if (auto* tp = dynamic_cast<TrackProcessor*>(node->getProcessor()))
-            tp->setSweetener(amount);
+    if (auto* node = processorGraph.getNodeForId(juce::AudioProcessorGraph::NodeID(tracks[i]->faderNodeID)))
+        if (auto* fader = dynamic_cast<TrackFaderProcessor*>(node->getProcessor()))
+            fader->setSweetener(amount);
 }
 
-void AudioEngine::setTrackMute(int i, bool mute)   { tracks[i]->mute   = mute; updateSoloState(); }
+void AudioEngine::setTrackMute(int i, bool mute)   { 
+    tracks[i]->mute = mute; 
+    if (auto* node = processorGraph.getNodeForId(juce::AudioProcessorGraph::NodeID(tracks[i]->faderNodeID)))
+        if (auto* fader = dynamic_cast<TrackFaderProcessor*>(node->getProcessor()))
+            fader->setMute(mute);
+    updateSoloState(); 
+}
 void AudioEngine::setTrackSolo(int i, bool solo)   { tracks[i]->solo   = solo; updateSoloState(); }
 void AudioEngine::armTrack(int i, bool armed)      { tracks[i]->armed  = armed; }
 
@@ -385,36 +350,12 @@ void AudioEngine::updateSoloState()
 
 void AudioEngine::addAutoTuneToTrack(int trackIndex)
 {
-    if (!juce::isPositiveAndBelow(trackIndex, tracks.size())) return;
-    auto* track = tracks[trackIndex];
-    if (track->nodeID == -1) return;
-    
-    if (auto* node = processorGraph.getNodeForId(juce::AudioProcessorGraph::NodeID(track->nodeID)))
-    {
-        if (auto* proc = dynamic_cast<TrackProcessor*>(node->getProcessor()))
-        {
-            auto autoTune = std::make_unique<AutoTuneProcessor>();
-            autoTune->setEnabled(true);
-            proc->addInsertFX(std::move(autoTune));
-        }
-    }
+    // TODO: Phase 2 - Insert into graph between generator and fader
 }
 
 void AudioEngine::addAudioCleanupToTrack(int trackIndex)
 {
-    if (!juce::isPositiveAndBelow(trackIndex, tracks.size())) return;
-    auto* track = tracks[trackIndex];
-    if (track->nodeID == -1) return;
-    
-    if (auto* node = processorGraph.getNodeForId(juce::AudioProcessorGraph::NodeID(track->nodeID)))
-    {
-        if (auto* proc = dynamic_cast<TrackProcessor*>(node->getProcessor()))
-        {
-            auto cleanup = std::make_unique<AudioCleanupProcessor>();
-            cleanup->setNoiseReductionEnabled(true);
-            proc->addInsertFX(std::move(cleanup));
-        }
-    }
+    // TODO: Phase 2 - Insert into graph between generator and fader
 }
 
 //──────────────────────────────────────────────────────────────────────────────
@@ -503,14 +444,19 @@ void AudioEngine::processAudioBlock(juce::AudioBuffer<float>& buffer)
         
         for (auto* track : tracks)
         {
-            if (track->nodeID == -1) continue;
+            // Update Playhead in Generator
+            if (auto* node = processorGraph.getNodeForId(juce::AudioProcessorGraph::NodeID(track->generatorNodeID)))
+                if (auto* gen = dynamic_cast<ClipGeneratorProcessor*>(node->getProcessor()))
+                    gen->setPlayhead(time);
+
+            if (track->faderNodeID == -1) continue;
             
-            // Find processor
-            auto* node = processorGraph.getNodeForId(juce::AudioProcessorGraph::NodeID(track->nodeID));
+            // Find Fader processor
+            auto* node = processorGraph.getNodeForId(juce::AudioProcessorGraph::NodeID(track->faderNodeID));
             if (!node) continue;
             
-            auto* proc = dynamic_cast<TrackProcessor*>(node->getProcessor());
-            if (!proc) continue;
+            auto* fader = dynamic_cast<TrackFaderProcessor*>(node->getProcessor());
+            if (!fader) continue;
 
             for (const auto& curve : track->automationCurves)
             {
@@ -533,8 +479,6 @@ void AudioEngine::processAudioBlock(juce::AudioBuffer<float>& buffer)
                 else
                 {
                     // Find segment
-                    // Since points are sorted, we can simple scan or binary search.
-                    // Scan is fine for small number of points.
                     for (size_t i = 0; i < curve.points.size() - 1; ++i)
                     {
                         const auto& p1 = curve.points[i];
@@ -552,12 +496,12 @@ void AudioEngine::processAudioBlock(juce::AudioBuffer<float>& buffer)
                 // Apply
                 if (curve.parameterID == "vol")
                 {
-                    proc->setVolume(value);
+                    fader->setVolume(value);
                     track->volume = value; // Update model for UI
                 }
                 else if (curve.parameterID == "pan")
                 {
-                    proc->setPan(value);
+                    fader->setPan(value);
                     track->pan = value;    // Update model for UI
                 }
             }
@@ -663,5 +607,57 @@ void AudioEngine::exportStems(const juce::File& outputDirectory)
         auto stemFile = outputDirectory.getChildFile(
             juce::File::createLegalFileName(tracks[i]->name) + ".wav");
         exportMix(stemFile); // TODO: solo individual track
+    }
+}
+
+void AudioEngine::updateTrackGraphConnections(int trackIndex)
+{
+    if (!juce::isPositiveAndBelow(trackIndex, (int)tracks.size())) return;
+    auto* track = tracks[trackIndex];
+
+    // 1. Collect all nodes in the track's internal chain in order
+    // Order: Generator -> Plugin[0] -> ... -> Plugin[N] -> Fader
+    std::vector<juce::AudioProcessorGraph::NodeID> chain;
+    
+    if (track->generatorNodeID != -1)
+        chain.push_back(juce::AudioProcessorGraph::NodeID(track->generatorNodeID));
+
+    for (int slotNodeID : track->pluginSlots)
+    {
+        if (slotNodeID != -1)
+            chain.push_back(juce::AudioProcessorGraph::NodeID(slotNodeID));
+    }
+
+    if (track->faderNodeID != -1)
+        chain.push_back(juce::AudioProcessorGraph::NodeID(track->faderNodeID));
+
+    // 2. Disconnect all nodes in this specific chain from each other
+    // We iterate through all nodes and remove any connections that start AND end within this chain.
+    for (const auto& conn : processorGraph.getConnections())
+    {
+        bool sourceInChain = std::find(chain.begin(), chain.end(), conn.source.nodeID) != chain.end();
+        bool destInChain = std::find(chain.begin(), chain.end(), conn.destination.nodeID) != chain.end();
+
+        if (sourceInChain && destInChain)
+            processorGraph.removeConnection(conn);
+    }
+
+    // 3. Connect them in the new linear order
+    for (size_t i = 0; i < chain.size() - 1; ++i)
+    {
+        for (int ch = 0; ch < 2; ++ch)
+        {
+            processorGraph.addConnection({ { chain[i], ch }, { chain[i+1], ch } });
+        }
+    }
+
+    // 4. Ensure Fader -> Master connection exists
+    if (track->faderNodeID != -1 && masterNode)
+    {
+        juce::AudioProcessorGraph::NodeID faderID(track->faderNodeID);
+        for (int ch = 0; ch < 2; ++ch)
+        {
+            processorGraph.addConnection({ { faderID, ch }, { masterNode->nodeID, ch } });
+        }
     }
 }

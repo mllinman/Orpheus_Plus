@@ -425,7 +425,8 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
     <ClCompile Include="C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Main.cpp" />
     <ClCompile Include="C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\MainComponent.cpp" />
     <ClCompile Include="C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Audio\AudioEngine.cpp" />
-    <ClCompile Include="C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Audio\TrackProcessor.cpp" />
+    <ClCompile Include="C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Audio\ClipGeneratorProcessor.cpp" />
+    <ClCompile Include="C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Audio\TrackFaderProcessor.cpp" />
     <ClCompile Include="C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Audio\MixerProcessor.cpp" />
     <ClCompile Include="C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Audio\PluginManager.cpp" />
     <ClCompile Include="C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Timeline\TimelineComponent.cpp" />

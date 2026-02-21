@@ -1,7 +1,7 @@
 #include <JuceHeader.h>
 #include "MixerPanel.h"
 #include "../Audio/PluginManager.h"
-#include "../Audio/TrackProcessor.h"
+#include "../Audio/TrackFaderProcessor.h"
 
 //==============================================================================
 MixerPanel::ChannelStrip::ChannelStrip(int idx, AudioEngine& e) : trackIndex(idx), engine(e)
@@ -183,12 +183,12 @@ void MixerPanel::ChannelStrip::paint(juce::Graphics& g)
     };
 
     // Grab peak from graph via node -> processor
-    if (auto* node = engine.getGraph().getNodeForId(juce::AudioProcessorGraph::NodeID(info.nodeID)))
+    if (auto* node = engine.getGraph().getNodeForId(juce::AudioProcessorGraph::NodeID(info.faderNodeID)))
     {
-        if (auto* tp = dynamic_cast<TrackProcessor*>(node->getProcessor()))
+        if (auto* faderProc = dynamic_cast<TrackFaderProcessor*>(node->getProcessor()))
         {
-             peakL = tp->getPeakL();
-             peakR = tp->getPeakR();
+             peakL = faderProc->getPeakL();
+             peakR = faderProc->getPeakR();
         }
     }
 
@@ -262,19 +262,56 @@ void MixerPanel::rebuildStrips()
 
 bool MixerPanel::ChannelStrip::PluginSlot::isInterestedInDragSource(const SourceDetails& dragSourceDetails)
 {
-    return dragSourceDetails.description.toString().startsWith("PluginDesc:");
+    auto desc = dragSourceDetails.description.toString();
+    return desc.startsWith("PluginDesc:") || desc.startsWith("PluginSlot:");
 }
 
 void MixerPanel::ChannelStrip::PluginSlot::itemDropped(const SourceDetails& dragSourceDetails)
 {
-    juce::String xmlString = dragSourceDetails.description.toString().substring(11); // Remove "PluginDesc:"
-    auto xml = juce::parseXML(xmlString);
-    if (xml)
+    auto desc = dragSourceDetails.description.toString();
+    
+    if (desc.startsWith("PluginDesc:"))
     {
-        juce::PluginDescription desc;
-        if (desc.loadFromXml(*xml))
+        juce::String xmlString = desc.substring(11);
+        auto xml = juce::parseXML(xmlString);
+        if (xml)
         {
-             engine.getPluginManager().addPluginToTrack(trackIndex, desc);
+            juce::PluginDescription pd;
+            if (pd.loadFromXml(*xml))
+                engine.getPluginManager().addPluginToTrack(trackIndex, pd);
+        }
+    }
+    else if (desc.startsWith("PluginSlot:"))
+    {
+        // Format: PluginSlot:trackIndex:slotIndex
+        auto tokens = juce::StringArray::fromTokens(desc.substring(11), ":", "");
+        if (tokens.size() == 2)
+        {
+            int sourceTrack = tokens[0].getIntValue();
+            int sourceSlot = tokens[1].getIntValue();
+            
+            if (sourceTrack == trackIndex)
+            {
+                engine.getPluginManager().movePlugin(trackIndex, sourceSlot, slotIndex);
+            }
+        }
+    }
+}
+
+void MixerPanel::ChannelStrip::PluginSlot::mouseDrag(const juce::MouseEvent& e)
+{
+    if (e.mouseWasDraggedSinceMouseDown())
+    {
+        auto& info = engine.getTrackInfo(trackIndex);
+        if (info.pluginSlots[slotIndex] != -1)
+        {
+            if (auto* container = juce::DragAndDropContainer::findParentDragContainerFor(this))
+            {
+                if (!container->isDragAndDropActive())
+                {
+                    container->startDragging("PluginSlot:" + juce::String(trackIndex) + ":" + juce::String(slotIndex), this);
+                }
+            }
         }
     }
 }

@@ -22,9 +22,6 @@ TimelineComponent::TimelineComponent(AudioEngine& e, AppState& s,
     setupButton(drawButton,   EditTool::Draw);
     setupButton(eraseButton,  EditTool::Erase);
 
-    setupButton(drawButton,   EditTool::Draw);
-    setupButton(eraseButton,  EditTool::Erase);
-
     selectButton.setToggleState(true, juce::dontSendNotification);
 
     // Snap Combo
@@ -113,6 +110,9 @@ void TimelineComponent::resized()
 
     trackViewport.setBounds(viewport);
 
+    double totalSeconds = 300.0;
+    int totalWidth = TRACK_HEADER_W + (int) (totalSeconds * pixelsPerSecond);
+    
     // Layout track container
     int currentY = 0;
     for (int i = 0; i < trackLanes.size(); ++i)
@@ -122,13 +122,13 @@ void TimelineComponent::resized()
         if (info.showTakes)
             h += (int)info.takes.size() * TAKE_LANE_H;
         
+        h += (int)info.visibleAutomationLanes.size() * AUTOMATION_LANE_H;
+        
         trackLanes[i]->setBounds(0, currentY, totalWidth, h);
         currentY += h;
     }
     int totalHeight = currentY;
 
-    double totalSeconds = 300.0;
-    int totalWidth = TRACK_HEADER_W + (int)(totalSeconds * pixelsPerSecond);
     trackContainer.setSize(totalWidth, totalHeight);
 
     // Update scroll bars

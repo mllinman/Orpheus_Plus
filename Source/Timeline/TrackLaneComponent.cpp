@@ -5,7 +5,7 @@ TrackLaneComponent::TrackLaneComponent(int idx, AudioEngine& e, AppState& s,
                                        TimelineComponent& t)
     : trackIndex(idx), audioEngine(e), appState(s), timeline(t)
 {
-    auto& info = audioEngine.getTrackInfo(trackIndex);
+    auto& trackInfo = audioEngine.getTrackInfo(trackIndex);
 
     // Mute
     muteButton.setColour(juce::TextButton::buttonColourId,   juce::Colour(0xff2d2d44));
@@ -49,7 +49,7 @@ TrackLaneComponent::TrackLaneComponent(int idx, AudioEngine& e, AppState& s,
     addAndMakeVisible(panSlider);
 
     // Name label
-    trackNameLabel.setText(info.name, juce::dontSendNotification);
+    trackNameLabel.setText(trackInfo.name, juce::dontSendNotification);
     
     // Automation Combo
     automationCombo.addItem("Automation: Off", 1);
@@ -66,7 +66,7 @@ TrackLaneComponent::TrackLaneComponent(int idx, AudioEngine& e, AppState& s,
     addAndMakeVisible(automationCombo);
 
     // Init thumbnails for existing clips
-    for (auto* clip : info.clips)
+    for (auto* clip : trackInfo.clips)
     {
         if (auto* audioClip = dynamic_cast<AudioClip*>(clip))
         {
@@ -168,8 +168,8 @@ void TrackLaneComponent::paint(juce::Graphics& g)
         // Actually we should just draw a red block from the last clip's end to the playhead.
         
         double recordStart = 0.0;
-        if (!info.clips.isEmpty())
-            recordStart = info.clips.getLast()->startTime + info.clips.getLast()->duration;
+        if (!trackInfo.clips.isEmpty())
+            recordStart = trackInfo.clips.getLast()->startTime + trackInfo.clips.getLast()->duration;
             
         double startP = timeline.timeToAbsolutePixel(recordStart) - HEADER_WIDTH;
         
@@ -280,6 +280,8 @@ void TrackLaneComponent::mouseDown(const juce::MouseEvent& e)
 {
     if (e.x < HEADER_WIDTH) return;
 
+    auto& trackInfo = audioEngine.getTrackInfo(trackIndex);
+
     // 1. Tool Logic (Split / Erase)
     double clickTime = timeline.snapToGrid(timeline.absolutePixelToTime(e.x)); // Snap for tools? Maybe.
     auto tool = timeline.getTool();
@@ -334,17 +336,14 @@ void TrackLaneComponent::mouseDown(const juce::MouseEvent& e)
     if (currentAutomationParam.isNotEmpty())
     {
         double automationClickTime = timeline.absolutePixelToTime(e.x); // X is Absolute
-        auto& info = audioEngine.getTrackInfo(trackIndex);
-
-        
         // Helper: Find or create curve
         AutomationCurve* targetCurve = nullptr;
-        for (auto& c : info.automationCurves) {
+        for (auto& c : trackInfo.automationCurves) {
             if (c.parameterID == currentAutomationParam) { targetCurve = &c; break; }
         }
         if (!targetCurve) {
-            info.automationCurves.push_back({ currentAutomationParam, {}, true });
-            targetCurve = &info.automationCurves.back();
+            trackInfo.automationCurves.push_back({ currentAutomationParam, {}, true });
+            targetCurve = &trackInfo.automationCurves.back();
         }
 
         // Hit test points
@@ -413,7 +412,6 @@ void TrackLaneComponent::mouseDown(const juce::MouseEvent& e)
         return; 
     }
 
-    auto& trackInfo = audioEngine.getTrackInfo(trackIndex);
     
     // Check if click is in a Take Lane
     if (trackInfo.showTakes && e.y > TimelineComponent::DEFAULT_TRACK_H)
@@ -512,8 +510,7 @@ void TrackLaneComponent::mouseDown(const juce::MouseEvent& e)
         currentDragMode = DragMode::None;
         
         // Deselect all
-        auto& info = audioEngine.getTrackInfo(trackIndex);
-        for (auto* c : info.clips) c->selected = false;
+        for (auto* c : trackInfo.clips) c->selected = false;
         repaint();
 
         // Right Click Menu (Add Clip) on Empty Space
@@ -546,6 +543,8 @@ void TrackLaneComponent::mouseDown(const juce::MouseEvent& e)
 void TrackLaneComponent::mouseDrag(const juce::MouseEvent& e)
 {
     if (!draggingClip && currentAutomationParam.isEmpty()) return;
+
+    auto& trackInfo = audioEngine.getTrackInfo(trackIndex);
     
     double mouseTime = timeline.absolutePixelToTime(e.x);
     double snappedMouseTime = timeline.snapToGrid(mouseTime);
@@ -556,9 +555,8 @@ void TrackLaneComponent::mouseDrag(const juce::MouseEvent& e)
     
     if (currentDragMode == DragMode::MoveAutomationPoint)
     {
-        auto& info = audioEngine.getTrackInfo(trackIndex);
          AutomationCurve* targetCurve = nullptr;
-        for (auto& c : info.automationCurves) {
+        for (auto& c : trackInfo.automationCurves) {
             if (c.parameterID == currentAutomationParam) { targetCurve = &c; break; }
         }
         
@@ -800,8 +798,8 @@ void TrackLaneComponent::addMidiClip(double startTime, double duration)
 
 Clip* TrackLaneComponent::getClipAt(double timeSeconds)
 {
-    auto& info = audioEngine.getTrackInfo(trackIndex);
-    for (auto* clip : info.clips)
+    auto& trackInfo = audioEngine.getTrackInfo(trackIndex);
+    for (auto* clip : trackInfo.clips)
         if (timeSeconds >= clip->startTime &&
             timeSeconds < clip->startTime + clip->duration)
             return clip;

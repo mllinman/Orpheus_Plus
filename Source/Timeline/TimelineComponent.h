@@ -70,12 +70,11 @@ public:
     double timeToAbsolutePixel(double t) const; // Time -> Absolute Pixel
 
     // AudioEngine::Listener
-    void trackListChanged() override { rebuildTracks(); }
-
     static constexpr int  RULER_HEIGHT    = 30;
     static constexpr int  TRACK_HEADER_W  = 180;
     static constexpr int  DEFAULT_TRACK_H = 80;
     static constexpr int  TAKE_LANE_H     = 40;
+    static constexpr int  AUTOMATION_LANE_H = 40;
 
 private:
     void timerCallback() override;

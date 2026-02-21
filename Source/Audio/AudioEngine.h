@@ -50,7 +50,9 @@ struct OrpheusTrackInfo
     juce::String name;
     juce::Colour colour;
     Type type = Type::Audio;
-    int nodeID = -1;         // AudioProcessorGraph node ID
+    int generatorNodeID = -1;  // Clip rendering node
+    int faderNodeID     = -1;  // Volume/Pan/Meter node
+    
     float volume = 1.0f;
     float pan    = 0.0f;
     bool mute    = false;
@@ -58,9 +60,9 @@ struct OrpheusTrackInfo
     bool armed   = false;    // Record-armed
     juce::String inputBus;
     juce::String outputBus;
-
-    static constexpr int MAX_PLUGINS = 4;
-    std::array<int, MAX_PLUGINS> pluginSlots; // Stores NodeID of plugin in graph. -1 if empty.
+    
+    static constexpr int MAX_PLUGINS = 8;
+    std::array<int, MAX_PLUGINS> pluginSlots; 
 
     struct Take
     {
@@ -68,11 +70,12 @@ struct OrpheusTrackInfo
         juce::OwnedArray<Clip> clips;
     };
 
-    juce::OwnedArray<Clip> clips; // The "Comped" or primary clips
-    juce::OwnedArray<Take> takes; // Sub-lanes / Takes
-    bool showTakes = false;       // Toggle for UI
+    juce::OwnedArray<Clip> clips; 
+    juce::OwnedArray<Take> takes; 
+    bool showTakes = false;       
     
     std::vector<AutomationCurve> automationCurves;
+    std::vector<juce::String> visibleAutomationLanes; // e.g. "vol", "pan", "sweet"
     
     OrpheusTrackInfo() { pluginSlots.fill(-1); }
 };
@@ -100,6 +103,7 @@ public:
     void toggleRecord();
     bool isPlaying()   const { return playing.load(); }
     bool isRecording() const { return recording.load(); }
+    bool isExporting() const { return exporting.load(); }
 
     double getPlayheadPosition() const { return playheadPosition.load(); }
     void   setPlayheadPosition(double posSeconds);
@@ -129,6 +133,7 @@ public:
     //── Plugin Graph ─────────────────────────────────────────────────────────
     juce::AudioProcessorGraph& getGraph() { return processorGraph; }
     PluginManager& getPluginManager()     { return *pluginManager; }
+    void updateTrackGraphConnections(int trackIndex);
 
     //── Master Bus ───────────────────────────────────────────────────────────
     void setMasterVolume(float vol) { masterVolume.store(vol); }

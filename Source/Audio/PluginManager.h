@@ -24,6 +24,7 @@ public:
 
     void addPluginToTrack(int trackIndex, const juce::PluginDescription& desc);
     void removePluginFromTrack(int trackIndex, int pluginSlot);
+    void movePlugin(int trackIndex, int oldSlot, int newSlot);
     void openPluginEditor(int trackIndex, int pluginSlot);
     juce::String getPluginName(int nodeID) const;
 
