@@ -16,6 +16,7 @@ class MixerProcessor;
 struct OrpheusTrackInfo;
 class SpectrumAnalyzer;
 class PluginManager;
+class MidiLearnManager;
 
 
 //==============================================================================
@@ -55,6 +56,7 @@ struct OrpheusTrackInfo
     
     float volume = 1.0f;
     float pan    = 0.0f;
+    float sweetener = 0.0f;
     bool mute    = false;
     bool solo    = false;
     bool armed   = false;    // Record-armed
@@ -134,6 +136,8 @@ public:
     juce::AudioProcessorGraph& getGraph() { return processorGraph; }
     PluginManager& getPluginManager()     { return *pluginManager; }
     void updateTrackGraphConnections(int trackIndex);
+
+    MidiLearnManager& getMidiLearn() { return *midiLearnManager; }
 
     //── Master Bus ───────────────────────────────────────────────────────────
     void setMasterVolume(float vol) { masterVolume.store(vol); }
@@ -215,6 +219,7 @@ private:
     juce::UndoManager          undoManager { 50 };
 
     juce::OwnedArray<OrpheusTrackInfo> tracks;
+    std::unique_ptr<MidiLearnManager>      midiLearnManager;
     std::unique_ptr<PluginManager>         pluginManager;
     std::unique_ptr<StemSeparator>         stemSeparator;
     std::unique_ptr<AudioToMidiConverter>  audioToMidi;

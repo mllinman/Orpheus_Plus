@@ -52,16 +52,34 @@ TrackLaneComponent::TrackLaneComponent(int idx, AudioEngine& e, AppState& s,
     trackNameLabel.setText(trackInfo.name, juce::dontSendNotification);
     
     // Automation Combo
-    automationCombo.addItem("Automation: Off", 1);
+    automationCombo.addItem("Show Automation...", 1);
     automationCombo.addItem("Volume", 2);
     automationCombo.addItem("Pan", 3);
-    automationCombo.setSelectedId(1);
+    automationCombo.addItem("Sweetener", 4);
+    automationCombo.setSelectedId(1, juce::dontSendNotification);
+    
     automationCombo.onChange = [this] {
         int id = automationCombo.getSelectedId();
-        if (id == 1) currentAutomationParam = "";
-        else if (id == 2) currentAutomationParam = "vol";
-        else if (id == 3) currentAutomationParam = "pan";
-        repaint();
+        juce::String paramID;
+        if (id == 2) paramID = "vol";
+        else if (id == 3) paramID = "pan";
+        else if (id == 4) paramID = "sweet";
+
+        if (paramID.isNotEmpty())
+        {
+            auto& info = audioEngine.getTrackInfo(trackIndex);
+            
+            // Toggle Visibility
+            auto it = std::find(info.visibleAutomationLanes.begin(), info.visibleAutomationLanes.end(), paramID);
+            if (it == info.visibleAutomationLanes.end())
+                info.visibleAutomationLanes.push_back(paramID);
+            else
+                info.visibleAutomationLanes.erase(it);
+
+            timeline.resized();
+            repaint();
+        }
+        automationCombo.setSelectedId(1, juce::dontSendNotification);
     };
     addAndMakeVisible(automationCombo);
 
@@ -153,33 +171,16 @@ void TrackLaneComponent::paint(juce::Graphics& g)
         }
     }
 
-    // Record Progress Area
-    if (trackInfo.armed && audioEngine.isRecording())
-    {
-        double currentPos = audioEngine.getPlayheadPosition();
-        double startPixel = timeline.timeToAbsolutePixel(0.0) - HEADER_WIDTH; // Simplified: Assuming we began recording at 0.0 or track the true start
-        double currentPixel = timeline.timeToAbsolutePixel(currentPos) - HEADER_WIDTH;
+    // Automation Lanes
+    int currentY = TimelineComponent::DEFAULT_TRACK_H;
+    if (trackInfo.showTakes)
+        currentY += (int)trackInfo.takes.size() * TimelineComponent::TAKE_LANE_H;
 
-        // More accurate start time of recording:
-        // By default we lack a "recordStartTime" in AudioEngine right now, 
-        // so we'll visually draw from the first clip end, or 0.0 if empty for a simple representation.
-        // Actually, let's just draw from where playhead is MINUS current capture length.
-        // For a quick MVP, draw from 0.0 to current playhead if recording.
-        // Actually we should just draw a red block from the last clip's end to the playhead.
-        
-        double recordStart = 0.0;
-        if (!trackInfo.clips.isEmpty())
-            recordStart = trackInfo.clips.getLast()->startTime + trackInfo.clips.getLast()->duration;
-            
-        double startP = timeline.timeToAbsolutePixel(recordStart) - HEADER_WIDTH;
-        
-        if (currentPixel > startP)
-        {
-            g.setColour(juce::Colours::red.withAlpha(0.4f));
-            g.fillRect((float)startP, 4.0f, (float)(currentPixel - startP), (float)(getHeight() - 8));
-            g.setColour(juce::Colours::red);
-            g.drawRect((float)startP, 4.0f, (float)(currentPixel - startP), (float)(getHeight() - 8), 1.0f);
-        }
+    for (const auto& paramID : trackInfo.visibleAutomationLanes)
+    {
+        auto laneArea = bounds.withTop(currentY).withHeight(TimelineComponent::AUTOMATION_LANE_H);
+        paintAutomationLane(g, laneArea, paramID);
+        currentY += TimelineComponent::AUTOMATION_LANE_H;
     }
 }
 
@@ -206,7 +207,66 @@ void TrackLaneComponent::paintClips(juce::Graphics& g, juce::Rectangle<int> clip
 }
 
 
-// Old paint methods removed
+void TrackLaneComponent::paintAutomationLane(juce::Graphics& g, juce::Rectangle<int> bounds, const juce::String& paramID)
+{
+    g.setColour(juce::Colour(0xff22223a));
+    g.fillRect(bounds);
+    
+    g.setColour(juce::Colour(0xff0f0f1a));
+    g.drawHorizontalLine(bounds.getBottom() - 1, (float)bounds.getX(), (float)bounds.getRight());
+
+    // Parameter Name
+    g.setColour(juce::Colours::grey);
+    g.setFont(10.0f);
+    g.drawText(paramID.toUpperCase(), bounds.getX() + 5, bounds.getY() + 2, 60, 15, juce::Justification::left);
+
+    auto& trackInfo = audioEngine.getTrackInfo(trackIndex);
+    AutomationCurve* targetCurve = nullptr;
+    for (auto& c : trackInfo.automationCurves) {
+        if (c.parameterID == paramID) { targetCurve = &c; break; }
+    }
+
+    if (!targetCurve || targetCurve->points.empty()) return;
+
+    g.setColour(juce::Colour(0xff00BCD4));
+    juce::Path path;
+    bool first = true;
+
+    float zeroY = (float)bounds.getBottom();
+    float rangeY = (float)bounds.getHeight();
+
+    for (const auto& pt : targetCurve->points)
+    {
+        float px = (float)timeline.timeToAbsolutePixel(pt.time) - HEADER_WIDTH;
+        float norm = pt.value;
+        if (paramID == "vol") norm = pt.value / 1.5f;
+        else if (paramID == "pan") norm = (pt.value + 1.0f) / 2.0f;
+
+        float py = zeroY - norm * rangeY;
+
+        if (first) {
+            path.startNewSubPath(px, py);
+            first = false;
+        } else {
+            path.lineTo(px, py);
+        }
+    }
+
+    g.strokePath(path, juce::PathStrokeType(1.5f));
+
+    // Draw points
+    for (const auto& pt : targetCurve->points)
+    {
+        float px = (float)timeline.timeToAbsolutePixel(pt.time) - HEADER_WIDTH;
+        float norm = pt.value;
+        if (paramID == "vol") norm = pt.value / 1.5f;
+        else if (paramID == "pan") norm = (pt.value + 1.0f) / 2.0f;
+        float py = zeroY - norm * rangeY;
+
+        g.setColour(juce::Colours::white);
+        g.fillEllipse(px - 3, py - 3, 6, 6);
+    }
+}
 
 
 juce::Rectangle<float> TrackLaneComponent::getClipScreenBounds(const Clip& clip) const
@@ -332,210 +392,187 @@ void TrackLaneComponent::mouseDown(const juce::MouseEvent& e)
 
     // 2. Default Interaction
     
-    // Check Automation Mode First
-    if (currentAutomationParam.isNotEmpty())
+    // Y-Coord based lane detection
+    int clipBottom = TimelineComponent::DEFAULT_TRACK_H;
+    int currentY = clipBottom;
+    
+    // 2a. Take Lanes
+    if (trackInfo.showTakes)
     {
-        double automationClickTime = timeline.absolutePixelToTime(e.x); // X is Absolute
-        // Helper: Find or create curve
-        AutomationCurve* targetCurve = nullptr;
-        for (auto& c : trackInfo.automationCurves) {
-            if (c.parameterID == currentAutomationParam) { targetCurve = &c; break; }
-        }
-        if (!targetCurve) {
-            trackInfo.automationCurves.push_back({ currentAutomationParam, {}, true });
-            targetCurve = &trackInfo.automationCurves.back();
-        }
-
-        // Hit test points
-        int hitIndex = -1;
-        for (int i=0; i<targetCurve->points.size(); ++i)
+        int takesBottom = currentY + (int)trackInfo.takes.size() * TimelineComponent::TAKE_LANE_H;
+        if (e.y >= currentY && e.y < takesBottom)
         {
-            float px = (float)timeline.timeToAbsolutePixel(targetCurve->points[i].time) - HEADER_WIDTH;
-            // timeToAbsolutePixel returns value including Header. 
-            // TrackLane render offset is -HEADER_WIDTH.
-            // So px needs to be adjusted?
-            // getClipScreenBounds subtracts HEADER_WIDTH.
-            // Rendering logic: x - HEADER_WIDTH.
-            // So yes, px = timeToAbs(t) - HEADER_WIDTH.
-
-            float zeroY = (float)getLocalBounds().getBottom(); // Approx
-            float rangeY = (float)getLocalBounds().getHeight();
-            float val = targetCurve->points[i].value;
-            float norm = val; 
-            if (currentAutomationParam == "vol") norm = val / 1.5f; 
-            else if (currentAutomationParam == "pan") norm = (val + 1.0f) / 2.0f;
-            float py = zeroY - norm * rangeY;
-
-            if (e.getPosition().getDistanceFrom({(int)px, (int)py}) < 6)
+            int takeIdx = (e.y - currentY) / TimelineComponent::TAKE_LANE_H;
+            if (takeIdx >= 0 && takeIdx < trackInfo.takes.size())
             {
-                hitIndex = i;
-                break;
-            }
-        }
-
-        if (hitIndex != -1)
-        {
-            // e.mods doesn't have isDoubleClick. e has getNumberOfClicks().
-            if (e.getNumberOfClicks() > 1) 
-            {
-                targetCurve->points.erase(targetCurve->points.begin() + hitIndex);
-                repaint();
+                currentDragMode = DragMode::SwipeComp;
+                draggingTakeIndex = takeIdx;
+                dragStartPos = e.getPosition();
                 return;
             }
-            // Start Drag
-            currentDragMode = DragMode::MoveAutomationPoint;
-            draggingAutomationPointIndex = hitIndex;
+        }
+        currentY = takesBottom;
+    }
+
+    // 2b. Automation Lanes
+    for (int i = 0; i < (int)trackInfo.visibleAutomationLanes.size(); ++i)
+    {
+        int laneTop = currentY;
+        int laneBottom = currentY + TimelineComponent::AUTOMATION_LANE_H;
+        
+        if (e.y >= laneTop && e.y < laneBottom)
+        {
+            currentAutomationParam = trackInfo.visibleAutomationLanes[i];
+            double automationClickTime = timeline.absolutePixelToTime(e.x);
+            
+            AutomationCurve* targetCurve = nullptr;
+            for (auto& c : trackInfo.automationCurves) {
+                if (c.parameterID == currentAutomationParam) { targetCurve = &c; break; }
+            }
+            if (!targetCurve) {
+                trackInfo.automationCurves.push_back({ currentAutomationParam, {}, true });
+                targetCurve = &trackInfo.automationCurves.back();
+            }
+
+            int hitIndex = -1;
+            for (int j = 0; j < (int)targetCurve->points.size(); ++j)
+            {
+                float px = (float)timeline.timeToAbsolutePixel(targetCurve->points[j].time) - HEADER_WIDTH;
+                float norm = targetCurve->points[j].value;
+                if (currentAutomationParam == "vol") norm = targetCurve->points[j].value / 1.5f;
+                else if (currentAutomationParam == "pan") norm = (targetCurve->points[j].value + 1.0f) / 2.0f;
+                
+                float py = (float)laneBottom - norm * TimelineComponent::AUTOMATION_LANE_H;
+
+                if (e.getPosition().getDistanceFrom({(int)px, (int)py}) < 8) {
+                    hitIndex = j;
+                    break;
+                }
+            }
+
+            if (hitIndex != -1) {
+                if (e.getNumberOfClicks() > 1) {
+                    targetCurve->points.erase(targetCurve->points.begin() + hitIndex);
+                } else {
+                    currentDragMode = DragMode::MoveAutomationPoint;
+                    draggingAutomationPointIndex = hitIndex;
+                    dragStartPos = e.getPosition();
+                    dragStartTime = targetCurve->points[hitIndex].time;
+                    dragStartVal = targetCurve->points[hitIndex].value;
+                }
+            } else {
+                float normY = ((float)laneBottom - (float)e.y) / (float)TimelineComponent::AUTOMATION_LANE_H;
+                float newVal = normY;
+                if (currentAutomationParam == "vol") newVal = normY * 1.5f;
+                else if (currentAutomationParam == "pan") newVal = normY * 2.0f - 1.0f;
+                targetCurve->addPoint(automationClickTime, newVal);
+            }
+            repaint();
+            return;
+        }
+        currentY = laneBottom;
+    }
+
+    // 2c. Main Clip Lane (Default Fallback)
+    if (e.y < clipBottom)
+    {
+        draggingClip = getClipAt(e.x, e.y);
+        if (draggingClip)
+        {
+            currentDragMode = getZoneAt(e.x, e.y, draggingClip);
+            draggingTakeIndex = -1;
             dragStartPos = e.getPosition();
-            dragStartTime = targetCurve->points[hitIndex].time;
-            dragStartVal  = targetCurve->points[hitIndex].value;
+            dragStartTime = draggingClip->startTime;
+            dragStartDuration = draggingClip->duration;
+            dragStartOffset = draggingClip->offset;
+            dragStartFadeIn = draggingClip->fadeIn;
+            dragStartFadeOut = draggingClip->fadeOut;
+            dragStartSourceBpm = 120.0;
+            if (auto* ac = dynamic_cast<AudioClip*>(draggingClip))
+                dragStartSourceBpm = ac->sourceBpm;
+
+            if (!e.mods.isShiftDown())
+                timeline.clearAllSelections();
+            draggingClip->selected = true;
+
+            // Right Click Menu on Clip
+            if (e.mods.isRightButtonDown())
+            {
+                juce::PopupMenu menu;
+                if (draggingClip->getType() == Clip::Type::Audio)
+                {
+                    auto* ac = static_cast<AudioClip*>(draggingClip);
+                    menu.addItem(1, "Extract Stems (AI)...");
+                    menu.addItem(2, "Convert to MIDI (AI)...");
+                    menu.addSeparator();
+                    menu.addItem(3, "Apply Pitch Correction");
+                    menu.addItem(4, "Apply Audio Cleanup");
+                    menu.addSeparator();
+
+                    menu.showMenuAsync(juce::PopupMenu::Options{}, [this, ac](int result) {
+                        if (result == 1)
+                        {
+                            audioEngine.getStemSeparator().separate(ac->sourceFile, appState, [this](StemSeparationResult res) {
+                                juce::MessageManager::callAsync([this, res] {
+                                    double t = draggingClip ? draggingClip->startTime : 0.0;
+                                    if (res.vocals.existsAsFile()) addAudioClip(res.vocals, t);
+                                    if (res.drums.existsAsFile())  addAudioClip(res.drums, t);
+                                    if (res.bass.existsAsFile())   addAudioClip(res.bass, t);
+                                    if (res.other.existsAsFile())  addAudioClip(res.other, t);
+                                });
+                            });
+                        }
+                        else if (result == 2)
+                        {
+                            audioEngine.getAudioToMidiConverter().convert(ac->sourceFile, appState, [this](AudioToMidiResult res) {
+                                juce::MessageManager::callAsync([this, res] {
+                                    double t = draggingClip ? draggingClip->startTime : 0.0;
+                                    if (res.midiFileOnDisk.existsAsFile())
+                                        addMidiClip(t, 4.0);
+                                });
+                            });
+                        }
+                        else if (result == 3)
+                        {
+                            audioEngine.addAutoTuneToTrack(trackIndex);
+                        }
+                        else if (result == 4)
+                        {
+                            audioEngine.addAudioCleanupToTrack(trackIndex);
+                        }
+                    });
+                }
+            }
         }
         else
         {
-            // Add Point
-             // Calc value from Y
-            float zeroY = (float)getLocalBounds().getBottom();
-            float rangeY = (float)getLocalBounds().getHeight();
-            float normY = (zeroY - e.y) / rangeY;
-            float newVal = normY;
-            if (currentAutomationParam == "vol") newVal = normY * 1.5f;
-            else if (currentAutomationParam == "pan") newVal = normY * 2.0f - 1.0f;
-
-            targetCurve->addPoint(automationClickTime, newVal);
+            currentDragMode = DragMode::None;
+            for (auto* c : trackInfo.clips) c->selected = false;
             repaint();
-            
-            // Immediately start dragging the new point?
-            currentDragMode = DragMode::MoveAutomationPoint;
-            draggingAutomationPointIndex = -1; 
-            // Need to find index of new point (sorted).
-            // For now just add.
-        }
-        return; 
-    }
 
-    
-    // Check if click is in a Take Lane
-    if (trackInfo.showTakes && e.y > TimelineComponent::DEFAULT_TRACK_H)
-    {
-        int relativeY = e.y - TimelineComponent::DEFAULT_TRACK_H;
-        int takeIdx = relativeY / TimelineComponent::TAKE_LANE_H;
-        
-        if (takeIdx >= 0 && takeIdx < trackInfo.takes.size())
-        {
-            currentDragMode = DragMode::SwipeComp;
-            draggingTakeIndex = takeIdx;
-            dragStartPos = e.getPosition();
-            return;
-        }
-    }
-
-    draggingClip = getClipAt(e.x, e.y); // Pixel hit test
-    
-    if (draggingClip)
-    {
-        // Drag Mode / Zone
-        currentDragMode = getZoneAt(e.x, e.y, draggingClip);
-        draggingTakeIndex = -1; // Comp lane
-        
-        dragStartPos = e.getPosition();
-        dragStartTime = draggingClip->startTime;
-        dragStartDuration = draggingClip->duration;
-        dragStartOffset = draggingClip->offset;
-        dragStartFadeIn = draggingClip->fadeIn;
-        dragStartFadeOut = draggingClip->fadeOut;
-        dragStartSourceBpm = 120.0;
-        if (auto* ac = dynamic_cast<AudioClip*>(draggingClip))
-            dragStartSourceBpm = ac->sourceBpm;
-
-        // Selection
-        if (!e.mods.isShiftDown())
-        {
-            timeline.clearAllSelections();
-        }
-        draggingClip->selected = true;
-        // Right Click Menu on Clip
-        if (e.mods.isRightButtonDown())
-        {
-            juce::PopupMenu menu;
-            if (draggingClip->getType() == Clip::Type::Audio)
+            // Right Click Menu on Empty Space
+            if (e.mods.isRightButtonDown())
             {
-                auto* ac = static_cast<AudioClip*>(draggingClip);
-                menu.addItem(1, "Extract Stems (AI)...");
-                menu.addItem(2, "Convert to MIDI (AI)...");
-                menu.addSeparator();
-                menu.addItem(3, "Apply Pitch Correction");
-                menu.addItem(4, "Apply Audio Cleanup");
-                menu.addSeparator();
-
-                menu.showMenuAsync(juce::PopupMenu::Options{}, [this, ac](int result) {
+                double clickTime = timeline.absolutePixelToTime(e.x);
+                juce::PopupMenu menu;
+                menu.addItem(1, "Add Audio Clip...");
+                menu.addItem(2, "Add MIDI Clip");
+                menu.showMenuAsync(juce::PopupMenu::Options{}, [this, clickTime](int result) {
                     if (result == 1)
                     {
-                        // Trigger Stem Separator
-                        audioEngine.getStemSeparator().separate(ac->sourceFile, appState, [this](StemSeparationResult res) {
-                            juce::MessageManager::callAsync([this, res] {
-                                double t = draggingClip ? draggingClip->startTime : 0.0;
-                                if (res.vocals.existsAsFile()) addAudioClip(res.vocals, t);
-                                if (res.drums.existsAsFile())  addAudioClip(res.drums, t);
-                                if (res.bass.existsAsFile())   addAudioClip(res.bass, t);
-                                if (res.other.existsAsFile())  addAudioClip(res.other, t);
+                        auto chooser = std::make_shared<juce::FileChooser>("Select audio file",
+                            juce::File{}, "*.wav;*.aiff;*.mp3;*.flac");
+                        chooser->launchAsync(juce::FileBrowserComponent::openMode |
+                                             juce::FileBrowserComponent::canSelectFiles,
+                            [this, clickTime, chooser](const juce::FileChooser& fc) {
+                                if (fc.getResult().existsAsFile())
+                                    addAudioClip(fc.getResult(), clickTime);
                             });
-                        });
                     }
                     else if (result == 2)
-                    {
-                        // Trigger Audio To Midi
-                        audioEngine.getAudioToMidiConverter().convert(ac->sourceFile, appState, [this](AudioToMidiResult res) {
-                            juce::MessageManager::callAsync([this, res] {
-                                double t = draggingClip ? draggingClip->startTime : 0.0;
-                                if (res.midiFileOnDisk.existsAsFile())
-                                {
-                                    addMidiClip(t, 4.0);
-                                }
-                            });
-                        });
-                    }
-                    else if (result == 3)
-                    {
-                        audioEngine.addAutoTuneToTrack(trackIndex);
-                    }
-                    else if (result == 4)
-                    {
-                        audioEngine.addAudioCleanupToTrack(trackIndex);
-                    }
+                        addMidiClip(clickTime);
                 });
             }
-        }
-    }
-    else
-    {
-        currentDragMode = DragMode::None;
-        
-        // Deselect all
-        for (auto* c : trackInfo.clips) c->selected = false;
-        repaint();
-
-        // Right Click Menu (Add Clip) on Empty Space
-        if (e.mods.isRightButtonDown())
-        {
-            juce::PopupMenu menu;
-            menu.addItem(1, "Add Audio Clip...");
-            menu.addItem(2, "Add MIDI Clip");
-            menu.showMenuAsync(juce::PopupMenu::Options{}, [this, clickTime](int result) {
-                if (result == 1)
-                {
-                    auto chooser = std::make_shared<juce::FileChooser>("Select audio file",
-                        juce::File{}, "*.wav;*.aiff;*.mp3;*.flac");
-                    chooser->launchAsync(juce::FileBrowserComponent::openMode |
-                                         juce::FileBrowserComponent::canSelectFiles,
-                        [this, clickTime, chooser](const juce::FileChooser& fc) {
-                            if (fc.getResult().existsAsFile())
-                                addAudioClip(fc.getResult(), clickTime);
-                        });
-                }
-                else if (result == 2)
-                {
-                    addMidiClip(clickTime);
-                }
-            });
         }
     }
 }
@@ -560,33 +597,48 @@ void TrackLaneComponent::mouseDrag(const juce::MouseEvent& e)
             if (c.parameterID == currentAutomationParam) { targetCurve = &c; break; }
         }
         
-        if (targetCurve && draggingAutomationPointIndex >= 0 && draggingAutomationPointIndex < targetCurve->points.size())
+        if (targetCurve && draggingAutomationPointIndex >= 0 && draggingAutomationPointIndex < (int)targetCurve->points.size())
         {
             double newTime = timeline.snapToGrid(mouseTime);
             if (newTime < 0) newTime = 0;
             
-            // Calc value from Y
-            float zeroY = (float)getLocalBounds().getBottom();
-            float rangeY = (float)getLocalBounds().getHeight();
-            float normY = (zeroY - e.y) / rangeY; // local bounds or clip area?
-            // Mouse event is relative to component (0,0 is top left)
-            // But clips are drawn in clipArea?
-            // "height - 8" was used in paintClips.
-            // Let's assume full height matching paint logic approx.
+            // Find lane relative Y
+            int laneIdx = -1;
+            for (int i=0; i<(int)trackInfo.visibleAutomationLanes.size(); ++i) {
+                if (trackInfo.visibleAutomationLanes[i] == currentAutomationParam) { laneIdx = i; break; }
+            }
+
+            float zeroY = (float)getHeight();
+            float rangeY = (float)getHeight();
+
+            if (laneIdx != -1)
+            {
+                int currentY = TimelineComponent::DEFAULT_TRACK_H;
+                if (trackInfo.showTakes) currentY += (int)trackInfo.takes.size() * TimelineComponent::TAKE_LANE_H;
+                currentY += laneIdx * TimelineComponent::AUTOMATION_LANE_H;
+                
+                int laneBottom = currentY + TimelineComponent::AUTOMATION_LANE_H;
+                zeroY = (float)laneBottom;
+                rangeY = (float)TimelineComponent::AUTOMATION_LANE_H;
+            }
             
+            float normY = (zeroY - (float)e.y) / rangeY;
             float newVal = normY;
             if (currentAutomationParam == "vol") newVal = std::clamp(normY * 1.5f, 0.0f, 1.5f);
             else if (currentAutomationParam == "pan") newVal = std::clamp(normY * 2.0f - 1.0f, -1.0f, 1.0f);
+            else newVal = std::clamp(normY, 0.0f, 1.0f);
             
             targetCurve->points[draggingAutomationPointIndex].time = newTime;
             targetCurve->points[draggingAutomationPointIndex].value = newVal;
             
-            // Re-sort required if time changed past neighbors?
-            // For now, assume simple drag. 
              std::sort(targetCurve->points.begin(), targetCurve->points.end());
-             // Invalidates index if order changes!
-             // So we need to find it again or just re-sort on mouseUp.
-             // Visual glitch if not sorted.
+             // Re-finding index after sort to avoid invalidating it
+             for (int i=0; i<(int)targetCurve->points.size(); ++i) {
+                 if (targetCurve->points[i].time == newTime && targetCurve->points[i].value == newVal) {
+                     draggingAutomationPointIndex = i;
+                     break;
+                 }
+             }
         }
         repaint();
         return;

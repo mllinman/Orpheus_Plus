@@ -4,6 +4,7 @@
 #include "ClipGeneratorProcessor.h"
 #include "TrackFaderProcessor.h"
 #include "MixerProcessor.h"
+#include "MidiLearnManager.h"
 #include "../Project/AppState.h"
 #include "../PitchCorrection/AutoTuneProcessor.h"
 #include "../AudioCleanup/AudioCleanupProcessor.h"
@@ -15,6 +16,7 @@ AudioEngine::AudioEngine()
     formatManager.registerBasicFormats();
 
     pluginManager  = std::make_unique<PluginManager>(*this);
+    midiLearnManager = std::make_unique<MidiLearnManager>(*this);
     stemSeparator  = std::make_unique<StemSeparator>();
     audioToMidi    = std::make_unique<AudioToMidiConverter>();
     // autoTune       = std::make_unique<AutoTuneProcessor>();
@@ -319,6 +321,7 @@ void AudioEngine::setTrackPan(int i, float pan) {
 
 void AudioEngine::setTrackSweetener(int i, float amount)
 {
+    tracks[i]->sweetener = amount;
     if (auto* node = processorGraph.getNodeForId(juce::AudioProcessorGraph::NodeID(tracks[i]->faderNodeID)))
         if (auto* fader = dynamic_cast<TrackFaderProcessor*>(node->getProcessor()))
             fader->setSweetener(amount);
@@ -504,6 +507,11 @@ void AudioEngine::processAudioBlock(juce::AudioBuffer<float>& buffer)
                     fader->setPan(value);
                     track->pan = value;    // Update model for UI
                 }
+                else if (curve.parameterID == "sweet")
+                {
+                    fader->setSweetener(value);
+                    track->sweetener = value;
+                }
             }
         }
     }
@@ -523,6 +531,7 @@ void AudioEngine::processAudioBlock(juce::AudioBuffer<float>& buffer)
 
 void AudioEngine::handleIncomingMidiMessage(juce::MidiInput*, const juce::MidiMessage& message)
 {
+    midiLearnManager->handleIncomingMidi(message);
     midiCollector.addMessageToQueue(message);
     
     if (recording.load() && armedTrackIndex >= 0)

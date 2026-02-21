@@ -89,12 +89,18 @@ MixerPanel::ChannelStrip::ChannelStrip(int idx, AudioEngine& e) : trackIndex(idx
     fader.setTextBoxStyle(juce::Slider::NoTextBox, false, 0, 0);
     fader.onValueChange = [this] { engine.setTrackVolume(trackIndex, (float)fader.getValue()); };
     fader.setDoubleClickReturnValue(true, 1.0);
+    fader.onMidiLearn = [this] {
+        engine.getMidiLearn().setLearnMode(true, { ParameterTarget::Type::TrackVolume, trackIndex });
+    };
     addAndMakeVisible(fader);
 
     panKnob.setSliderStyle(juce::Slider::Rotary);
     panKnob.setRange(-1.0, 1.0, 0.001);
     panKnob.setTextBoxStyle(juce::Slider::NoTextBox, false, 0, 0);
     panKnob.onValueChange = [this] { engine.setTrackPan(trackIndex, (float)panKnob.getValue()); };
+    panKnob.onMidiLearn = [this] {
+        engine.getMidiLearn().setLearnMode(true, { ParameterTarget::Type::TrackPan, trackIndex });
+    };
     addAndMakeVisible(panKnob);
 
     sweetenerKnob.setSliderStyle(juce::Slider::Rotary);
@@ -103,6 +109,9 @@ MixerPanel::ChannelStrip::ChannelStrip(int idx, AudioEngine& e) : trackIndex(idx
     sweetenerKnob.setTextBoxStyle(juce::Slider::NoTextBox, false, 0, 0);
     sweetenerKnob.onValueChange = [this] { engine.setTrackSweetener(trackIndex, (float)sweetenerKnob.getValue()); };
     sweetenerKnob.setDoubleClickReturnValue(true, 0.0);
+    sweetenerKnob.onMidiLearn = [this] {
+        engine.getMidiLearn().setLearnMode(true, { ParameterTarget::Type::TrackSweet, trackIndex });
+    };
     addAndMakeVisible(sweetenerKnob);
 
     muteBtn.setToggleable(true);

@@ -4,6 +4,23 @@
 #include "../Project/AppState.h"
 
 //==============================================================================
+struct MidiLearnSlider : public juce::Slider
+{
+    std::function<void()> onMidiLearn;
+
+    void mouseDown(const juce::MouseEvent& e) override {
+        if (e.mods.isRightButtonDown()) {
+            juce::PopupMenu m;
+            m.addItem(1, "Learn MIDI CC");
+            m.showMenuAsync(juce::PopupMenu::Options{}, [this](int res) {
+                if (res == 1 && onMidiLearn) onMidiLearn();
+            });
+        } else {
+            juce::Slider::mouseDown(e);
+        }
+    }
+};
+
 class MixerPanel : public juce::Component,
                    public AudioEngine::Listener,
                    private juce::Timer
@@ -32,9 +49,12 @@ private:
         int trackIndex;
         AudioEngine& engine;
 
-        juce::Slider     fader;
-        juce::Slider     panKnob;
-        juce::Slider     sweetenerKnob;
+        juce::Slider& getFader() { return fader; }
+
+    private:
+        MidiLearnSlider  fader;
+        MidiLearnSlider  panKnob;
+        MidiLearnSlider  sweetenerKnob;
         juce::TextButton muteBtn  { "M" };
         juce::TextButton soloBtn  { "S" };
         juce::Label      nameLabel;
