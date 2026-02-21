@@ -1,5 +1,6 @@
 #pragma once
 #include "Clip.h"
+#include "../Audio/TimeStretcher.h"
 
 class AudioClip : public Clip
 {
@@ -20,8 +21,11 @@ public:
     juce::AudioBuffer<float> audioData;
     double sampleRate { 0.0 };
     double sourceBpm { 120.0 };
-    bool isLoaded { false };
-    bool loopEnabled { true };
+    float  pitchShift { 0.0f }; // In semitones
+    bool   isLoaded { false };
+    bool   loopEnabled { true };
+    
+    TimeStretcher stretcher;
     
     float getStretchFactor(double sessionBpm) const { 
         return (float)(sessionBpm / sourceBpm); 

@@ -46,46 +46,64 @@ void ClipGeneratorProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce
             double clipStart = ac->startTime;
             double clipEnd = ac->startTime + ac->duration;
 
-            if (playhead < clipEnd && endTime > clipStart)
+            // Find intersection between clip and current block
+            double blockStart = playhead;
+            double blockEnd = playhead + (numSamples / sr);
+
+            if (blockStart < clipEnd && blockEnd > clipStart)
             {
+                // Calculate portion of block to fill
+                int startSample = (int)juce::jmax(0.0, (clipStart - blockStart) * sr);
+                int endSample = (int)juce::jmin((double)numSamples, (clipEnd - blockStart) * sr);
+                int numToFill = endSample - startSample;
+
+                if (numToFill <= 0) continue;
+
                 float stretch = ac->getStretchFactor(bpm);
-                double sourceSr = ac->sampleRate;
-                if (sourceSr <= 0) sourceSr = sr;
+                float pitch = std::pow(2.0f, ac->pitchShift / 12.0f);
+                
+                // For the placeholder Lagrange, we just pass the ratio
+                // In actual Rubber Band, we'd set these properties on the stretcher
+                
+                // Prepare a source buffer subset
+                // (Roughly estimating how many source samples we need)
+                double speedRatio = (double)stretch * (double)pitch;
+                int approxSourceSamples = (int)(numToFill * speedRatio) + 4; // padding for interpolation
+                
+                juce::AudioBuffer<float> sourceSubset(ac->audioData.getNumChannels(), approxSourceSamples);
+                juce::AudioBuffer<float> outputSubset(ac->audioData.getNumChannels(), numToFill);
+                
+                // Map session time to source samples
+                double segmentStartTime = blockStart + (startSample / sr);
+                double offsetInSession = segmentStartTime - clipStart;
+                double sourceStartPos = offsetInSession * ac->sampleRate * stretch;
 
-                int sourceNumSamples = ac->audioData.getNumSamples();
-                if (sourceNumSamples == 0) continue;
-
-                for (int i = 0; i < numSamples; ++i)
+                for (int ch = 0; ch < ac->audioData.getNumChannels(); ++ch)
                 {
-                    double currentSessionTime = playhead + (i / sr);
-                    if (currentSessionTime < clipStart || currentSessionTime >= clipEnd)
-                        continue;
-
-                    double offsetInSession = currentSessionTime - clipStart;
-                    double sourcePosSamples = offsetInSession * sourceSr * stretch;
-
-                    if (ac->loopEnabled)
+                    for (int s = 0; s < approxSourceSamples; ++s)
                     {
-                        sourcePosSamples = std::fmod(sourcePosSamples, (double)sourceNumSamples);
+                        double pos = sourceStartPos + (s * (ac->sampleRate / sr) * (1.0 / pitch)); // This logic is tricky with dual-ratios
+                        // Actually, let's let the stretcher handle the math via speedRatio
+                        // We just need a contiguous chunk of source audio.
+                        
+                        double actualSourcePos = sourceStartPos + s;
+                        if (ac->loopEnabled)
+                            actualSourcePos = std::fmod(actualSourcePos, (double)ac->audioData.getNumSamples());
+                        
+                        if (actualSourcePos >= 0 && actualSourcePos < ac->audioData.getNumSamples())
+                            sourceSubset.setSample(ch, s, ac->audioData.getSample(ch, (int)actualSourcePos));
+                        else
+                            sourceSubset.setSample(ch, s, 0.0f);
                     }
-                    else if (sourcePosSamples >= sourceNumSamples)
-                    {
-                        continue;
-                    }
+                }
 
-                    int idx1 = (int)sourcePosSamples;
-                    int idx2 = (idx1 + 1) % sourceNumSamples;
-                    float fract = (float)(sourcePosSamples - idx1);
+                ac->stretcher.process(sourceSubset, outputSubset, (float)speedRatio);
 
-                    for (int ch = 0; ch < buffer.getNumChannels(); ++ch)
-                    {
-                        int sourceCh = ch % ac->audioData.getNumChannels();
-                        float s1 = ac->audioData.getSample(sourceCh, idx1);
-                        float s2 = ac->audioData.getSample(sourceCh, idx2);
-                        float interpolated = s1 + fract * (s2 - s1);
-
-                        buffer.addSample(ch, i, interpolated);
-                    }
+                // Mix into main buffer
+                for (int ch = 0; ch < buffer.getNumChannels(); ++ch)
+                {
+                    int srcCh = ch % outputSubset.getNumChannels();
+                    buffer.addFrom(ch, startSample, outputSubset, srcCh, 0, numToFill);
                 }
             }
         }

@@ -46,9 +46,14 @@ private:
 
     struct ChannelStrip : public juce::Component
     {
+        ChannelStrip(int idx, AudioEngine& e);
+        ~ChannelStrip() override;
+
+        void resized() override;
+        void paint(juce::Graphics&) override;
+
         int trackIndex;
         AudioEngine& engine;
-
         juce::Slider& getFader() { return fader; }
 
     private:
@@ -76,12 +81,6 @@ private:
         };
 
         juce::OwnedArray<PluginSlot> pluginSlots;
-
-        ChannelStrip(int idx, AudioEngine& e);
-        ~ChannelStrip() override;
-
-        void resized() override;
-        void paint(juce::Graphics&) override;
 
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ChannelStrip)
     };

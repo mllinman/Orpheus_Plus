@@ -5,6 +5,8 @@ C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Audio\ClipGenerator
 C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Audio\TrackFaderProcessor.cpp;C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.dir\Debug\TrackFaderProcessor.obj
 C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Audio\MixerProcessor.cpp;C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.dir\Debug\MixerProcessor.obj
 C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Audio\PluginManager.cpp;C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.dir\Debug\PluginManager.obj
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Audio\MidiLearnManager.cpp;C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.dir\Debug\MidiLearnManager.obj
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Audio\TimeStretcher.cpp;C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.dir\Debug\TimeStretcher.obj
 C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Timeline\TimelineComponent.cpp;C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.dir\Debug\TimelineComponent.obj
 C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Timeline\TrackLaneComponent.cpp;C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.dir\Debug\TrackLaneComponent.obj
 C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Timeline\AudioClip.cpp;C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.dir\Debug\AudioClip.obj

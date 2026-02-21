@@ -1,0 +1,250 @@
+﻿MSBuild version 17.14.23+b0019275e for .NET Framework
+
+  Checking File Globs
+  OrpheusPlus_rc_lib.vcxproj -> C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus_rc_lib.dir\Debug\OrpheusPlus_rc_lib.lib
+  AudioEngine.cpp
+  ClipGeneratorProcessor.cpp
+  PluginManager.cpp
+  Main.cpp
+  MainComponent.cpp
+  MasteringModule.cpp
+  PianoRollComponent.cpp
+  ProjectManager.cpp
+  TimelineComponent.cpp
+  TrackLaneComponent.cpp
+  TransportController.cpp
+  MixerPanel.cpp
+  PluginBrowser.cpp
+  SpectrumAnalyzer.cpp
+  TransportBar.cpp
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\StemSeparation\StemSeparator.h(45,51): warning C4100: 'progress': unreferenced parameter [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+  (compiling source file '../Source/Timeline/TrackLaneComponent.cpp')
+  
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\StemSeparation\StemSeparator.h(46,73): warning C4100: 'result': unreferenced parameter [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+  (compiling source file '../Source/Timeline/TrackLaneComponent.cpp')
+  
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\StemSeparation\StemSeparator.h(47,63): warning C4100: 'error': unreferenced parameter [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+  (compiling source file '../Source/Timeline/TrackLaneComponent.cpp')
+  
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\StemSeparation\StemSeparator.h(45,51): warning C4100: 'progress': unreferenced parameter [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+  (compiling source file '../Source/Mastering/MasteringModule.cpp')
+  
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\StemSeparation\StemSeparator.h(46,73): warning C4100: 'result': unreferenced parameter [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+  (compiling source file '../Source/Mastering/MasteringModule.cpp')
+  
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\StemSeparation\StemSeparator.h(47,63): warning C4100: 'error': unreferenced parameter [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+  (compiling source file '../Source/Mastering/MasteringModule.cpp')
+  
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\StemSeparation\StemSeparator.h(45,51): warning C4100: 'progress': unreferenced parameter [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+  (compiling source file '../Source/Audio/AudioEngine.cpp')
+  
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\StemSeparation\StemSeparator.h(46,73): warning C4100: 'result': unreferenced parameter [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+  (compiling source file '../Source/Audio/AudioEngine.cpp')
+  
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\StemSeparation\StemSeparator.h(47,63): warning C4100: 'error': unreferenced parameter [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+  (compiling source file '../Source/Audio/AudioEngine.cpp')
+  
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\StemSeparation\StemSeparator.h(45,51): warning C4100: 'progress': unreferenced parameter [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+  (compiling source file '../Source/UI/TransportBar.cpp')
+  
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\StemSeparation\StemSeparator.h(46,73): warning C4100: 'result': unreferenced parameter [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+  (compiling source file '../Source/UI/TransportBar.cpp')
+  
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\StemSeparation\StemSeparator.h(47,63): warning C4100: 'error': unreferenced parameter [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+  (compiling source file '../Source/UI/TransportBar.cpp')
+  
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\StemSeparation\StemSeparator.h(45,51): warning C4100: 'progress': unreferenced parameter [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+  (compiling source file '../Source/UI/MixerPanel.cpp')
+  
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\StemSeparation\StemSeparator.h(46,73): warning C4100: 'result': unreferenced parameter [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+  (compiling source file '../Source/UI/MixerPanel.cpp')
+  
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\StemSeparation\StemSeparator.h(47,63): warning C4100: 'error': unreferenced parameter [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+  (compiling source file '../Source/UI/MixerPanel.cpp')
+  
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Timeline\TrackLaneComponent.cpp(96,38): warning C4996: 'juce::Font::Font': Use the constructor that takes a FontOptions argument [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Timeline\TrackLaneComponent.cpp(293,15): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Timeline\TrackLaneComponent.cpp(294,15): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Timeline\TrackLaneComponent.cpp(294,9): warning C4189: 'clipW': local variable is initialized but not referenced [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Audio\PluginManager.h(43,71): warning C4100: 'currentPlugin': unreferenced parameter [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+  (compiling source file '../Source/Audio/AudioEngine.cpp')
+  
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Audio\PluginManager.h(43,41): warning C4100: 'progress': unreferenced parameter [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+  (compiling source file '../Source/Audio/AudioEngine.cpp')
+  
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Audio\PluginManager.h(43,71): warning C4100: 'currentPlugin': unreferenced parameter [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+  (compiling source file '../Source/Audio/PluginManager.cpp')
+  
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Audio\PluginManager.h(43,41): warning C4100: 'progress': unreferenced parameter [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+  (compiling source file '../Source/Audio/PluginManager.cpp')
+  
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Timeline\TrackLaneComponent.cpp(556,24): warning C4456: declaration of 'clickTime' hides previous local declaration [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+      C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Timeline\TrackLaneComponent.cpp(346,12):
+      see declaration of 'clickTime'
+  
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\StemSeparation\StemSeparator.h(45,51): warning C4100: 'progress': unreferenced parameter [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+  (compiling source file '../Source/Audio/PluginManager.cpp')
+  
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\StemSeparation\StemSeparator.h(46,73): warning C4100: 'result': unreferenced parameter [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+  (compiling source file '../Source/Audio/PluginManager.cpp')
+  
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\StemSeparation\StemSeparator.h(47,63): warning C4100: 'error': unreferenced parameter [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+  (compiling source file '../Source/Audio/PluginManager.cpp')
+  
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Audio\PluginManager.h(43,71): warning C4100: 'currentPlugin': unreferenced parameter [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+  (compiling source file '../Source/UI/PluginBrowser.cpp')
+  
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Audio\PluginManager.h(43,41): warning C4100: 'progress': unreferenced parameter [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+  (compiling source file '../Source/UI/PluginBrowser.cpp')
+  
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Timeline\TrackLaneComponent.cpp(820,82): warning C4100: 'y': unreferenced parameter [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\StemSeparation\StemSeparator.h(45,51): warning C4100: 'progress': unreferenced parameter [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+  (compiling source file '../Source/PianoRoll/PianoRollComponent.cpp')
+  
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\StemSeparation\StemSeparator.h(46,73): warning C4100: 'result': unreferenced parameter [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+  (compiling source file '../Source/PianoRoll/PianoRollComponent.cpp')
+  
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\StemSeparation\StemSeparator.h(47,63): warning C4100: 'error': unreferenced parameter [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+  (compiling source file '../Source/PianoRoll/PianoRollComponent.cpp')
+  
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\StemSeparation\StemSeparator.h(45,51): warning C4100: 'progress': unreferenced parameter [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+  (compiling source file '../Source/UI/PluginBrowser.cpp')
+  
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\StemSeparation\StemSeparator.h(46,73): warning C4100: 'result': unreferenced parameter [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+  (compiling source file '../Source/UI/PluginBrowser.cpp')
+  
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\StemSeparation\StemSeparator.h(47,63): warning C4100: 'error': unreferenced parameter [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+  (compiling source file '../Source/UI/PluginBrowser.cpp')
+  
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Audio\AudioEngine.cpp(159,46): warning C4996: 'juce::AudioFormat::createWriterFor': Use the function taking an AudioFormatWriterOptions instead. [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\UI\TransportBar.cpp(43,32): warning C4996: 'juce::Font::Font': Use the constructor that takes a FontOptions argument [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\UI\TransportBar.cpp(61,31): warning C4996: 'juce::Font::Font': Use the constructor that takes a FontOptions argument [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\UI\TransportBar.cpp(82,41): warning C4996: 'juce::Font::Font': Use the constructor that takes a FontOptions argument [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Audio\AudioEngine.cpp(354,42): warning C4100: 'trackIndex': unreferenced parameter [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Audio\AudioEngine.cpp(359,46): warning C4100: 'trackIndex': unreferenced parameter [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Audio\PluginManager.h(43,71): warning C4100: 'currentPlugin': unreferenced parameter [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+  (compiling source file '../Source/UI/MixerPanel.cpp')
+  
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Audio\PluginManager.h(43,41): warning C4100: 'progress': unreferenced parameter [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+  (compiling source file '../Source/UI/MixerPanel.cpp')
+  
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Audio\PluginManager.cpp(8,19): warning C4996: 'juce::AudioPluginFormatManager::addFormat': Prefer the signature that accepts a unique_ptr [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Audio\AudioEngine.cpp(549,54): warning C4100: 'analyzer': unreferenced parameter [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Audio\AudioEngine.cpp(554,56): warning C4100: 'analyzer': unreferenced parameter [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Audio\AudioEngine.cpp(570,19): warning C4996: 'juce::AudioFormat::createWriterFor': Use the function taking an AudioFormatWriterOptions instead. [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Audio\PluginManager.cpp(254,53): warning C4100: 'path': unreferenced parameter [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\UI\MixerPanel.cpp(93,28): error C2027: use of undefined type 'MidiLearnManager' [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+      C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Audio\AudioEngine.h(19,7):
+      see declaration of 'MidiLearnManager'
+  
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\UI\MixerPanel.cpp(93,52): error C2653: 'ParameterTarget': is not a class or namespace name [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\UI\MixerPanel.cpp(93,75): error C2065: 'TrackVolume': undeclared identifier [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\UI\MixerPanel.cpp(102,28): error C2027: use of undefined type 'MidiLearnManager' [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+      C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Audio\AudioEngine.h(19,7):
+      see declaration of 'MidiLearnManager'
+  
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\UI\MixerPanel.cpp(102,52): error C2653: 'ParameterTarget': is not a class or namespace name [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\UI\MixerPanel.cpp(102,75): error C2065: 'TrackPan': undeclared identifier [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\UI\MixerPanel.cpp(113,28): error C2027: use of undefined type 'MidiLearnManager' [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+      C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Audio\AudioEngine.h(19,7):
+      see declaration of 'MidiLearnManager'
+  
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\UI\MixerPanel.cpp(113,52): error C2653: 'ParameterTarget': is not a class or namespace name [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\UI\MixerPanel.cpp(113,75): error C2065: 'TrackSweet': undeclared identifier [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\UI\MixerPanel.cpp(80,33): warning C4996: 'juce::Font::Font': Use the constructor that takes a FontOptions argument [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\PianoRoll\PianoRollComponent.cpp(46,33): warning C4996: 'juce::Font::Font': Use the constructor that takes a FontOptions argument [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\PianoRoll\PianoRollComponent.cpp(57,12): warning C4189: 'secondsPerBeat': local variable is initialized but not referenced [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\UI\MixerPanel.cpp(265,50): error C2248: 'MixerPanel::ChannelStrip::ChannelStrip': cannot access private member declared in class 'MixerPanel::ChannelStrip' [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+      C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\UI\MixerPanel.cpp(7,27):
+      see declaration of 'MixerPanel::ChannelStrip::ChannelStrip'
+      C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\UI\MixerPanel.h(47,12):
+      see declaration of 'MixerPanel::ChannelStrip'
+  
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\StemSeparation\StemSeparator.h(45,51): warning C4100: 'progress': unreferenced parameter [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+  (compiling source file '../Source/Timeline/TimelineComponent.cpp')
+  
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\StemSeparation\StemSeparator.h(45,51): warning C4100: 'progress': unreferenced parameter [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+  (compiling source file '../Source/Project/ProjectManager.cpp')
+  
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\StemSeparation\StemSeparator.h(46,73): warning C4100: 'result': unreferenced parameter [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+  (compiling source file '../Source/Timeline/TimelineComponent.cpp')
+  
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\StemSeparation\StemSeparator.h(46,73): warning C4100: 'result': unreferenced parameter [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+  (compiling source file '../Source/Project/ProjectManager.cpp')
+  
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\StemSeparation\StemSeparator.h(47,63): warning C4100: 'error': unreferenced parameter [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+  (compiling source file '../Source/Timeline/TimelineComponent.cpp')
+  
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\StemSeparation\StemSeparator.h(47,63): warning C4100: 'error': unreferenced parameter [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+  (compiling source file '../Source/Project/ProjectManager.cpp')
+  
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\StemSeparation\StemSeparator.h(45,51): warning C4100: 'progress': unreferenced parameter [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+  (compiling source file '../Source/MainComponent.cpp')
+  
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\StemSeparation\StemSeparator.h(46,73): warning C4100: 'result': unreferenced parameter [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+  (compiling source file '../Source/MainComponent.cpp')
+  
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\StemSeparation\StemSeparator.h(47,63): warning C4100: 'error': unreferenced parameter [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+  (compiling source file '../Source/MainComponent.cpp')
+  
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\UI\PluginBrowser.cpp(27,35): warning C4996: 'juce::Font::Font': Use the constructor that takes a FontOptions argument [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\UI\PluginBrowser.cpp(56,25): warning C4996: 'juce::Font::Font': Use the constructor that takes a FontOptions argument [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\UI\PluginBrowser.cpp(76,25): warning C4996: 'juce::Font::Font': Use the constructor that takes a FontOptions argument [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\UI\PluginBrowser.cpp(80,25): warning C4996: 'juce::Font::Font': Use the constructor that takes a FontOptions argument [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\StemSeparation\StemSeparator.h(45,51): warning C4100: 'progress': unreferenced parameter [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+  (compiling source file '../Source/Main.cpp')
+  
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\StemSeparation\StemSeparator.h(46,73): warning C4100: 'result': unreferenced parameter [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+  (compiling source file '../Source/Main.cpp')
+  
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\StemSeparation\StemSeparator.h(47,63): warning C4100: 'error': unreferenced parameter [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+  (compiling source file '../Source/Main.cpp')
+  
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\StemSeparation\StemSeparator.h(45,51): warning C4100: 'progress': unreferenced parameter [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+  (compiling source file '../Source/Timeline/TransportController.cpp')
+  
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\StemSeparation\StemSeparator.h(46,73): warning C4100: 'result': unreferenced parameter [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+  (compiling source file '../Source/Timeline/TransportController.cpp')
+  
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\StemSeparation\StemSeparator.h(47,63): warning C4100: 'error': unreferenced parameter [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+  (compiling source file '../Source/Timeline/TransportController.cpp')
+  
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Timeline\TimelineComponent.cpp(170,25): warning C4996: 'juce::Font::Font': Use the constructor that takes a FontOptions argument [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Timeline\TimelineComponent.cpp(208,62): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Timeline\TimelineComponent.cpp(364,12): warning C4189: 'centerTime': local variable is initialized but not referenced [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Timeline\TimelineComponent.cpp(363,12): warning C4189: 'oldPPS': local variable is initialized but not referenced [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Timeline\TimelineComponent.cpp(441,81): warning C4100: 'y': unreferenced parameter [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\StemSeparation\StemSeparator.h(45,51): warning C4100: 'progress': unreferenced parameter [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+  (compiling source file '../Source/Audio/ClipGeneratorProcessor.cpp')
+  
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\StemSeparation\StemSeparator.h(46,73): warning C4100: 'result': unreferenced parameter [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+  (compiling source file '../Source/Audio/ClipGeneratorProcessor.cpp')
+  
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\StemSeparation\StemSeparator.h(47,63): warning C4100: 'error': unreferenced parameter [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+  (compiling source file '../Source/Audio/ClipGeneratorProcessor.cpp')
+  
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\StemSeparation\StemSeparator.h(45,51): warning C4100: 'progress': unreferenced parameter [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+  (compiling source file '../Source/UI/SpectrumAnalyzer.cpp')
+  
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Audio\PluginManager.h(43,71): warning C4100: 'currentPlugin': unreferenced parameter [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+  (compiling source file '../Source/MainComponent.cpp')
+  
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\StemSeparation\StemSeparator.h(46,73): warning C4100: 'result': unreferenced parameter [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+  (compiling source file '../Source/UI/SpectrumAnalyzer.cpp')
+  
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Audio\PluginManager.h(43,41): warning C4100: 'progress': unreferenced parameter [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+  (compiling source file '../Source/MainComponent.cpp')
+  
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\StemSeparation\StemSeparator.h(47,63): warning C4100: 'error': unreferenced parameter [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+  (compiling source file '../Source/UI/SpectrumAnalyzer.cpp')
+  
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Audio\ClipGeneratorProcessor.cpp(15,67): warning C4100: 'samplesPerBlock': unreferenced parameter [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Audio\ClipGeneratorProcessor.cpp(15,51): warning C4100: 'sampleRate': unreferenced parameter [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Audio\ClipGeneratorProcessor.cpp(23,95): warning C4100: 'midiMessages': unreferenced parameter [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Audio\PluginManager.h(43,71): warning C4100: 'currentPlugin': unreferenced parameter [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+  (compiling source file '../Source/Main.cpp')
+  
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Audio\PluginManager.h(43,41): warning C4100: 'progress': unreferenced parameter [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+  (compiling source file '../Source/Main.cpp')
+  
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Timeline\TimelineComponent.cpp(409,1): warning C4702: unreachable code [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]

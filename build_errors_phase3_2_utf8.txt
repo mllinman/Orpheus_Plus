@@ -1,0 +1,53 @@
+﻿MSBuild version 17.14.23+b0019275e for .NET Framework
+
+  Checking File Globs
+  OrpheusPlus_rc_lib.vcxproj -> C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus_rc_lib.dir\Debug\OrpheusPlus_rc_lib.lib
+  Main.cpp
+  MainComponent.cpp
+  MixerPanel.cpp
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\StemSeparation\StemSeparator.h(45,51): warning C4100: 'progress': unreferenced parameter [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+  (compiling source file '../Source/UI/MixerPanel.cpp')
+  
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\StemSeparation\StemSeparator.h(45,51): warning C4100: 'progress': unreferenced parameter [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+  (compiling source file '../Source/MainComponent.cpp')
+  
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\StemSeparation\StemSeparator.h(46,73): warning C4100: 'result': unreferenced parameter [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+  (compiling source file '../Source/UI/MixerPanel.cpp')
+  
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\StemSeparation\StemSeparator.h(46,73): warning C4100: 'result': unreferenced parameter [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+  (compiling source file '../Source/MainComponent.cpp')
+  
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\StemSeparation\StemSeparator.h(47,63): warning C4100: 'error': unreferenced parameter [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+  (compiling source file '../Source/UI/MixerPanel.cpp')
+  
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\StemSeparation\StemSeparator.h(47,63): warning C4100: 'error': unreferenced parameter [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+  (compiling source file '../Source/MainComponent.cpp')
+  
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\StemSeparation\StemSeparator.h(45,51): warning C4100: 'progress': unreferenced parameter [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+  (compiling source file '../Source/Main.cpp')
+  
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\StemSeparation\StemSeparator.h(46,73): warning C4100: 'result': unreferenced parameter [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+  (compiling source file '../Source/Main.cpp')
+  
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\StemSeparation\StemSeparator.h(47,63): warning C4100: 'error': unreferenced parameter [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+  (compiling source file '../Source/Main.cpp')
+  
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Audio\PluginManager.h(43,71): warning C4100: 'currentPlugin': unreferenced parameter [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+  (compiling source file '../Source/UI/MixerPanel.cpp')
+  
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Audio\PluginManager.h(43,41): warning C4100: 'progress': unreferenced parameter [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+  (compiling source file '../Source/UI/MixerPanel.cpp')
+  
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\UI\MixerPanel.cpp(5,10): error C1083: Cannot open include file: 'ClipGeneratorProcessor.h': No such file or directory [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Audio\PluginManager.h(43,71): warning C4100: 'currentPlugin': unreferenced parameter [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+  (compiling source file '../Source/MainComponent.cpp')
+  
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Audio\PluginManager.h(43,41): warning C4100: 'progress': unreferenced parameter [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+  (compiling source file '../Source/MainComponent.cpp')
+  
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Audio\PluginManager.h(43,71): warning C4100: 'currentPlugin': unreferenced parameter [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+  (compiling source file '../Source/Main.cpp')
+  
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Audio\PluginManager.h(43,41): warning C4100: 'progress': unreferenced parameter [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+  (compiling source file '../Source/Main.cpp')
+  

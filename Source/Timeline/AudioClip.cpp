@@ -5,6 +5,7 @@ AudioClip::AudioClip(const juce::File& f, double start)
 {
     startTime = start;
     name = f.getFileNameWithoutExtension();
+    stretcher.reset(44100.0, 2); // Default, will be updated on load
 }
 
 AudioClip::~AudioClip()
@@ -23,6 +24,7 @@ std::unique_ptr<Clip> AudioClip::clone() const
     copy->gain = gain;
     copy->muted = muted;
     copy->loopEnabled = loopEnabled;
+    copy->pitchShift = pitchShift;
 
     if (isLoaded)
     {
@@ -58,6 +60,7 @@ void AudioClip::loadAudioData(juce::AudioFormatManager& formatManager)
         
         duration = lengthInSamples / sampleRate;
         isLoaded = true;
+        stretcher.reset(sampleRate, reader->numChannels);
 
         // Try to detect BPM from filename (e.g. "loop_120bpm.wav")
         auto filename = sourceFile.getFileNameWithoutExtension().toLowerCase();

@@ -43,6 +43,8 @@ target_sources(OrpheusPlus PRIVATE
     Source/Audio/TrackFaderProcessor.cpp
     Source/Audio/MixerProcessor.cpp
     Source/Audio/PluginManager.cpp
+    Source/Audio/MidiLearnManager.cpp
+    Source/Audio/TimeStretcher.cpp
 
     # Timeline
     Source/Timeline/TimelineComponent.cpp

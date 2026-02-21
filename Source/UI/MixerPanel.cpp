@@ -1,6 +1,8 @@
 #include <JuceHeader.h>
 #include "MixerPanel.h"
 #include "../Audio/PluginManager.h"
+#include "../Audio/MidiLearnManager.h"
+#include "../Audio/ClipGeneratorProcessor.h"
 #include "../Audio/TrackFaderProcessor.h"
 
 //==============================================================================
