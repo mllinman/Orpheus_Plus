@@ -25,12 +25,12 @@ private:
     juce::ApplicationCommandManager& commandManager;
 
     // Transport buttons
-    juce::TextButton rewindButton    { "|◀" };
-    juce::TextButton playButton      { "▶" };
-    juce::TextButton stopButton      { "■" };
-    juce::TextButton recordButton    { "●" };
-    juce::TextButton loopButton      { "⟳" };
-    juce::TextButton settingsButton  { "⚙" };
+    juce::TextButton rewindButton    { "Rewind" };
+    juce::TextButton playButton      { "Play" };
+    juce::TextButton stopButton      { "Stop" };
+    juce::TextButton recordButton    { "Record" };
+    juce::TextButton loopButton      { "Loop" };
+    juce::TextButton settingsButton  { "Settings" };
 
     // BPM
     juce::Label  bpmLabel         { {}, "BPM" };

@@ -1,21 +1,77 @@
 #include "PianoRollComponent.h"
+#include "../UI/OrpheusLookAndFeel.h"
 
 PianoRollComponent::PianoRollComponent(AppState& s, AudioEngine& e)
     : appState(s), audioEngine(e)
 {
     setOpaque(true);
     setWantsKeyboardFocus(true);
+    
+    liveNoteState.fill(false);
+    liveNoteVelocity.fill(0);
+
+    // Enable MIDI input from all available devices
+    enableMidiInput();
+
     startTimerHz(30);
 }
 
-PianoRollComponent::~PianoRollComponent() { stopTimer(); }
+PianoRollComponent::~PianoRollComponent()
+{
+    stopTimer();
+    // Disable MIDI input on all devices
+    auto& dm = audioEngine.getDeviceManager();
+    for (auto& dev : juce::MidiInput::getAvailableDevices())
+        dm.removeMidiInputDeviceCallback(dev.identifier, this);
+}
+
+void PianoRollComponent::enableMidiInput()
+{
+    auto& dm = audioEngine.getDeviceManager();
+    auto devices = juce::MidiInput::getAvailableDevices();
+
+    for (auto& dev : devices)
+    {
+        if (!dm.isMidiInputDeviceEnabled(dev.identifier))
+            dm.setMidiInputDeviceEnabled(dev.identifier, true);
+
+        dm.addMidiInputDeviceCallback(dev.identifier, this);
+    }
+}
+
+//==============================================================================
+// MIDI Input Callback — called on the MIDI thread
+//==============================================================================
+void PianoRollComponent::handleIncomingMidiMessage(juce::MidiInput*, const juce::MidiMessage& message)
+{
+    if (message.isNoteOn())
+    {
+        const juce::ScopedLock sl(midiStateLock);
+        int note = message.getNoteNumber();
+        if (note >= 0 && note < 128)
+        {
+            liveNoteState[note] = true;
+            liveNoteVelocity[note] = message.getVelocity();
+        }
+    }
+    else if (message.isNoteOff())
+    {
+        const juce::ScopedLock sl(midiStateLock);
+        int note = message.getNoteNumber();
+        if (note >= 0 && note < 128)
+        {
+            liveNoteState[note] = false;
+            liveNoteVelocity[note] = 0;
+        }
+    }
+}
 
 void PianoRollComponent::resized() {}
 
 void PianoRollComponent::paint(juce::Graphics& g)
 {
     auto bounds = getLocalBounds();
-    g.fillAll(juce::Colour(0xff12121e));
+    g.fillAll(OrpheusLookAndFeel::bgPanel());
 
     auto pianoArea = bounds.removeFromLeft(PIANO_KEY_WIDTH);
     paintPianoKeys(g, pianoArea);
@@ -28,21 +84,52 @@ void PianoRollComponent::paintPianoKeys(juce::Graphics& g, juce::Rectangle<int> 
 {
     static const bool blackKeys[12] = { false,true,false,true,false,false,true,false,true,false,true,false };
 
+    // Snapshot the live state (thread-safe copy)
+    std::array<bool, 128> activeKeys;
+    std::array<uint8_t, 128> activeVel;
+    {
+        const juce::ScopedLock sl(midiStateLock);
+        activeKeys = liveNoteState;
+        activeVel  = liveNoteVelocity;
+    }
+
     for (int note = 0; note < NUM_NOTES; ++note)
     {
         int   y   = pitchToPixel(note) - (int)verticalOffset;
         bool  isBlack = blackKeys[note % 12];
         float keyW = isBlack ? area.getWidth() * 0.6f : (float)area.getWidth();
 
-        g.setColour(isBlack ? juce::Colour(0xff222233) : juce::Colour(0xffddeeff));
+        bool isActive = activeKeys[note];
+
+        if (isActive)
+        {
+            // Glowing highlight when key is pressed
+            float intensity = activeVel[note] / 127.0f;
+            juce::Colour glow = OrpheusLookAndFeel::accentPrimary().interpolatedWith(
+                OrpheusLookAndFeel::accentSecondary(), 0.3f);
+            g.setColour(glow.withAlpha(0.6f + intensity * 0.4f));
+        }
+        else
+        {
+            g.setColour(isBlack ? juce::Colour(0xff222233) : juce::Colour(0xffddeeff));
+        }
         g.fillRect(area.getX(), y, (int)keyW, NOTE_HEIGHT);
-        g.setColour(juce::Colour(0xff000000));
+
+        // Key border
+        g.setColour(juce::Colour(0xff000000).withAlpha(isActive ? 0.2f : 1.0f));
         g.drawRect(area.getX(), y, (int)keyW, NOTE_HEIGHT);
+
+        // Glow outline on active keys
+        if (isActive)
+        {
+            g.setColour(OrpheusLookAndFeel::accentPrimary().withAlpha(0.7f));
+            g.drawRect(area.getX(), y, (int)keyW, NOTE_HEIGHT, 2);
+        }
 
         // Note name at C notes
         if (note % 12 == 0)
         {
-            g.setColour(juce::Colours::grey);
+            g.setColour(isActive ? juce::Colours::white : juce::Colours::grey);
             g.setFont(juce::Font(9.0f));
             g.drawText("C" + juce::String(note / 12 - 1),
                        area.getX() + 2, y, area.getWidth() - 4, NOTE_HEIGHT,
@@ -57,6 +144,13 @@ void PianoRollComponent::paintGrid(juce::Graphics& g, juce::Rectangle<int> area)
     double secondsPerBeat = 60.0 / bpm;
     int    totalBeats    = 64;
 
+    // Snapshot active keys for lane highlighting
+    std::array<bool, 128> activeKeys;
+    {
+        const juce::ScopedLock sl(midiStateLock);
+        activeKeys = liveNoteState;
+    }
+
     // Horizontal lane lines
     for (int note = 0; note < NUM_NOTES; ++note)
     {
@@ -64,12 +158,20 @@ void PianoRollComponent::paintGrid(juce::Graphics& g, juce::Rectangle<int> area)
         bool isBlack = (note % 12 == 1 || note % 12 == 3 || note % 12 == 6 ||
                         note % 12 == 8 || note % 12 == 10);
 
-        g.setColour(isBlack ? juce::Colour(0xff0f0f1f) : juce::Colour(0xff1a1a2e));
+        if (activeKeys[note])
+        {
+            // Highlight the entire lane when key is pressed
+            g.setColour(OrpheusLookAndFeel::accentPrimary().withAlpha(0.12f));
+        }
+        else
+        {
+            g.setColour(isBlack ? juce::Colour(0xff0f0f1f) : OrpheusLookAndFeel::bgSurface());
+        }
         g.fillRect(area.getX(), y, area.getWidth(), NOTE_HEIGHT);
 
         if (note % 12 == 0)
         {
-            g.setColour(juce::Colour(0xff2a2a4a));
+            g.setColour(OrpheusLookAndFeel::borderDefault());
             g.drawHorizontalLine(y + NOTE_HEIGHT, (float)area.getX(), (float)area.getRight());
         }
     }
@@ -81,7 +183,8 @@ void PianoRollComponent::paintGrid(juce::Graphics& g, juce::Rectangle<int> area)
         if (x < area.getX() || x > area.getRight()) continue;
 
         bool isBar = (beat % 4 == 0);
-        g.setColour(isBar ? juce::Colour(0xff533483) : juce::Colour(0xff2a2a4a));
+        g.setColour(isBar ? OrpheusLookAndFeel::accentPrimary().withAlpha(0.35f) 
+                          : OrpheusLookAndFeel::borderDefault());
         g.drawVerticalLine(x, (float)area.getY(), (float)area.getBottom());
     }
 
@@ -127,13 +230,18 @@ void PianoRollComponent::paintPlayhead(juce::Graphics& g)
                    (audioEngine.getBpm() / 60.0);
     int x = PIANO_KEY_WIDTH + beatToPixel(beats) - (int)horizontalOffset;
 
-    g.setColour(juce::Colour(0xffe94560));
+    // Playhead with glow
+    g.setColour(OrpheusLookAndFeel::accentPrimary().withAlpha(0.3f));
+    g.drawVerticalLine(x - 1, 0.0f, (float)getHeight());
+    g.drawVerticalLine(x + 1, 0.0f, (float)getHeight());
+    g.setColour(OrpheusLookAndFeel::accentPrimary());
     g.drawVerticalLine(x, 0.0f, (float)getHeight());
 }
 
 void PianoRollComponent::timerCallback()
 {
-    if (audioEngine.isPlaying()) repaint();
+    // Always repaint to update live key highlights and playhead
+    repaint();
 }
 
 //──────────────────────────────────────────────────────────────────────────────
@@ -182,8 +290,7 @@ void PianoRollComponent::mouseDown(const juce::MouseEvent& e)
         // Deselect all
         for (auto* other : notes) other->selected = false;
 
-        // Add new note if double clicked or if we enforce drawing mode
-        // For now, let's say single click on empty space creates a note
+        // Add new note
         auto* newNote       = notes.add(new MidiNote());
         newNote->pitch      = pitch;
         newNote->startBeat  = qBeat;
@@ -211,7 +318,6 @@ void PianoRollComponent::mouseDrag(const juce::MouseEvent& e)
     }
     else if (draggingNote)
     {
-        // Simple move (doesn't handle multi-selection move yet)
         draggingNote->pitch = pitch;
         draggingNote->startBeat = qBeat;
         repaint();

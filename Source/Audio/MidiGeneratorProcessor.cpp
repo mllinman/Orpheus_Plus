@@ -48,7 +48,7 @@ void MidiGeneratorProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce
             {
                 // Simple version: iterate through the sequence
                 // In a production DAW, we'd use a more efficient iterator
-                auto& sequence = mc->sequence;
+                auto& sequence = mc->midiData;
                 for (int i = 0; i < sequence.getNumEvents(); ++i)
                 {
                     auto* event = sequence.getEventPointer(i);

@@ -23,6 +23,30 @@ public:
 
     void systemRequestedQuit() override
     {
+        if (mainWindow != nullptr)
+        {
+            auto* mc = dynamic_cast<MainComponent*>(mainWindow->getContentComponent());
+            if (mc != nullptr && mc->hasUnsavedChanges())
+            {
+                auto options = juce::MessageBoxOptions()
+                    .withIconType(juce::MessageBoxIconType::QuestionIcon)
+                    .withTitle("Unsaved Changes")
+                    .withMessage("You have unsaved changes. Do you want to save before quitting?")
+                    .withButton("Save")
+                    .withButton("Don't Save")
+                    .withButton("Cancel");
+
+                juce::AlertWindow::showAsync(options, [this, mc](int result)
+                {
+                    if (result == 0 || result == 3) return;  // Cancel or closed
+                    if (result == 1)  // Save
+                        mc->getCommandManager().invokeDirectly(MainComponent::cmdSaveProject, false);
+                    // result == 2 => Don't Save
+                    quit();
+                });
+                return;
+            }
+        }
         quit();
     }
 
@@ -42,8 +66,8 @@ public:
             setContentOwned(new MainComponent(), true);
 
             setResizable(true, true);
-            setResizeLimits(600, 400, 10000, 10000);
-            centreWithSize(800, 600);
+            setResizeLimits(800, 500, 10000, 10000);
+            centreWithSize(1280, 800);
             setVisible(true);
         }
 

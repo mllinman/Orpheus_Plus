@@ -40,6 +40,7 @@ target_sources(OrpheusPlus PRIVATE
     # Audio Engine
     Source/Audio/AudioEngine.cpp
     Source/Audio/ClipGeneratorProcessor.cpp
+    Source/Audio/TrackProcessor.cpp
     Source/Audio/TrackFaderProcessor.cpp
     Source/Audio/MixerProcessor.cpp
     Source/Audio/PluginManager.cpp
@@ -82,6 +83,10 @@ target_sources(OrpheusPlus PRIVATE
     Source/UI/MixerPanel.cpp
     Source/UI/SpectrumAnalyzer.cpp
     Source/UI/PluginBrowser.cpp
+    Source/UI/TrackSettingsPanel.cpp
+    Source/UI/StemSeparatorPanel.cpp
+    Source/UI/AudioCleanupPanel.cpp
+    Source/UI/AutoTunePanel.cpp
 
 )
 

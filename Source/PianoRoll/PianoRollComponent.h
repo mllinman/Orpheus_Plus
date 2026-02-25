@@ -15,6 +15,7 @@ struct MidiNote
 
 //==============================================================================
 class PianoRollComponent : public juce::Component,
+                           public juce::MidiInputCallback,
                            private juce::Timer
 {
 public:
@@ -29,6 +30,9 @@ public:
     void mouseUp(const juce::MouseEvent&) override;
     void mouseWheelMove(const juce::MouseEvent&, const juce::MouseWheelDetails&) override;
     bool keyPressed(const juce::KeyPress& key) override;
+
+    // MIDI Input
+    void handleIncomingMidiMessage(juce::MidiInput* source, const juce::MidiMessage& message) override;
 
     void loadMidiSequence(const juce::MidiMessageSequence& seq);
     juce::MidiMessageSequence getMidiSequence() const;
@@ -46,6 +50,7 @@ private:
     void paintGrid(juce::Graphics&, juce::Rectangle<int>);
     void paintNotes(juce::Graphics&, juce::Rectangle<int>);
     void paintPlayhead(juce::Graphics&);
+    void enableMidiInput();
 
     MidiNote* getNoteAt(double beat, int pitch);
     juce::Rectangle<float> getNoteBounds(const MidiNote& note) const;
@@ -73,7 +78,12 @@ private:
     double  horizontalOffset  = 0.0;
     double  quantizeDivision  = 0.25; // 1/16th note
 
-    juce::Colour noteColour { 0xff4fc3f7 };
+    juce::Colour noteColour { 0xff6c5ce7 };  // Legacy accent purple
+
+    // Live MIDI input state — tracks which keys are currently pressed
+    std::array<bool, 128>  liveNoteState {};    // true = key held down
+    std::array<uint8_t, 128> liveNoteVelocity {}; // velocity of held key
+    juce::CriticalSection  midiStateLock;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PianoRollComponent)
 };

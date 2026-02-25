@@ -9,6 +9,15 @@ public:
     AppState();
     ~AppState() override;
 
+    //── Track Info ────────────────────────────────────────────────────────────
+    struct TrackInfo {
+        enum class Type { Audio, Midi };
+        juce::String  name;
+        Type          type   = Type::Audio;
+        juce::Colour  colour = juce::Colour(0xff6c5ce7);
+        int           height = 80;
+    };
+
     //── Project state ────────────────────────────────────────────────────────
     bool isDirty() const { return dirty; }
     void markDirty()     { dirty = true; sendChangeMessage(); }
@@ -34,6 +43,18 @@ public:
     void removeTrack(int index);
     int  getNumTracks() const;
 
+    std::vector<TrackInfo>& getTracks() { return tracks; }
+    const std::vector<TrackInfo>& getTracks() const { return tracks; }
+
+    void moveTrack(int fromIndex, int toIndex);
+    void duplicateTrack(int index);
+    void renameTrack(int index, const juce::String& newName);
+    void setTrackColor(int index, juce::Colour col);
+    void setTrackHeight(int index, int h);
+
+    int  getSelectedTrackIndex() const       { return selectedTrackIndex; }
+    void setSelectedTrackIndex(int i)        { selectedTrackIndex = i; sendChangeMessage(); }
+
     //── Undo / Redo ──────────────────────────────────────────────────────────
     void undo();
     void redo();
@@ -55,6 +76,9 @@ private:
     int          timeSigNum  = 4;
     int          timeSigDen  = 4;
     int          sampleRate  = 48000;
+    int          selectedTrackIndex = -1;
+
+    std::vector<TrackInfo> tracks;
 
     juce::UndoManager undoManager { 100 };
     juce::ValueTree   valueTree   { "OrpheusProject" };
