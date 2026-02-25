@@ -13,6 +13,13 @@ PianoRollComponent::PianoRollComponent(AppState& s, AudioEngine& e)
     // Enable MIDI input from all available devices
     enableMidiInput();
 
+    horizontalLayout.setItemLayout(0, 30, 200, keyboardWidth); // Keyboard keys (fixed area)
+    horizontalLayout.setItemLayout(1, 8, 8, 8);               // Resizer (fixed 8px)
+    horizontalLayout.setItemLayout(2, -0.1, -1.0, -0.7);      // Note Grid (flexible)
+
+    resizerBar = std::make_unique<juce::StretchableLayoutResizerBar>(&horizontalLayout, 1, false);
+    addAndMakeVisible(resizerBar.get());
+
     startTimerHz(30);
 }
 
@@ -66,14 +73,30 @@ void PianoRollComponent::handleIncomingMidiMessage(juce::MidiInput*, const juce:
     }
 }
 
-void PianoRollComponent::resized() {}
+void PianoRollComponent::resized()
+{
+    auto bounds = getLocalBounds();
+    
+    juce::Component dummyLeft, dummyRight;
+    juce::Component* hComps[] = { &dummyLeft, resizerBar.get(), &dummyRight };
+    
+    horizontalLayout.layOutComponents(hComps, 3, bounds.getX(), bounds.getY(), bounds.getWidth(), bounds.getHeight(), false, true);
+    
+    // We don't actually move any child components because we paint them directly,
+    // but we need to update the dynamic `keyboardWidth` property based on the resizer's calculation.
+    keyboardWidth = dummyLeft.getWidth();
+}
 
 void PianoRollComponent::paint(juce::Graphics& g)
 {
     auto bounds = getLocalBounds();
     g.fillAll(OrpheusLookAndFeel::bgPanel());
 
-    auto pianoArea = bounds.removeFromLeft(PIANO_KEY_WIDTH);
+    auto pianoArea = bounds.removeFromLeft(keyboardWidth);
+    
+    // Account for resizer bar width in visual painting
+    bounds.removeFromLeft(8);
+
     paintPianoKeys(g, pianoArea);
     paintGrid(g, bounds);
     paintNotes(g, bounds);
@@ -228,7 +251,7 @@ void PianoRollComponent::paintPlayhead(juce::Graphics& g)
 {
     double beats = audioEngine.getPlayheadPosition() *
                    (audioEngine.getBpm() / 60.0);
-    int x = PIANO_KEY_WIDTH + beatToPixel(beats) - (int)horizontalOffset;
+    int x = keyboardWidth + 8 + beatToPixel(beats) - (int)horizontalOffset;
 
     // Playhead with glow
     g.setColour(OrpheusLookAndFeel::accentPrimary().withAlpha(0.3f));
@@ -249,11 +272,11 @@ void PianoRollComponent::timerCallback()
 //──────────────────────────────────────────────────────────────────────────────
 void PianoRollComponent::mouseDown(const juce::MouseEvent& e)
 {
-    if (e.x < PIANO_KEY_WIDTH) return;
+    if (e.x < keyboardWidth + 8) return;
     grabKeyboardFocus();
 
     int pitch = pixelToPitch(e.y + (int)verticalOffset);
-    double beat = pixelToBeat(e.x - PIANO_KEY_WIDTH + (int)horizontalOffset);
+    double beat = pixelToBeat(e.x - (keyboardWidth + 8) + (int)horizontalOffset);
     double qBeat = std::round(beat / quantizeDivision) * quantizeDivision;
 
     auto* n = getNoteAt(beat, pitch);
@@ -276,7 +299,7 @@ void PianoRollComponent::mouseDown(const juce::MouseEvent& e)
 
         // Check if we clicked the right edge for resizing
         auto bounds = getNoteBounds(*n);
-        float rightEdge = bounds.getRight() + PIANO_KEY_WIDTH - (float)horizontalOffset;
+        float rightEdge = bounds.getRight() + keyboardWidth + 8 - (float)horizontalOffset;
         
         if (std::abs(e.x - rightEdge) < 10.0f) {
             resizingNote = n;
@@ -304,10 +327,10 @@ void PianoRollComponent::mouseDown(const juce::MouseEvent& e)
 
 void PianoRollComponent::mouseDrag(const juce::MouseEvent& e)
 {
-    if (e.x < PIANO_KEY_WIDTH) return;
+    if (e.x < keyboardWidth + 8) return;
 
     int pitch = pixelToPitch(e.y + (int)verticalOffset);
-    double beat = pixelToBeat(e.x - PIANO_KEY_WIDTH + (int)horizontalOffset);
+    double beat = pixelToBeat(e.x - (keyboardWidth + 8) + (int)horizontalOffset);
     double qBeat = std::round(beat / quantizeDivision) * quantizeDivision;
 
     if (resizingNote)

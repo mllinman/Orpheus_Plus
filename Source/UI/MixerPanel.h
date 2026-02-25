@@ -44,6 +44,10 @@ private:
     juce::Viewport channelViewport;
     juce::Component channelContainer;
 
+    int masterStripWidth = 100;
+    juce::StretchableLayoutManager horizontalLayout;
+    std::unique_ptr<juce::StretchableLayoutResizerBar> resizerBar;
+
     struct ChannelStrip : public juce::Component
     {
         ChannelStrip(int idx, AudioEngine& e);
@@ -85,7 +89,27 @@ private:
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ChannelStrip)
     };
 
+    // A specialized strip for the Master bus
+    struct MasterStrip : public juce::Component
+    {
+        MasterStrip(AudioEngine& e);
+        ~MasterStrip() override;
+
+        void resized() override;
+        void paint(juce::Graphics&) override;
+
+        AudioEngine& engine;
+        
+    private:
+        MidiLearnSlider  fader;
+        juce::Label      nameLabel;
+        float peakL = 0.0f, peakR = 0.0f;
+
+        JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MasterStrip)
+    };
+
     juce::OwnedArray<ChannelStrip> strips;
+    std::unique_ptr<MasterStrip>   masterStrip;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MixerPanel)
 };

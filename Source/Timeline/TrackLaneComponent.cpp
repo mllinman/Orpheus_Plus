@@ -108,7 +108,7 @@ TrackLaneComponent::~TrackLaneComponent() {}
 
 void TrackLaneComponent::resized()
 {
-    auto header = getLocalBounds().removeFromLeft(HEADER_WIDTH).reduced(4);
+    auto header = getLocalBounds().removeFromLeft(timeline.getTrackHeaderWidth()).reduced(4);
 
     trackNameLabel.setBounds(header.removeFromTop(18));
     header.removeFromTop(2);
@@ -133,17 +133,27 @@ void TrackLaneComponent::paint(juce::Graphics& g)
 {
     auto& trackInfo = audioEngine.getTrackInfo(trackIndex);
     auto bounds = getLocalBounds();
+    int headerWidth = timeline.getTrackHeaderWidth();
 
     // Track background
     g.setColour(juce::Colour(0xff1e1e32));
     g.fillRect(bounds);
 
     // Header background
-    auto header = bounds.removeFromLeft(HEADER_WIDTH);
+    auto header = bounds.removeFromLeft(headerWidth);
     g.setColour(trackInfo.colour.withBrightness(0.25f));
     g.fillRect(header);
     g.setColour(trackInfo.colour.withAlpha(0.8f));
     g.drawLine(0, 0, 0, (float)getHeight(), 3.0f);
+
+    if (isDragHovering)
+    {
+        g.setColour(juce::Colours::white);
+        if (hoverIsTopHalf)
+            g.fillRect(0, 0, getWidth(), 2);
+        else
+            g.fillRect(0, getHeight() - 2, getWidth(), 2);
+    }
 
     // Divider line
     g.setColour(juce::Colour(0xff0f0f1a));
@@ -237,7 +247,7 @@ void TrackLaneComponent::paintAutomationLane(juce::Graphics& g, juce::Rectangle<
 
     for (const auto& pt : targetCurve->points)
     {
-        float px = (float)timeline.timeToAbsolutePixel(pt.time) - HEADER_WIDTH;
+        float px = (float)timeline.timeToAbsolutePixel(pt.time) - timeline.getTrackHeaderWidth();
         float norm = pt.value;
         if (paramID == "vol") norm = pt.value / 1.5f;
         else if (paramID == "pan") norm = (pt.value + 1.0f) / 2.0f;
@@ -257,7 +267,7 @@ void TrackLaneComponent::paintAutomationLane(juce::Graphics& g, juce::Rectangle<
     // Draw points
     for (const auto& pt : targetCurve->points)
     {
-        float px = (float)timeline.timeToAbsolutePixel(pt.time) - HEADER_WIDTH;
+        float px = (float)timeline.timeToAbsolutePixel(pt.time) - timeline.getTrackHeaderWidth();
         float norm = pt.value;
         if (paramID == "vol") norm = pt.value / 1.5f;
         else if (paramID == "pan") norm = (pt.value + 1.0f) / 2.0f;
@@ -278,7 +288,7 @@ juce::Rectangle<float> TrackLaneComponent::getClipScreenBounds(const Clip& clip)
     float  h  = (float)(getHeight() - 8);
     
     // Note: Assuming timeToPixel returns absolute timeline pixel.
-    return { (float)(startPixel - HEADER_WIDTH), y, (float)(endPixel - startPixel), h }; 
+    return { (float)(startPixel - timeline.getTrackHeaderWidth()), y, (float)(endPixel - startPixel), h }; 
 }
 
 TrackLaneComponent::DragMode TrackLaneComponent::getZoneAt(int x, int y, Clip* clip)
@@ -286,12 +296,12 @@ TrackLaneComponent::DragMode TrackLaneComponent::getZoneAt(int x, int y, Clip* c
     if (!clip) return DragMode::None;
 
     // x is absolute pixel in TrackLane (inside container)
-    // Clip drawing starts at HEADER_WIDTH?
-    // In getClipScreenBounds, we return (startPixel - HEADER_WIDTH).
-    // So visual X of clip start is timeToAbsolutePixel(start) - HEADER_WIDTH.
+    // Clip drawing starts at timeline.getTrackHeaderWidth()?
+    // In getClipScreenBounds, we return (startPixel - timeline.getTrackHeaderWidth()).
+    // So visual X of clip start is timeToAbsolutePixel(start) - timeline.getTrackHeaderWidth().
     
-    int clipX = timeline.timeToAbsolutePixel(clip->startTime) - HEADER_WIDTH;
-    int clipW = timeline.timeToAbsolutePixel(clip->duration) - HEADER_WIDTH; // wait, duration is relative? 
+    int clipX = timeline.timeToAbsolutePixel(clip->startTime) - timeline.getTrackHeaderWidth();
+    int clipW = timeline.timeToAbsolutePixel(clip->duration) - timeline.getTrackHeaderWidth(); // wait, duration is relative? 
     // timeToAbsolutePixel(dur) = Header + dur*p.
     // So length is (Header+dur*p) - Header = dur*p.
     // Or just:
@@ -338,7 +348,78 @@ void TrackLaneComponent::mouseMoved(const juce::MouseEvent& e)
 
 void TrackLaneComponent::mouseDown(const juce::MouseEvent& e)
 {
-    if (e.x < HEADER_WIDTH) return;
+    int headerWidth = timeline.getTrackHeaderWidth();
+
+    if (e.mods.isRightButtonDown())
+    {
+        // Right click inside track area or header
+        juce::PopupMenu m;
+        m.addItem(1, "Change track options...");
+        m.addItem(2, "Reset track to empty");
+        m.addItem(3, "Reset playhead to beginning");
+        m.addSeparator();
+        m.addItem(4, "Delete track");
+
+        m.showMenuAsync(juce::PopupMenu::Options{}, [this](int result)
+        {
+            if (result == 1)
+            {
+                auto* alert = new juce::AlertWindow("Track Options", "Change track name:", juce::MessageBoxIconType::NoIcon);
+                alert->addTextEditor("name", audioEngine.getTrackInfo(trackIndex).name, "Track Name:");
+                alert->addButton("OK", 1, juce::KeyPress(juce::KeyPress::returnKey));
+                alert->addButton("Cancel", 0, juce::KeyPress(juce::KeyPress::escapeKey));
+
+                alert->enterModalState(true, juce::ModalCallbackFunction::create([this, alert](int res) {
+                    if (res == 1)
+                    {
+                        auto newName = alert->getTextEditorContents("name");
+                        if (newName.isNotEmpty())
+                        {
+                            appState.renameTrack(trackIndex, newName);
+                            audioEngine.getTrackInfo(trackIndex).name = newName;
+                            timeline.repaint();
+                        }
+                    }
+                    delete alert;
+                }));
+            }
+            else if (result == 2)
+            {
+                // Reset track to empty (delete all clips and automation)
+                auto& engineTrack = audioEngine.getTrackInfo(trackIndex);
+                engineTrack.clips.clear();
+                if (engineTrack.type == OrpheusTrackInfo::Type::Midi)
+                {
+                    engineTrack.takes.clear();
+                }
+                timeline.repaint();
+            }
+            else if (result == 3)
+            {
+                // Reset playhead to first frame/clip
+                auto& engineTrack = audioEngine.getTrackInfo(trackIndex);
+                double earliest = 0.0;
+                if (!engineTrack.clips.isEmpty())
+                {
+                    earliest = engineTrack.clips.getFirst()->startTime;
+                    for (auto* c : engineTrack.clips)
+                        earliest = juce::jmin(earliest, c->startTime);
+                }
+                audioEngine.setPlayheadPosition(earliest);
+                timeline.repaint();
+            }
+            else if (result == 4)
+            {
+                // Delete track
+                appState.removeTrack(trackIndex);
+                audioEngine.removeTrack(trackIndex);
+                timeline.rebuildTracks();
+            }
+        });
+        return;
+    }
+
+    if (e.x < headerWidth) return;
 
     auto& trackInfo = audioEngine.getTrackInfo(trackIndex);
 
@@ -437,7 +518,7 @@ void TrackLaneComponent::mouseDown(const juce::MouseEvent& e)
             int hitIndex = -1;
             for (int j = 0; j < (int)targetCurve->points.size(); ++j)
             {
-                float px = (float)timeline.timeToAbsolutePixel(targetCurve->points[j].time) - HEADER_WIDTH;
+                float px = (float)timeline.timeToAbsolutePixel(targetCurve->points[j].time) - timeline.getTrackHeaderWidth();
                 float norm = targetCurve->points[j].value;
                 if (currentAutomationParam == "vol") norm = targetCurve->points[j].value / 1.5f;
                 else if (currentAutomationParam == "pan") norm = (targetCurve->points[j].value + 1.0f) / 2.0f;
@@ -553,24 +634,24 @@ void TrackLaneComponent::mouseDown(const juce::MouseEvent& e)
             // Right Click Menu on Empty Space
             if (e.mods.isRightButtonDown())
             {
-                double clickTime = timeline.absolutePixelToTime(e.x);
+                double menuClickTime = timeline.absolutePixelToTime(e.x);
                 juce::PopupMenu menu;
                 menu.addItem(1, "Add Audio Clip...");
                 menu.addItem(2, "Add MIDI Clip");
-                menu.showMenuAsync(juce::PopupMenu::Options{}, [this, clickTime](int result) {
+                menu.showMenuAsync(juce::PopupMenu::Options{}, [this, menuClickTime](int result) {
                     if (result == 1)
                     {
                         auto chooser = std::make_shared<juce::FileChooser>("Select audio file",
                             juce::File{}, "*.wav;*.aiff;*.mp3;*.flac");
                         chooser->launchAsync(juce::FileBrowserComponent::openMode |
                                              juce::FileBrowserComponent::canSelectFiles,
-                            [this, clickTime, chooser](const juce::FileChooser& fc) {
+                            [this, menuClickTime, chooser](const juce::FileChooser& fc) {
                                 if (fc.getResult().existsAsFile())
-                                    addAudioClip(fc.getResult(), clickTime);
+                                    addAudioClip(fc.getResult(), menuClickTime);
                             });
                     }
                     else if (result == 2)
-                        addMidiClip(clickTime);
+                        addMidiClip(menuClickTime);
                 });
             }
         }
@@ -579,7 +660,23 @@ void TrackLaneComponent::mouseDown(const juce::MouseEvent& e)
 
 void TrackLaneComponent::mouseDrag(const juce::MouseEvent& e)
 {
-    if (!draggingClip && currentAutomationParam.isEmpty()) return;
+    int headerWidth = timeline.getTrackHeaderWidth();
+
+    if (e.x < headerWidth && !e.mods.isRightButtonDown())
+    {
+        if (auto* container = juce::DragAndDropContainer::findParentDragContainerFor(this))
+        {
+            if (!container->isDragAndDropActive())
+            {
+                juce::String dragDescription = "TrackLane:" + juce::String(trackIndex);
+                auto dragImage = createComponentSnapshot(getLocalBounds().withWidth(headerWidth));
+                container->startDragging(dragDescription, this, dragImage);
+            }
+        }
+        return;
+    }
+
+    if (!draggingClip && currentAutomationParam.isEmpty() && draggingTakeIndex == -1) return;
 
     auto& trackInfo = audioEngine.getTrackInfo(trackIndex);
     
@@ -789,7 +886,7 @@ void TrackLaneComponent::mouseUp(const juce::MouseEvent& e)
 
 void TrackLaneComponent::mouseDoubleClick(const juce::MouseEvent& e)
 {
-    if (e.x < HEADER_WIDTH) return;
+    if (e.x < timeline.getTrackHeaderWidth()) return;
 
     double clickTime = timeline.snapToGrid(timeline.absolutePixelToTime(e.x));
     if (auto* clip = getClipAt(timeline.absolutePixelToTime(e.x))) // Check unsnapped for hit test
@@ -846,6 +943,64 @@ void TrackLaneComponent::addMidiClip(double startTime, double duration)
     auto* clip = new MidiClip(startTime, duration);
     audioEngine.getTrackInfo(trackIndex).clips.add(clip);
     repaint();
+}
+
+//──────────────────────────────────────────────────────────────────────────────
+// Drag and drop reordering
+//──────────────────────────────────────────────────────────────────────────────
+bool TrackLaneComponent::isInterestedInDragSource(const SourceDetails& dragSourceDetails)
+{
+    return dragSourceDetails.description.toString().startsWith("TrackLane:");
+}
+
+void TrackLaneComponent::itemDragEnter(const SourceDetails& dragSourceDetails)
+{
+    isDragHovering = true;
+    repaint();
+}
+
+void TrackLaneComponent::itemDragMove(const SourceDetails& dragSourceDetails)
+{
+    bool newHover = (dragSourceDetails.localPosition.y < getHeight() / 2);
+    if (newHover != hoverIsTopHalf)
+    {
+        hoverIsTopHalf = newHover;
+        repaint();
+    }
+}
+
+void TrackLaneComponent::itemDragExit(const SourceDetails& dragSourceDetails)
+{
+    isDragHovering = false;
+    repaint();
+}
+
+void TrackLaneComponent::itemDropped(const SourceDetails& dragSourceDetails)
+{
+    isDragHovering = false;
+    repaint();
+
+    juce::String descStr = dragSourceDetails.description.toString();
+    if (descStr.startsWith("TrackLane:"))
+    {
+        int sourceIndex = descStr.substring(10).getIntValue();
+        if (sourceIndex != trackIndex) // did we drop it on a different track?
+        {
+            int insertIndex = trackIndex;
+            if (!hoverIsTopHalf)
+                insertIndex++;
+
+            if (sourceIndex < insertIndex)
+                insertIndex--; // Adjust since removing source shifts array
+
+            if (sourceIndex != insertIndex)
+            {
+                appState.moveTrack(sourceIndex, insertIndex);
+                audioEngine.moveTrack(sourceIndex, insertIndex);
+                timeline.rebuildTracks();
+            }
+        }
+    }
 }
 
 Clip* TrackLaneComponent::getClipAt(double timeSeconds)

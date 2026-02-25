@@ -149,9 +149,9 @@ void PluginBrowser::rebuildFilteredList()
     int sortMode = sortCombo.getSelectedId();
 
     const juce::KnownPluginList& list = audioEngine.getPluginManager().getKnownPluginList();
-    const juce::Array<juce::PluginDescription>& types = list.getTypes();
+    allPlugins = list.getTypes();
 
-    for (const auto& desc : types)
+    for (const auto& desc : allPlugins)
     {
         // Category filter
         if (category == 2 && !desc.isInstrument) continue;     // Instruments only
@@ -205,5 +205,8 @@ void PluginBrowser::scanComplete()
 
 void PluginBrowser::pluginListChanged()
 {
-    rebuildFilteredList();
+    // Need to do this on message thread
+    juce::MessageManager::callAsync([this]() {
+        rebuildFilteredList();
+    });
 }

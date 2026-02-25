@@ -143,7 +143,7 @@ void TimelineComponent::resized()
     auto ruler    = bounds.removeFromTop(RULER_HEIGHT);
     
     // Tools row
-    auto toolArea = ruler.removeFromLeft(TRACK_HEADER_W);
+    auto toolArea = ruler.removeFromLeft(trackHeaderWidth);
     int btnW = toolArea.getWidth() / 4;
     selectButton.setBounds(toolArea.removeFromLeft(btnW).reduced(2));
     splitButton.setBounds(toolArea.removeFromLeft(btnW).reduced(2));
@@ -164,7 +164,7 @@ void TimelineComponent::resized()
     trackViewport.setBounds(viewport);
 
     double totalSeconds = 300.0;
-    int totalWidth = TRACK_HEADER_W + (int) (totalSeconds * pixelsPerSecond);
+    int totalWidth = trackHeaderWidth + (int) (totalSeconds * pixelsPerSecond);
     
     // Layout track container
     int currentY = 0;
@@ -225,10 +225,10 @@ void TimelineComponent::paintRuler(juce::Graphics& g, juce::Rectangle<int> ruler
     for (int bar = firstBar; bar < firstBar + 200; ++bar)
     {
         double tSec = bar * secondsPerBar;
-        double xPix = TRACK_HEADER_W + (tSec - horizontalScrollOffset) * pixelsPerSecond;
+        double xPix = trackHeaderWidth + (tSec - horizontalScrollOffset) * pixelsPerSecond;
 
         if (xPix > getWidth()) break;
-        if (xPix < TRACK_HEADER_W) continue;
+        if (xPix < trackHeaderWidth) continue;
 
         g.setColour(juce::Colour(0xff533483));
         g.drawVerticalLine((int)xPix, (float)rulerBounds.getY(),
@@ -253,9 +253,9 @@ void TimelineComponent::paintRuler(juce::Graphics& g, juce::Rectangle<int> ruler
 void TimelineComponent::paintPlayhead(juce::Graphics& g)
 {
     double playPos = audioEngine.getPlayheadPosition();
-    double xPix    = TRACK_HEADER_W + (playPos - horizontalScrollOffset) * pixelsPerSecond;
+    double xPix    = trackHeaderWidth + (playPos - horizontalScrollOffset) * pixelsPerSecond;
 
-    if (xPix >= TRACK_HEADER_W && xPix <= getWidth())
+    if (xPix >= trackHeaderWidth && xPix <= getWidth())
     {
         g.setColour(juce::Colour(0xffe94560));
         g.drawVerticalLine((int)xPix, RULER_HEIGHT, getHeight());
@@ -271,8 +271,8 @@ void TimelineComponent::paintPlayhead(juce::Graphics& g)
 
 void TimelineComponent::paintLoopRegion(juce::Graphics& g)
 {
-    double x1 = TRACK_HEADER_W + (loopStart - horizontalScrollOffset) * pixelsPerSecond;
-    double x2 = TRACK_HEADER_W + (loopEnd   - horizontalScrollOffset) * pixelsPerSecond;
+    double x1 = trackHeaderWidth + (loopStart - horizontalScrollOffset) * pixelsPerSecond;
+    double x2 = trackHeaderWidth + (loopEnd   - horizontalScrollOffset) * pixelsPerSecond;
 
     g.setColour(juce::Colour(0x22e94560));
     g.fillRect(juce::Rectangle<float>((float)x1, (float)RULER_HEIGHT,
@@ -323,14 +323,14 @@ void TimelineComponent::mouseWheelMove(const juce::MouseEvent& e,
     if (e.mods.isCommandDown() || e.mods.isCtrlDown()) // Ctrl for Windows/Linux
     {
         // Zoom towards mouse pointer
-        if (e.x >= TRACK_HEADER_W)
+        if (e.x >= trackHeaderWidth)
         {
             double timeAtMouse = pixelToTime(e.x);
             double zoomFactor = std::pow(2.0, wheel.deltaY * 2.0); // Smooth zoom factor
             double newPPS = juce::jlimit(5.0, 5000.0, pixelsPerSecond * zoomFactor);
             
             // Recalculate offset so the time under the mouse stays the same
-            double newOffset = timeAtMouse - (e.x - TRACK_HEADER_W) / newPPS;
+            double newOffset = timeAtMouse - (e.x - trackHeaderWidth) / newPPS;
             horizontalScrollOffset = juce::jmax(0.0, newOffset);
             
             pixelsPerSecond = newPPS;
@@ -391,24 +391,24 @@ void TimelineComponent::scrollBarMoved(juce::ScrollBar* bar, double newRange)
 // View Conversions (Relative to Window)
 double TimelineComponent::pixelToTime(double x) const
 {
-    return (x - TRACK_HEADER_W) / pixelsPerSecond + horizontalScrollOffset;
+    return (x - trackHeaderWidth) / pixelsPerSecond + horizontalScrollOffset;
 }
 
 double TimelineComponent::timeToPixel(double t) const
 {
-    return TRACK_HEADER_W + (t - horizontalScrollOffset) * pixelsPerSecond;
+    return trackHeaderWidth + (t - horizontalScrollOffset) * pixelsPerSecond;
 }
 
 // Absolute Conversions (Relative to Track Start)
 double TimelineComponent::absolutePixelToTime(double x) const
 {
     // x is absolute pixel
-    return (x - TRACK_HEADER_W) / pixelsPerSecond;
+    return (x - trackHeaderWidth) / pixelsPerSecond;
 }
 
 double TimelineComponent::timeToAbsolutePixel(double t) const
 {
-    return TRACK_HEADER_W + t * pixelsPerSecond;
+    return trackHeaderWidth + t * pixelsPerSecond;
 }
 
 void TimelineComponent::setPixelsPerSecond(double pps)

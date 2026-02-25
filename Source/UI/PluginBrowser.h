@@ -45,6 +45,7 @@ private:
     juce::ProgressBar progressBar;
     double scanProgress_ = 0.0;
 
+    juce::Array<juce::PluginDescription> allPlugins;
     juce::Array<const juce::PluginDescription*> filteredPlugins;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PluginBrowser)

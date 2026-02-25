@@ -125,6 +125,7 @@ public:
     int  addMidiTrack(const juce::String& name = "MIDI Track");
     int  addBusTrack(const juce::String& name = "Bus");
     void removeTrack(int trackIndex);
+    void moveTrack(int fromIndex, int toIndex);
     int  getNumTracks() const;
     OrpheusTrackInfo& getTrackInfo(int index);
     const juce::OwnedArray<OrpheusTrackInfo>& getAllTracks() const { return tracks; }

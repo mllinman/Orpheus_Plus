@@ -71,10 +71,11 @@ public:
 
     // AudioEngine::Listener
     static constexpr int  RULER_HEIGHT    = 30;
-    static constexpr int  TRACK_HEADER_W  = 180;
     static constexpr int  DEFAULT_TRACK_H = 80;
     static constexpr int  TAKE_LANE_H     = 40;
     static constexpr int  AUTOMATION_LANE_H = 40;
+
+    int getTrackHeaderWidth() const { return trackHeaderWidth; }
 
 private:
     void timerCallback() override;
@@ -111,6 +112,11 @@ private:
 
     juce::ScrollBar horizontalScrollBar { false };
     juce::ScrollBar verticalScrollBar   { true  };
+
+    // Resizable layout for Track Headers
+    int trackHeaderWidth = 180;
+    juce::StretchableLayoutManager horizontalLayout;
+    std::unique_ptr<juce::StretchableLayoutResizerBar> resizerBar;
 
     double pixelsPerSecond       = 100.0;
     double horizontalScrollOffset = 0.0;

@@ -333,6 +333,17 @@ void AudioEngine::removeTrack(int index)
     }
 }
 
+void AudioEngine::moveTrack(int fromIndex, int toIndex)
+{
+    if (juce::isPositiveAndBelow(fromIndex, tracks.size()) && 
+        juce::isPositiveAndBelow(toIndex, tracks.size()) && 
+        fromIndex != toIndex)
+    {
+        tracks.move(fromIndex, toIndex);
+        juce::MessageManager::callAsync([this]{ listeners.call(&Listener::trackListChanged); });
+    }
+}
+
 int AudioEngine::getNumTracks() const { return tracks.size(); }
 
 OrpheusTrackInfo& AudioEngine::getTrackInfo(int index)

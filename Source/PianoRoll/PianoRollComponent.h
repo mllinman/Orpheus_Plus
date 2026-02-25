@@ -59,7 +59,9 @@ private:
     int   pitchToPixel(int pitch) const;
     int   beatToPixel(double beat) const;
 
-    static constexpr int PIANO_KEY_WIDTH = 52;
+    int keyboardWidth = 52;
+    juce::StretchableLayoutManager horizontalLayout;
+    std::unique_ptr<juce::StretchableLayoutResizerBar> resizerBar;
     static constexpr int NOTE_HEIGHT     = 14;
     static constexpr int NUM_OCTAVES     = 8;
     static constexpr int NUM_NOTES       = 128;

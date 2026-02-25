@@ -16,6 +16,7 @@ class TimelineComponent;
 //==============================================================================
 class TrackLaneComponent : public juce::Component,
                            public juce::FileDragAndDropTarget,
+                           public juce::DragAndDropTarget,
                            private juce::ChangeListener
 {
 public:
@@ -34,6 +35,12 @@ public:
     void mouseDoubleClick(const juce::MouseEvent&) override;
     bool isInterestedInFileDrag(const juce::StringArray& files) override;
     void filesDropped(const juce::StringArray& files, int x, int y) override;
+
+    bool isInterestedInDragSource(const SourceDetails& dragSourceDetails) override;
+    void itemDropped(const SourceDetails& dragSourceDetails) override;
+    void itemDragEnter(const SourceDetails& dragSourceDetails) override;
+    void itemDragMove(const SourceDetails& dragSourceDetails) override;
+    void itemDragExit(const SourceDetails& dragSourceDetails) override;
 
     void addAudioClip(const juce::File& file, double startTime);
     void addMidiClip(double startTime, double duration = 4.0);
@@ -73,7 +80,6 @@ private:
 
     juce::Rectangle<float> getClipScreenBounds(const Clip& clip) const;
 
-    static constexpr int HEADER_WIDTH = 180;
 
     int          trackIndex;
     AudioEngine& audioEngine;
@@ -98,6 +104,10 @@ private:
 
     // Waveform thumbnails
     juce::AudioThumbnailCache thumbnailCache { 32 };
+
+    // Used for drag and drop reordering feedback
+    bool isDragHovering = false;
+    bool hoverIsTopHalf = false;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(TrackLaneComponent)
 };

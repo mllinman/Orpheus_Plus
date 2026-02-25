@@ -205,6 +205,79 @@ void MixerPanel::ChannelStrip::paint(juce::Graphics& g)
 }
 
 //==============================================================================
+// MasterStrip
+//==============================================================================
+
+MixerPanel::MasterStrip::MasterStrip(AudioEngine& e)
+    : engine(e)
+{
+    fader.setSliderStyle(juce::Slider::LinearVertical);
+    fader.setTextBoxStyle(juce::Slider::TextBoxBelow, false, 50, 16);
+    fader.setRange(-60.0, 6.0);
+    fader.setValue(0.0);
+    fader.setDoubleClickReturnValue(true, 0.0);
+    fader.setNumDecimalPlacesToDisplay(1);
+    fader.setTextValueSuffix(" dB");
+    fader.onValueChange = [this]() {
+        // Here we would tell AudioEngine to set master volume
+        // engine.setMasterVolume(fader.getValue());
+    };
+    addAndMakeVisible(fader);
+
+    nameLabel.setText("MASTER", juce::dontSendNotification);
+    nameLabel.setJustificationType(juce::Justification::centred);
+    nameLabel.setColour(juce::Label::textColourId, juce::Colour(0xffe94560));
+    addAndMakeVisible(nameLabel);
+}
+
+MixerPanel::MasterStrip::~MasterStrip() {}
+
+void MixerPanel::MasterStrip::resized()
+{
+    auto b = getLocalBounds();
+    nameLabel.setBounds(b.removeFromBottom(24));
+    b.removeFromBottom(8); // spacing
+    
+    // Fader
+    fader.setBounds(b.removeFromBottom(200));
+}
+
+void MixerPanel::MasterStrip::paint(juce::Graphics& g)
+{
+    g.fillAll(juce::Colour(0xff16213e));
+    g.setColour(juce::Colour(0xff0f3460));
+    g.drawRect(getLocalBounds());
+
+    // Master meters
+    auto b = getLocalBounds();
+    b.removeFromBottom(232); // text + fader space
+    b.removeFromTop(24);     // spacing
+
+    int meterW = 6;
+    int meterX = b.getCentreX() - meterW - 1;
+    int meterY = b.getY();
+    int meterH = b.getHeight();
+
+    g.setColour(juce::Colours::black);
+    g.fillRect(meterX, meterY, meterW * 2 + 2, meterH);
+
+    // TODO: implement master peak retrieval from AudioEngine
+    peakL = peakL * 0.9f;
+    peakR = peakR * 0.9f;
+
+    auto meterColour = [](float val) {
+        if (val > 0.9f) return juce::Colours::red;
+        if (val > 0.75f) return juce::Colours::yellow;
+        return juce::Colours::green;
+    };
+
+    g.setColour(meterColour(peakL));
+    g.fillRect((float)meterX, meterY + meterH * (1.0f - peakL), (float)meterW, meterH * peakL);
+    g.setColour(meterColour(peakR));
+    g.fillRect((float)(meterX + meterW + 2), meterY + meterH * (1.0f - peakR), (float)meterW, meterH * peakR);
+}
+
+//==============================================================================
 MixerPanel::MixerPanel(AudioEngine& e, AppState& s)
     : audioEngine(e), appState(s)
 {
@@ -212,6 +285,17 @@ MixerPanel::MixerPanel(AudioEngine& e, AppState& s)
     channelViewport.setViewedComponent(&channelContainer, false);
     channelViewport.setScrollBarsShown(false, true);
     addAndMakeVisible(channelViewport);
+
+    masterStrip = std::make_unique<MasterStrip>(audioEngine);
+    addAndMakeVisible(masterStrip.get());
+
+    horizontalLayout.setItemLayout(0, -0.1, -1.0, -0.7); // Channel viewport (flexible)
+    horizontalLayout.setItemLayout(1, 8, 8, 8);          // Resizer bar (fixed 8px)
+    horizontalLayout.setItemLayout(2, 60, 200, masterStripWidth); // Master strip
+
+    resizerBar = std::make_unique<juce::StretchableLayoutResizerBar>(&horizontalLayout, 1, false);
+    addAndMakeVisible(resizerBar.get());
+
     startTimerHz(30);
     rebuildStrips();
 }
@@ -225,14 +309,20 @@ MixerPanel::~MixerPanel()
 void MixerPanel::resized()
 {
     auto bounds = getLocalBounds();
-    channelViewport.setBounds(bounds);
+
+    juce::Component dummyLeft, dummyRight;
+    juce::Component* hComps[] = { &dummyLeft, resizerBar.get(), &dummyRight };
+    horizontalLayout.layOutComponents(hComps, 3, bounds.getX(), bounds.getY(), bounds.getWidth(), bounds.getHeight(), false, true);
+    
+    channelViewport.setBounds(dummyLeft.getBounds());
+    masterStrip->setBounds(dummyRight.getBounds());
 
     const int stripW = 72;
-    channelContainer.setSize(juce::jmax(bounds.getWidth(),
-        strips.size() * stripW), bounds.getHeight());
+    channelContainer.setSize(juce::jmax(channelViewport.getWidth(),
+        strips.size() * stripW), channelViewport.getHeight());
 
     for (int i = 0; i < strips.size(); ++i)
-        strips[i]->setBounds(i * stripW, 0, stripW, bounds.getHeight());
+        strips[i]->setBounds(i * stripW, 0, stripW, channelViewport.getHeight());
 }
 
 void MixerPanel::paint(juce::Graphics& g)
