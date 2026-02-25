@@ -11,6 +11,8 @@ StemSeparatorPanel::StemSeparatorPanel(AudioEngine& e, AppState& s)
     modelCombo.addItem("Spleeter 2-Stem", 3);
     modelCombo.addItem("Spleeter 4-Stem", 4);
     modelCombo.addItem("Spleeter 5-Stem", 5);
+    modelCombo.addItem("Open-Unmix (UMX)", 6);
+    modelCombo.addItem("UVR (MDX-Net)", 7);
     modelCombo.setSelectedId(1, juce::dontSendNotification);
     addAndMakeVisible(modelLabel);
     addAndMakeVisible(modelCombo);
@@ -69,10 +71,14 @@ StemSeparatorPanel::StemSeparatorPanel(AudioEngine& e, AppState& s)
         stemCards[i].addToTimeline.setVisible(false);
     }
 
+    stemSeparator.addListener(this);
     startTimerHz(15);
 }
 
-StemSeparatorPanel::~StemSeparatorPanel() { stopTimer(); }
+StemSeparatorPanel::~StemSeparatorPanel() { 
+    stemSeparator.removeListener(this);
+    stopTimer(); 
+}
 
 void StemSeparatorPanel::startSeparation(const juce::File& file)
 {
@@ -82,6 +88,19 @@ void StemSeparatorPanel::startSeparation(const juce::File& file)
     errorMessage.clear();
     separateButton.setVisible(false);
     cancelButton.setVisible(true);
+
+    switch (modelCombo.getSelectedId())
+    {
+        case 1: stemSeparator.setModel(StemSeparator::Model::Demucs4); break;
+        case 2: stemSeparator.setModel(StemSeparator::Model::Demucs4HQ); break;
+        case 3: stemSeparator.setModel(StemSeparator::Model::Spleeter2); break;
+        case 4: stemSeparator.setModel(StemSeparator::Model::Spleeter4); break;
+        case 5: stemSeparator.setModel(StemSeparator::Model::Spleeter5); break;
+        case 6: stemSeparator.setModel(StemSeparator::Model::OpenUnmix); break;
+        case 7: stemSeparator.setModel(StemSeparator::Model::UVR_MDXNet); break;
+    }
+
+    stemSeparator.separate(file, appState, nullptr);
     repaint();
 }
 

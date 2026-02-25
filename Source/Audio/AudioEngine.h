@@ -46,7 +46,7 @@ struct AutomationCurve
 // Represents a single track in the engine
 struct OrpheusTrackInfo
 {
-    enum class Type { Audio, Midi, Bus, Master };
+    enum class Type { Audio, Midi, Bus, Folder, Arranger, Master };
 
     juce::String name;
     juce::Colour colour;
@@ -60,6 +60,9 @@ struct OrpheusTrackInfo
     bool mute    = false;
     bool solo    = false;
     bool armed   = false;    // Record-armed
+    bool expanded = true;    // Folder state
+    bool visible  = true;    // Hierarchy visibility
+    int  depth   = 0;        // Nesting level
     juce::String inputBus;
     juce::String outputBus;
     
@@ -124,6 +127,8 @@ public:
     int  addAudioTrack(const juce::String& name = "Audio Track");
     int  addMidiTrack(const juce::String& name = "MIDI Track");
     int  addBusTrack(const juce::String& name = "Bus");
+    int  addFolderTrack(const juce::String& name = "Folder");
+    int  addArrangerTrack(const juce::String& name = "Arranger");
     void removeTrack(int trackIndex);
     void moveTrack(int fromIndex, int toIndex);
     int  getNumTracks() const;

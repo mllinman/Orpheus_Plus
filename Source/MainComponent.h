@@ -79,6 +79,8 @@ public:
         cmdToggleTrackSettings,
         cmdAddVocalTrack,
         cmdAddInstrumentTrack,
+        cmdAddFolderTrack,
+        cmdAddArrangerTrack,
     };
 
 private:

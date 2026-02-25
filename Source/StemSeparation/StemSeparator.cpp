@@ -31,6 +31,12 @@ void StemSeparator::separate(const juce::File& inputFile, AppState& appState,
             case Model::Spleeter5:
                 success = runSpleeter(inputFile, outputDir);
                 break;
+            case Model::OpenUnmix:
+                success = runOpenUnmix(inputFile, outputDir);
+                break;
+            case Model::UVR_MDXNet:
+                success = runUVR(inputFile, outputDir);
+                break;
         }
 
         if (success)
@@ -143,6 +149,50 @@ bool StemSeparator::runSpleeter(const juce::File& inputFile, const juce::File& o
     args.add("-o");
     args.add(outputDir.getFullPathName());
     args.add(inputFile.getFullPathName());
+
+    juce::ChildProcess proc;
+    if (!proc.start(args)) return false;
+
+    while (proc.isRunning())
+    {
+        if (!running.load()) { proc.kill(); return false; }
+        juce::Thread::sleep(500);
+    }
+
+    return (proc.getExitCode() == 0);
+}
+
+bool StemSeparator::runOpenUnmix(const juce::File& inputFile, const juce::File& outputDir)
+{
+    // umx <input.wav> --outdir <output_dir>
+    juce::StringArray args;
+    args.add("umx");
+    args.add(inputFile.getFullPathName());
+    args.add("--outdir");
+    args.add(outputDir.getFullPathName());
+
+    juce::ChildProcess proc;
+    if (!proc.start(args)) return false;
+
+    while (proc.isRunning())
+    {
+        if (!running.load()) { proc.kill(); return false; }
+        juce::Thread::sleep(500);
+    }
+
+    return (proc.getExitCode() == 0);
+}
+
+bool StemSeparator::runUVR(const juce::File& inputFile, const juce::File& outputDir)
+{
+    // audio-separator <input.wav> --model_name UVR-MDX-NET-Inst_HQ_3 --output_dir <output_dir>
+    juce::StringArray args;
+    args.add("audio-separator");
+    args.add(inputFile.getFullPathName());
+    args.add("--model_name");
+    args.add("UVR-MDX-NET-Inst_HQ_3");
+    args.add("--output_dir");
+    args.add(outputDir.getFullPathName());
 
     juce::ChildProcess proc;
     if (!proc.start(args)) return false;

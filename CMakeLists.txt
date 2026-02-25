@@ -50,6 +50,8 @@ target_sources(OrpheusPlus PRIVATE
     Source/Audio/OrpheusSynth.cpp
     Source/Audio/MidiGeneratorProcessor.cpp
     Source/Audio/ArpeggiatorProcessor.cpp
+    Source/Audio/SimpleDelayProcessor.cpp
+    Source/Audio/TransientDetector.cpp
 
     # Timeline
     Source/Timeline/TimelineComponent.cpp
@@ -88,6 +90,7 @@ target_sources(OrpheusPlus PRIVATE
     Source/UI/StemSeparatorPanel.cpp
     Source/UI/AudioCleanupPanel.cpp
     Source/UI/AutoTunePanel.cpp
+    Source/UI/AudioMidiSettingsPanel.cpp
 
     # Utility
     Source/Util/OrpheusLogger.cpp

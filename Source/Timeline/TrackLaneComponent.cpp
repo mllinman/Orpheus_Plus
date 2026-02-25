@@ -1,5 +1,6 @@
 #include "TrackLaneComponent.h"
 #include "TimelineComponent.h"
+#include "../Audio/TransientDetector.h"
 
 TrackLaneComponent::TrackLaneComponent(int idx, AudioEngine& e, AppState& s,
                                        TimelineComponent& t)
@@ -101,17 +102,78 @@ TrackLaneComponent::TrackLaneComponent(int idx, AudioEngine& e, AppState& s,
     };
     addAndMakeVisible(trackNameLabel);
 
-
+    // Folder Expand Button
+    folderExpandButton.setColour(juce::TextButton::buttonColourId, juce::Colour(0xff2d2d44));
+    folderExpandButton.onClick = [this] {
+        bool expanded = !audioEngine.getAllTracks()[trackIndex]->expanded;
+        appState.setTrackExpanded(trackIndex, expanded);
+        folderExpandButton.setButtonText(expanded ? "-" : "+");
+        timeline.resized();
+    };
+    addAndMakeVisible(folderExpandButton);
 }
 
 TrackLaneComponent::~TrackLaneComponent() {}
 
 void TrackLaneComponent::resized()
 {
+    auto& trackInfo = audioEngine.getTrackInfo(trackIndex);
     auto header = getLocalBounds().removeFromLeft(timeline.getTrackHeaderWidth()).reduced(4);
+
+    if (trackInfo.depth > 0)
+        header.removeFromLeft(trackInfo.depth * 12);
 
     trackNameLabel.setBounds(header.removeFromTop(18));
     header.removeFromTop(2);
+
+    if (trackInfo.type == OrpheusTrackInfo::Type::Arranger)
+    {
+        muteButton.setVisible(false);
+        soloButton.setVisible(false);
+        armButton.setVisible(false);
+        showTakesButton.setVisible(false);
+        volumeSlider.setVisible(false);
+        panSlider.setVisible(false);
+        automationCombo.setVisible(false);
+        folderExpandButton.setVisible(false);
+        return;
+    }
+
+    if (trackInfo.type == OrpheusTrackInfo::Type::Folder)
+    {
+        muteButton.setVisible(true);
+        soloButton.setVisible(true);
+        armButton.setVisible(false);
+        showTakesButton.setVisible(false);
+        volumeSlider.setVisible(true);
+        panSlider.setVisible(true);
+        automationCombo.setVisible(false);
+        
+        folderExpandButton.setVisible(true);
+        folderExpandButton.setButtonText(trackInfo.expanded ? "-" : "+");
+        
+        auto buttonRow = header.removeFromTop(22);
+        folderExpandButton.setBounds(buttonRow.removeFromLeft(22));
+        buttonRow.removeFromLeft(2);
+        muteButton.setBounds(buttonRow.removeFromLeft(22));
+        buttonRow.removeFromLeft(2);
+        soloButton.setBounds(buttonRow.removeFromLeft(22));
+
+        auto sliderRow = header.removeFromTop(20);
+        panSlider.setBounds(sliderRow.removeFromRight(30));
+        volumeSlider.setBounds(sliderRow);
+        return;
+    }
+
+    // Standard track (Audio/Midi)
+    folderExpandButton.setVisible(false);
+    muteButton.setVisible(true);
+    soloButton.setVisible(true);
+    armButton.setVisible(true);
+    showTakesButton.setVisible(true);
+    volumeSlider.setVisible(true);
+    panSlider.setVisible(true);
+    automationCombo.setVisible(true);
 
     auto buttonRow = header.removeFromTop(22);
     muteButton.setBounds(buttonRow.removeFromLeft(22));
@@ -589,6 +651,8 @@ void TrackLaneComponent::mouseDown(const juce::MouseEvent& e)
                     menu.addItem(3, "Apply Pitch Correction");
                     menu.addItem(4, "Apply Audio Cleanup");
                     menu.addSeparator();
+                    menu.addItem(5, "Detect Transients & Slice");
+                    menu.addItem(6, "Extract Groove to Quantize Template");
 
                     menu.showMenuAsync(juce::PopupMenu::Options{}, [this, ac](int result) {
                         if (result == 1)
@@ -620,6 +684,168 @@ void TrackLaneComponent::mouseDown(const juce::MouseEvent& e)
                         else if (result == 4)
                         {
                             audioEngine.addAudioCleanupToTrack(trackIndex);
+                        }
+                        else if (result == 5)
+                        {
+                            if (ac->isLoaded && ac->sampleRate > 0)
+                            {
+                                auto transients = TransientDetector::detectTransients(ac->audioData, ac->sampleRate);
+                                if (!transients.empty())
+                                {
+                                    auto& trackClips = audioEngine.getTrackInfo(trackIndex).clips;
+                                    double currentStart = ac->startTime;
+                                    double currentOffset = ac->offset;
+                                    double endTime = ac->startTime + ac->duration;
+                                    
+                                    juce::String msg = "Detected " + juce::String((int)transients.size()) + " transients!";
+                                    DBG(msg);
+                                    
+                                    std::vector<Clip*> newClips;
+                                    
+                                    for (double t : transients)
+                                    {
+                                        if (t > currentOffset + 0.05 && t < ac->offset + ac->duration - 0.05)
+                                        {
+                                            double splitTime = ac->startTime + (t - ac->offset);
+                                            auto* chunk = new AudioClip(ac->sourceFile, currentStart);
+                                            chunk->offset = currentOffset;
+                                            chunk->duration = splitTime - currentStart;
+                                            chunk->colour = ac->colour;
+                                            chunk->isLoaded = ac->isLoaded;
+                                            chunk->sampleRate = ac->sampleRate;
+                                            chunk->audioData = ac->audioData;
+                                            chunk->setThumbnailCache(thumbnailCache, audioEngine.getFormatManager());
+                                            newClips.push_back(chunk);
+                                            
+                                            currentStart = splitTime;
+                                            currentOffset = t;
+                                        }
+                                    }
+                                    
+                                    // Add the final chunk
+                                    if (currentStart < endTime)
+                                    {
+                                        auto* finalChunk = new AudioClip(ac->sourceFile, currentStart);
+                                        finalChunk->offset = currentOffset;
+                                        finalChunk->duration = endTime - currentStart;
+                                        finalChunk->colour = ac->colour;
+                                        finalChunk->isLoaded = ac->isLoaded;
+                                        finalChunk->sampleRate = ac->sampleRate;
+                                        finalChunk->audioData = ac->audioData;
+                                        finalChunk->setThumbnailCache(thumbnailCache, audioEngine.getFormatManager());
+                                        newClips.push_back(finalChunk);
+                                    }
+                                    
+                                    // Remove old clip and add new ones if we actually sliced
+                                    if (newClips.size() > 1)
+                                    {
+                                        trackClips.removeObject(ac); // Also deletes the old clip!
+                                        for (auto* c : newClips) trackClips.add(c);
+                                        repaint();
+                                    }
+                                    else
+                                    {
+                                        for (auto* c : newClips) delete c;
+                                    }
+                                }
+                            }
+                        }
+                        else if (result == 6)
+                        {
+                            if (ac->isLoaded && ac->sampleRate > 0)
+                            {
+                                auto transients = TransientDetector::detectTransients(ac->audioData, ac->sampleRate);
+                                if (!transients.empty())
+                                {
+                                    double bpm = audioEngine.getBpm();
+                                    double bps = bpm / 60.0;
+                                    double secPerBeat = 1.0 / bps;
+                                    
+                                    appState.userGrooveTemplate.clear();
+                                    for (double t : transients)
+                                    {
+                                        double absoluteTime = ac->startTime + (t - ac->offset);
+                                        double beatVal = absoluteTime / secPerBeat;
+                                        double frac = beatVal - std::floor(beatVal);
+                                        appState.userGrooveTemplate.push_back(frac);
+                                    }
+                                    
+                                    juce::String msg = "Extracted groove template from " + juce::String((int)appState.userGrooveTemplate.size()) + " transients!";
+                                    DBG(msg);
+                                }
+                            }
+                        }
+                    });
+                }
+                else if (draggingClip->getType() == Clip::Type::Midi)
+                {
+                    auto* mc = static_cast<MidiClip*>(draggingClip);
+                    menu.addItem(1, "Quantize to 1/16th Grid");
+                    if (!appState.userGrooveTemplate.empty())
+                    {
+                        menu.addItem(2, "Quantize to Extracted Groove Template");
+                    }
+                    else
+                    {
+                        menu.addItem(2, "Quantize to Extracted Groove Template (None Extracted)", false, false);
+                    }
+                    
+                    menu.showMenuAsync(juce::PopupMenu::Options{}, [this, mc](int result) {
+                        if (result == 1 || result == 2)
+                        {
+                            double bpm = audioEngine.getBpm();
+                            double bps = bpm / 60.0;
+                            double secPerBeat = 1.0 / bps;
+                            
+                            juce::MidiMessageSequence newSeq;
+                            for (int i = 0; i < mc->midiData.getNumEvents(); ++i)
+                            {
+                                auto* evt = mc->midiData.getEventPointer(i);
+                                auto m = evt->message;
+                                
+                                if (m.isNoteOn() || m.isNoteOff())
+                                {
+                                    double evAbsoluteTime = mc->startTime + (m.getTimeStamp() / mc->ppq) * secPerBeat;
+                                    double beatVal = evAbsoluteTime / secPerBeat;
+                                    double currentFrac = beatVal - std::floor(beatVal);
+                                    
+                                    double targetFrac = 0.0;
+                                    
+                                    if (result == 1) // 1/16 grid
+                                    {
+                                        targetFrac = std::round(currentFrac * 4.0) / 4.0;
+                                    }
+                                    else if (result == 2) // Groove
+                                    {
+                                        double bestDiff = 999.0;
+                                        for (double gf : appState.userGrooveTemplate)
+                                        {
+                                            double diff = std::abs(currentFrac - gf);
+                                            // wrap around logic for fractions near 0 and 1
+                                            if (diff > 0.5) diff = 1.0 - diff;
+                                            
+                                            if (diff < bestDiff)
+                                            {
+                                                bestDiff = diff;
+                                                targetFrac = gf;
+                                                
+                                                // Handle edge wrap
+                                                if (currentFrac > 0.5 && gf < 0.5) targetFrac += 1.0;
+                                                if (currentFrac < 0.5 && gf > 0.5) targetFrac -= 1.0;
+                                            }
+                                        }
+                                    }
+                                    
+                                    double newAbsoluteTime = (std::floor(beatVal) + targetFrac) * secPerBeat;
+                                    double newRelativeTime = ((newAbsoluteTime - mc->startTime) / secPerBeat) * mc->ppq;
+                                    m.setTimeStamp(newRelativeTime);
+                                }
+                                newSeq.addEvent(m);
+                            }
+                            
+                            newSeq.updateMatchedPairs();
+                            mc->midiData = newSeq;
+                            repaint();
                         }
                     });
                 }

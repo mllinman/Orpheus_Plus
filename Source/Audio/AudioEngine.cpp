@@ -197,19 +197,20 @@ void AudioEngine::syncWithAppState(AppState& state)
     bpm.store(state.getBpm());
     timeSigNum = state.getTimeSigNum();
     timeSigDen = state.getTimeSigDen();
-    
-    auto vt = state.getValueTree();
-    for (int i = 0; i < vt.getNumChildren(); ++i)
+    // Add tracks from AppState
+    for (int i = 0; i < state.getNumTracks(); ++i)
     {
-        auto child = vt.getChild(i);
-        if (child.hasType("Track"))
+        auto child = state.getTrackNode(i);
+        if (child.isValid() && child.hasType("Track"))
         {
             juce::String type = child.getProperty("type");
             juce::String name = child.getProperty("name");
             int idx = -1;
             
-            if (type == "audio") idx = addAudioTrack(name);
-            else if (type == "midi") idx = addMidiTrack(name);
+            if (type == "audio" || type == "vocal")       idx = addAudioTrack(name);
+            else if (type == "midi" || type == "instrument") idx = addMidiTrack(name);
+            else if (type == "folder")                       idx = addFolderTrack(name);
+            else if (type == "arranger")                     idx = addArrangerTrack(name);
             
             if (idx >= 0)
             {
@@ -217,6 +218,8 @@ void AudioEngine::syncWithAppState(AppState& state)
                 setTrackPan(idx, static_cast<float>(child.getProperty("pan", 0.0f)));
                 setTrackMute(idx, static_cast<bool>(child.getProperty("mute", false)));
                 setTrackSolo(idx, static_cast<bool>(child.getProperty("solo", false)));
+                tracks[idx]->expanded = static_cast<bool>(child.getProperty("expanded", true));
+                tracks[idx]->depth = state.getTracks()[(size_t)i].depth;
             }
         }
     }
@@ -300,6 +303,31 @@ int AudioEngine::addMidiTrack(const juce::String& name)
 
     juce::MessageManager::callAsync([this]{ listeners.call(&Listener::trackListChanged); });
     return tracks.size() - 1;
+}
+
+int AudioEngine::addFolderTrack(const juce::String& name)
+{
+    auto* t = new OrpheusTrackInfo();
+    t->name = name;
+    t->type = OrpheusTrackInfo::Type::Folder;
+    t->colour = juce::Colour(0xfff39c12);
+
+    tracks.add(t);
+    juce::MessageManager::callAsync([this] { listeners.call(&Listener::trackListChanged); });
+    return tracks.size() - 1;
+}
+
+int AudioEngine::addArrangerTrack(const juce::String& name)
+{
+    auto* t = new OrpheusTrackInfo();
+    t->name = name;
+    t->type = OrpheusTrackInfo::Type::Arranger;
+    t->colour = juce::Colours::white;
+    
+    // Arranger is usually the first track visually
+    tracks.insert(0, t);
+    juce::MessageManager::callAsync([this] { listeners.call(&Listener::trackListChanged); });
+    return 0;
 }
 
 int AudioEngine::addBusTrack(const juce::String& name)

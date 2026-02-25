@@ -96,6 +96,7 @@ private:
     juce::TextButton soloButton  { "S" };
     juce::TextButton armButton     { "R" };
     juce::TextButton showTakesButton { "T" };
+    juce::TextButton folderExpandButton { "-" };
     
     juce::Slider     volumeSlider;
     juce::Slider     panSlider;

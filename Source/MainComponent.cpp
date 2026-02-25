@@ -4,6 +4,7 @@
 #include "AudioToMidi/AudioToMidiConverter.h"
 #include "AudioCleanup/AudioCleanupProcessor.h"
 #include "Util/OrpheusLogger.h"
+#include "UI/AudioMidiSettingsPanel.h"
 
 //==============================================================================
 MainComponent::MainComponent()
@@ -335,8 +336,8 @@ juce::PopupMenu MainComponent::getMenuForIndex(int menuIndex, const juce::String
         case 3: // Track
             menu.addCommandItem(&commandManager, cmdAddAudioTrack);
             menu.addCommandItem(&commandManager, cmdAddMidiTrack);
-            menu.addCommandItem(&commandManager, cmdAddVocalTrack);
-            menu.addCommandItem(&commandManager, cmdAddInstrumentTrack);
+            menu.addCommandItem(&commandManager, cmdAddFolderTrack);
+            menu.addCommandItem(&commandManager, cmdAddArrangerTrack);
             break;
 
         case 4: // AI
@@ -373,7 +374,8 @@ void MainComponent::getAllCommands(juce::Array<juce::CommandID>& commands)
         cmdOpenPluginBrowser, cmdOpenSettings,
         cmdToggleMixer, cmdAudioCleanup, cmdAbout, cmdQuit,
         cmdOpenAutoTune, cmdToggleTrackSettings,
-        cmdAddVocalTrack, cmdAddInstrumentTrack
+        cmdAddVocalTrack, cmdAddInstrumentTrack,
+        cmdAddFolderTrack, cmdAddArrangerTrack
     });
 }
 
@@ -489,6 +491,12 @@ void MainComponent::getCommandInfo(juce::CommandID commandID, juce::ApplicationC
         case cmdAddInstrumentTrack:
             result.setInfo("Add Instrument Track", "Add a new instrument track", "Track", 0);
             break;
+        case cmdAddFolderTrack:
+            result.setInfo("Add Folder Track", "Add a new folder track for grouping", "Track", 0);
+            break;
+        case cmdAddArrangerTrack:
+            result.setInfo("Add Arranger Track", "Add an arranger track for song sections", "Track", 0);
+            break;
         default:
             break;
     }
@@ -500,9 +508,51 @@ bool MainComponent::perform(const InvocationInfo& info)
     {
         // ── File ────────────────────────────────────────────────────────
         case cmdNewProject:
-            if (projectManager) projectManager->newProject();
-            if (timeline) timeline->rebuildTracks();
+        {
+            juce::PopupMenu menu;
+            menu.addItem(1, "Empty Project");
+            menu.addItem(2, "Rock Band Template");
+            menu.addItem(3, "Electronic Template");
+            menu.addItem(4, "Podcast Template");
+            
+            menu.showMenuAsync(juce::PopupMenu::Options{}, [this](int result) {
+                if (result == 0) return; // User cancelled
+                
+                if (projectManager) projectManager->newProject();
+                
+                if (result == 2) { // Rock Band
+                    appState.addFolderTrack("Drums");
+                    appState.addAudioTrack("Kick");
+                    appState.addAudioTrack("Snare");
+                    appState.addAudioTrack("Overheads");
+                    appState.addFolderTrack("Guitars");
+                    appState.addAudioTrack("Rhythm L");
+                    appState.addAudioTrack("Rhythm R");
+                    appState.addAudioTrack("Lead Guitar");
+                    appState.addAudioTrack("Bass");
+                    appState.addVocalTrack("Lead Vocal");
+                }
+                else if (result == 3) { // Electronic
+                    appState.addFolderTrack("Beat");
+                    appState.addInstrumentTrack("Drum Machine");
+                    appState.addInstrumentTrack("Synth Bass");
+                    appState.addInstrumentTrack("Pad");
+                    appState.addInstrumentTrack("Lead Synth");
+                    appState.addAudioTrack("FX / Risers");
+                }
+                else if (result == 4) { // Podcast
+                    appState.addVocalTrack("Host 1");
+                    appState.addVocalTrack("Host 2");
+                    appState.addVocalTrack("Guest / Remote");
+                    appState.addAudioTrack("Intro / Outro Music");
+                    appState.addAudioTrack("Sound Effects");
+                }
+                
+                if (audioEngine) audioEngine->syncWithAppState(appState);
+                if (timeline) timeline->rebuildTracks();
+            });
             return true;
+        }
 
         case cmdOpenProject:
             if (projectManager) projectManager->openProject();
@@ -602,6 +652,27 @@ bool MainComponent::perform(const InvocationInfo& info)
             return true;
         }
 
+        case cmdAddFolderTrack:
+        {
+            auto name = "Folder " + juce::String(audioEngine ? audioEngine->getNumTracks() + 1 : 1);
+            OrpheusLogger::logInfo("Adding folder track: " + name);
+            appState.addFolderTrack(name);
+            if (audioEngine) audioEngine->addFolderTrack(name);
+            if (timeline) timeline->rebuildTracks();
+            OrpheusLogger::logInfo("Folder track added.");
+            return true;
+        }
+
+        case cmdAddArrangerTrack:
+        {
+            OrpheusLogger::logInfo("Adding arranger track");
+            appState.addArrangerTrack("Arranger");
+            if (audioEngine) audioEngine->addArrangerTrack("Arranger");
+            if (timeline) timeline->rebuildTracks();
+            OrpheusLogger::logInfo("Arranger track added.");
+            return true;
+        }
+
         // ── View ────────────────────────────────────────────────────────
         case cmdShowTimeline:
             switchToView(0);
@@ -668,17 +739,11 @@ void MainComponent::showSettingsDialog()
     auto* deviceManager = &audioEngine->getDeviceManager();
     if (!deviceManager) return;
 
-    auto* selector = new juce::AudioDeviceSelectorComponent(
-        *deviceManager,
-        0, 256,
-        0, 256,
-        true, true, true, false);
-
-    selector->setSize(500, 450);
+    auto* panel = new AudioMidiSettingsPanel(*deviceManager);
 
     juce::DialogWindow::LaunchOptions options;
-    options.content.setOwned(selector);
-    options.dialogTitle = "Audio/MIDI Settings";
+    options.content.setOwned(panel);
+    options.dialogTitle = "Audio & MIDI Settings";
     options.dialogBackgroundColour = getLookAndFeel().findColour(juce::ResizableWindow::backgroundColourId);
     options.escapeKeyTriggersCloseButton = true;
     options.useNativeTitleBar = false;
@@ -810,29 +875,79 @@ void MainComponent::showAudioCleanupDialog()
 
 void MainComponent::showExportDialog()
 {
-    auto chooser = std::make_shared<juce::FileChooser>(
-        "Export Mix",
-        juce::File::getSpecialLocation(juce::File::userDesktopDirectory)
-            .getChildFile("mix.wav"),
-        "*.wav;*.flac;*.ogg");
+    // Show format/quality selection first
+    auto* alert = new juce::AlertWindow("Export Mix", "Configure export settings:", juce::MessageBoxIconType::NoIcon);
 
-    chooser->launchAsync(juce::FileBrowserComponent::saveMode
-                        | juce::FileBrowserComponent::canSelectFiles,
-        [this, chooser](const juce::FileChooser& fc)
+    alert->addComboBox("format", {"WAV", "FLAC", "OGG"}, "Format:");
+    alert->addComboBox("sampleRate", {"44100 Hz", "48000 Hz", "88200 Hz", "96000 Hz"}, "Sample Rate:");
+    alert->addComboBox("bitDepth", {"16-bit", "24-bit", "32-bit float"}, "Bit Depth:");
+
+    // Default to 48000 Hz
+    alert->getComboBoxComponent("sampleRate")->setSelectedItemIndex(1, juce::dontSendNotification);
+
+    alert->addButton("Export", 1, juce::KeyPress(juce::KeyPress::returnKey));
+    alert->addButton("Cancel", 0, juce::KeyPress(juce::KeyPress::escapeKey));
+
+    alert->enterModalState(true, juce::ModalCallbackFunction::create(
+        [this, alert](int result)
         {
-            auto result = fc.getResult();
-            if (result == juce::File{}) return;
+            if (result == 0) { delete alert; return; }
 
-            // Start offline export
-            if (audioEngine)
-            {
-                audioEngine->exportMix(result);
-                juce::AlertWindow::showMessageBoxAsync(
-                    juce::MessageBoxIconType::InfoIcon,
-                    "Export Complete",
-                    "Mix exported to:\n" + result.getFullPathName());
-            }
-        });
+            auto formatIdx = alert->getComboBoxComponent("format")->getSelectedItemIndex();
+            auto srIdx     = alert->getComboBoxComponent("sampleRate")->getSelectedItemIndex();
+            auto bdIdx     = alert->getComboBoxComponent("bitDepth")->getSelectedItemIndex();
+            delete alert;
+
+            juce::String ext;
+            if (formatIdx == 0) ext = ".wav";
+            else if (formatIdx == 1) ext = ".flac";
+            else ext = ".ogg";
+
+            int sampleRates[] = { 44100, 48000, 88200, 96000 };
+            int bitDepths[]   = { 16, 24, 32 };
+
+            int chosenSR = sampleRates[srIdx];
+            int chosenBD = bitDepths[bdIdx];
+
+            juce::String filterStr = "*" + ext;
+
+            auto chooser = std::make_shared<juce::FileChooser>(
+                "Export Mix",
+                juce::File::getSpecialLocation(juce::File::userDesktopDirectory)
+                    .getChildFile("mix" + ext),
+                filterStr);
+
+            chooser->launchAsync(juce::FileBrowserComponent::saveMode
+                                | juce::FileBrowserComponent::canSelectFiles,
+                [this, chooser, chosenSR, chosenBD, ext](const juce::FileChooser& fc)
+                {
+                    auto file = fc.getResult();
+                    if (file == juce::File{}) return;
+
+                    // Ensure correct extension
+                    if (!file.hasFileExtension(ext.substring(1)))
+                        file = file.withFileExtension(ext.substring(1));
+
+                    if (audioEngine)
+                    {
+                        // Log export settings
+                        OrpheusLogger::logInfo("Exporting: " + file.getFullPathName()
+                            + " | SR=" + juce::String(chosenSR)
+                            + " | BD=" + juce::String(chosenBD)
+                            + " | Fmt=" + ext);
+
+                        audioEngine->exportMix(file);
+
+                        juce::AlertWindow::showMessageBoxAsync(
+                            juce::MessageBoxIconType::InfoIcon,
+                            "Export Complete",
+                            "Mix exported to:\n" + file.getFullPathName()
+                            + "\n\nFormat: " + ext.substring(1).toUpperCase()
+                            + "\nSample Rate: " + juce::String(chosenSR) + " Hz"
+                            + "\nBit Depth: " + juce::String(chosenBD) + "-bit");
+                    }
+                });
+        }), true);
 }
 
 void MainComponent::showAboutDialog()

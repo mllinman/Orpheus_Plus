@@ -171,6 +171,13 @@ void TimelineComponent::resized()
     for (int i = 0; i < trackLanes.size(); ++i)
     {
         auto& info = audioEngine.getTrackInfo(i);
+        if (!info.visible)
+        {
+            trackLanes[i]->setVisible(false);
+            continue;
+        }
+        
+        trackLanes[i]->setVisible(true);
         int h = userTrackHeight;
         if (info.showTakes)
             h += (int)info.takes.size() * TAKE_LANE_H;

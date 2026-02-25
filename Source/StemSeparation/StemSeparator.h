@@ -18,7 +18,7 @@ struct StemSeparationResult
 class StemSeparator
 {
 public:
-    enum class Model { Demucs4, Demucs4HQ, Spleeter2, Spleeter4, Spleeter5 };
+    enum class Model { Demucs4, Demucs4HQ, Spleeter2, Spleeter4, Spleeter5, OpenUnmix, UVR_MDXNet };
 
     StemSeparator();
     ~StemSeparator();
@@ -56,6 +56,8 @@ private:
 
     bool runDemucs(const juce::File& inputFile, const juce::File& outputDir);
     bool runSpleeter(const juce::File& inputFile, const juce::File& outputDir);
+    bool runOpenUnmix(const juce::File& inputFile, const juce::File& outputDir);
+    bool runUVR(const juce::File& inputFile, const juce::File& outputDir);
     StemSeparationResult collectResults(const juce::File& outputDir);
 
     Model currentModel = Model::Demucs4;

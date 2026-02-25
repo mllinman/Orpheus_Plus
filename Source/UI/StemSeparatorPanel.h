@@ -39,6 +39,7 @@ private:
 
     AudioEngine& audioEngine;
     AppState&    appState;
+    StemSeparator stemSeparator;
 
     // Model selector
     juce::Label    modelLabel { {}, "MODEL" };

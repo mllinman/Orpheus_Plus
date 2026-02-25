@@ -11,11 +11,14 @@ public:
 
     //── Track Info ────────────────────────────────────────────────────────────
     struct TrackInfo {
-        enum class Type { Audio, Midi, Vocal, Instrument };
+        enum class Type { Audio, Midi, Vocal, Instrument, Folder, Arranger };
         juce::String  name;
         Type          type   = Type::Audio;
         juce::Colour  colour = juce::Colour(0xff6c5ce7);
         int           height = 80;
+        bool          expanded = true; // For folder tracks
+        int           depth = 0;
+        bool          visible = true;
     };
 
     //── Project state ────────────────────────────────────────────────────────
@@ -42,8 +45,11 @@ public:
     int  addMidiTrack(const juce::String& name = {});
     int  addVocalTrack(const juce::String& name = {});
     int  addInstrumentTrack(const juce::String& name = {});
+    int  addFolderTrack(const juce::String& name = {});
+    int  addArrangerTrack(const juce::String& name = {});
     void removeTrack(int index);
     int  getNumTracks() const;
+    juce::ValueTree getTrackNode(int flatIndex) const;
 
     std::vector<TrackInfo>& getTracks() { return tracks; }
     const std::vector<TrackInfo>& getTracks() const { return tracks; }
@@ -53,6 +59,7 @@ public:
     void renameTrack(int index, const juce::String& newName);
     void setTrackColor(int index, juce::Colour col);
     void setTrackHeight(int index, int h);
+    void setTrackExpanded(int index, bool expanded);
 
     int  getSelectedTrackIndex() const       { return selectedTrackIndex; }
     void setSelectedTrackIndex(int i)        { selectedTrackIndex = i; sendChangeMessage(); }
@@ -70,6 +77,8 @@ public:
     bool fromXml(const juce::XmlElement& xml);
 
     juce::ValueTree getValueTree() { return valueTree; }
+
+    std::vector<double> userGrooveTemplate;
 
 private:
     bool         dirty       = false;
