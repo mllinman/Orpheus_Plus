@@ -81,6 +81,13 @@ public:
         cmdAddInstrumentTrack,
         cmdAddFolderTrack,
         cmdAddArrangerTrack,
+        cmdCaptureMidi,
+        cmdToggleTempoFollower,
+        cmdSwitchTheme,
+        cmdShowMixingAssistant,
+        cmdFreezeTrack,
+        cmdScratchPadSave,
+        cmdScratchPadLoad,
     };
 
 private:

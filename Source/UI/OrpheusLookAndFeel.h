@@ -9,6 +9,34 @@ class OrpheusLookAndFeel : public juce::LookAndFeel_V4
 public:
     OrpheusLookAndFeel();
 
+    /** Load a named theme: "Dark" (default), "Light", or "Midnight". */
+    void loadTheme(const juce::String& themeName)
+    {
+        currentThemeName_ = themeName;
+        if (themeName == "Light")
+        {
+            setColour(juce::ResizableWindow::backgroundColourId, juce::Colour(0xfff0f0f5));
+            setColour(juce::TextButton::buttonColourId,          juce::Colour(0xffe0e0e8));
+            setColour(juce::TextButton::textColourOffId,         juce::Colour(0xff1a1a2e));
+            setColour(juce::Label::textColourId,                 juce::Colour(0xff1a1a2e));
+        }
+        else if (themeName == "Midnight")
+        {
+            setColour(juce::ResizableWindow::backgroundColourId, juce::Colour(0xff05050a));
+            setColour(juce::TextButton::buttonColourId,          juce::Colour(0xff0a0a18));
+            setColour(juce::TextButton::textColourOffId,         juce::Colour(0xff8888cc));
+            setColour(juce::Label::textColourId,                 juce::Colour(0xff8888cc));
+        }
+        else // "Dark" (default)
+        {
+            setColour(juce::ResizableWindow::backgroundColourId, juce::Colour(0xff0a0a0f));
+            setColour(juce::TextButton::buttonColourId,          juce::Colour(0xff1a1a2e));
+            setColour(juce::TextButton::textColourOffId,         juce::Colour(0xffe8e8f0));
+            setColour(juce::Label::textColourId,                 juce::Colour(0xffe8e8f0));
+        }
+    }
+
+    juce::String getCurrentTheme() const { return currentThemeName_; }
     //── Background Layers (from --bg-*) ──────────────────────────────────────
     static juce::Colour bgDarkest()    { return juce::Colour(0xff0a0a0f); }
     static juce::Colour bgDarker()     { return juce::Colour(0xff0f0f18); }
@@ -109,6 +137,7 @@ public:
 
 private:
     juce::Font defaultFont;
+    juce::String currentThemeName_ = "Dark";
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(OrpheusLookAndFeel)
 };

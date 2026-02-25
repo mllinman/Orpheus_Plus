@@ -52,6 +52,7 @@ target_sources(OrpheusPlus PRIVATE
     Source/Audio/ArpeggiatorProcessor.cpp
     Source/Audio/SimpleDelayProcessor.cpp
     Source/Audio/TransientDetector.cpp
+    Source/Audio/TempoFollower.cpp
 
     # Timeline
     Source/Timeline/TimelineComponent.cpp

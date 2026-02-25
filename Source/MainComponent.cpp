@@ -5,6 +5,8 @@
 #include "AudioCleanup/AudioCleanupProcessor.h"
 #include "Util/OrpheusLogger.h"
 #include "UI/AudioMidiSettingsPanel.h"
+#include "AI/MixingAssistant.h"
+#include "Timeline/AudioClip.h"
 
 //==============================================================================
 MainComponent::MainComponent()
@@ -670,6 +672,125 @@ bool MainComponent::perform(const InvocationInfo& info)
             if (audioEngine) audioEngine->addArrangerTrack("Arranger");
             if (timeline) timeline->rebuildTracks();
             OrpheusLogger::logInfo("Arranger track added.");
+            return true;
+        }
+
+        // ── New Workflow Commands ─────────────────────────────────────────
+        case cmdCaptureMidi:
+        {
+            int selTrack = appState.getSelectedTrackIndex();
+            if (selTrack >= 0 && audioEngine)
+            {
+                audioEngine->captureMidi(selTrack);
+                if (timeline) timeline->rebuildTracks();
+                OrpheusLogger::logInfo("Captured MIDI to track " + juce::String(selTrack));
+            }
+            return true;
+        }
+
+        case cmdToggleTempoFollower:
+        {
+            if (audioEngine)
+            {
+                bool currentState = audioEngine->getTempoFollower().isEnabled();
+                audioEngine->getTempoFollower().setEnabled(!currentState);
+                OrpheusLogger::logInfo("Tempo Follower " + juce::String(!currentState ? "enabled" : "disabled"));
+            }
+            return true;
+        }
+
+        case cmdSwitchTheme:
+        {
+            juce::PopupMenu menu;
+            menu.addItem(1, "Dark");
+            menu.addItem(2, "Light");
+            menu.addItem(3, "Midnight");
+            menu.showMenuAsync(juce::PopupMenu::Options{}, [this](int result) {
+                juce::String theme;
+                if (result == 1) theme = "Dark";
+                else if (result == 2) theme = "Light";
+                else if (result == 3) theme = "Midnight";
+                else return;
+                appState.setTheme(theme);
+                orpheusLookAndFeel.loadTheme(theme);
+                repaint();
+            });
+            return true;
+        }
+
+        case cmdShowMixingAssistant:
+        {
+            if (audioEngine)
+            {
+                MixingAssistant assistant;
+                juce::String report = "=== Mixing Assistant Report ===\n\n";
+
+                for (int i = 0; i < audioEngine->getNumTracks(); ++i)
+                {
+                    auto& ti = audioEngine->getTrackInfo(i);
+                    // Find the first loaded audio clip on this track
+                    for (auto* clip : ti.clips)
+                    {
+                        if (auto* ac = dynamic_cast<AudioClip*>(clip))
+                        {
+                            if (ac->isLoaded)
+                            {
+                                auto analysis = assistant.analyzeTrack(ti.name, ac->audioData, ac->sampleRate);
+                                report += "Track: " + analysis.trackName + "\n";
+                                report += "  EQ: " + analysis.eqSuggestion + "\n";
+                                report += "  Comp: " + analysis.compSuggestion + "\n";
+                                report += "  Gain Adjust: " + juce::String(analysis.suggestedGain, 1) + " dB\n\n";
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                juce::AlertWindow::showMessageBoxAsync(
+                    juce::MessageBoxIconType::InfoIcon,
+                    "AI Mixing Assistant", report);
+            }
+            return true;
+        }
+
+        case cmdFreezeTrack:
+        {
+            int selTrack = appState.getSelectedTrackIndex();
+            if (selTrack >= 0 && audioEngine)
+            {
+                if (audioEngine->isTrackFrozen(selTrack))
+                    audioEngine->unfreezeTrack(selTrack);
+                else
+                    audioEngine->freezeTrack(selTrack);
+            }
+            return true;
+        }
+
+        case cmdScratchPadSave:
+        {
+            juce::String padName = "Scratch Pad " + juce::String((int)appState.scratchPads.size() + 1);
+            appState.createScratchPad(padName);
+            OrpheusLogger::logInfo("Created scratch pad: " + padName);
+            return true;
+        }
+
+        case cmdScratchPadLoad:
+        {
+            if (!appState.scratchPads.empty())
+            {
+                juce::PopupMenu menu;
+                for (int i = 0; i < (int)appState.scratchPads.size(); ++i)
+                    menu.addItem(i + 1, appState.scratchPads[(size_t)i].name);
+
+                menu.showMenuAsync(juce::PopupMenu::Options{}, [this](int result) {
+                    if (result > 0)
+                    {
+                        appState.loadScratchPad(result - 1);
+                        if (audioEngine) audioEngine->syncWithAppState(appState);
+                        if (timeline) timeline->rebuildTracks();
+                    }
+                });
+            }
             return true;
         }
 

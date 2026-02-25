@@ -11,7 +11,7 @@ public:
 
     //── Track Info ────────────────────────────────────────────────────────────
     struct TrackInfo {
-        enum class Type { Audio, Midi, Vocal, Instrument, Folder, Arranger };
+        enum class Type { Audio, Midi, Vocal, Instrument, Folder, Arranger, Universal };
         juce::String  name;
         Type          type   = Type::Audio;
         juce::Colour  colour = juce::Colour(0xff6c5ce7);
@@ -20,6 +20,37 @@ public:
         int           depth = 0;
         bool          visible = true;
     };
+
+    //── Scratch Pads ───────────────────────────────────────────────────────────
+    struct ScratchPad {
+        juce::String    name;
+        juce::ValueTree snapshot;
+    };
+    std::vector<ScratchPad> scratchPads;
+    
+    int createScratchPad(const juce::String& name) {
+        ScratchPad sp;
+        sp.name = name;
+        sp.snapshot = valueTree.createCopy();
+        scratchPads.push_back(sp);
+        return (int)scratchPads.size() - 1;
+    }
+    
+    void loadScratchPad(int index) {
+        if (index >= 0 && index < (int)scratchPads.size()) {
+            valueTree = scratchPads[(size_t)index].snapshot.createCopy();
+            markDirty();
+        }
+    }
+    
+    void deleteScratchPad(int index) {
+        if (index >= 0 && index < (int)scratchPads.size())
+            scratchPads.erase(scratchPads.begin() + index);
+    }
+
+    //── Theme ─────────────────────────────────────────────────────────────────
+    juce::String currentTheme = "Dark";
+    void setTheme(const juce::String& theme) { currentTheme = theme; markDirty(); }
 
     //── Project state ────────────────────────────────────────────────────────
     bool isDirty() const { return dirty; }

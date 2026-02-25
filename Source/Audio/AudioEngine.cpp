@@ -774,3 +774,123 @@ void AudioEngine::updateTrackGraphConnections(int trackIndex)
         }
     }
 }
+
+//==============================================================================
+// MIDI Capture (Retroactive Recording)
+//==============================================================================
+void AudioEngine::captureMidi(int trackIndex)
+{
+    if (trackIndex < 0 || trackIndex >= (int)tracks.size()) return;
+    if (midiCaptureBuffer_.getNumEvents() == 0) return;
+
+    auto& track = tracks[trackIndex];
+
+    // Create a new MidiClip from the captured buffer
+    double startTime = playheadPosition.load();
+    double captureLength = (double)midiCaptureSeconds_;
+
+    auto* clip = new MidiClip(juce::jmax(0.0, startTime - captureLength), captureLength);
+
+    // Copy events from the capture buffer, offsetting timestamps
+    for (int i = 0; i < midiCaptureBuffer_.getNumEvents(); ++i)
+    {
+        auto* evt = midiCaptureBuffer_.getEventPointer(i);
+        clip->midiData.addEvent(evt->message);
+    }
+    clip->midiData.updateMatchedPairs();
+
+    track->clips.add(clip);
+
+    // Clear the capture buffer
+    midiCaptureBuffer_.clear();
+}
+
+//==============================================================================
+// Surround Panner
+//==============================================================================
+SurroundPanner& AudioEngine::getTrackPanner(int trackIdx)
+{
+    while ((int)trackPanners_.size() <= trackIdx)
+        trackPanners_.emplace_back();
+    return trackPanners_[(size_t)trackIdx];
+}
+
+//==============================================================================
+// Track Freeze
+//==============================================================================
+void AudioEngine::freezeTrack(int trackIndex)
+{
+    if (trackIndex < 0 || trackIndex >= (int)tracks.size()) return;
+    while ((int)frozenTracks_.size() <= trackIndex)
+    {
+        frozenTracks_.push_back(false);
+        frozenBuffers_.emplace_back();
+    }
+    frozenTracks_[(size_t)trackIndex] = true;
+    // Pre-render would happen here in a full implementation
+}
+
+void AudioEngine::unfreezeTrack(int trackIndex)
+{
+    if (trackIndex >= 0 && trackIndex < (int)frozenTracks_.size())
+    {
+        frozenTracks_[(size_t)trackIndex] = false;
+        frozenBuffers_[(size_t)trackIndex] = juce::AudioBuffer<float>();
+    }
+}
+
+bool AudioEngine::isTrackFrozen(int trackIndex) const
+{
+    if (trackIndex >= 0 && trackIndex < (int)frozenTracks_.size())
+        return frozenTracks_[(size_t)trackIndex];
+    return false;
+}
+
+//==============================================================================
+// Delay Compensation
+//==============================================================================
+void AudioEngine::recalculateDelayCompensation()
+{
+    int numTracks = (int)tracks.size();
+    trackLatencies_.resize((size_t)numTracks, 0);
+    delayCompBuffers_.resize((size_t)numTracks);
+
+    int maxLatency = 0;
+
+    // Query each track's plugin chain for latency
+    for (int i = 0; i < numTracks; ++i)
+    {
+        int trackLatency = 0;
+        auto& track = tracks[i];
+        for (auto slot : track->pluginSlots)
+        {
+            if (slot > 0)
+            {
+                auto node = processorGraph.getNodeForId(juce::AudioProcessorGraph::NodeID((uint32)slot));
+                if (node && node->getProcessor())
+                    trackLatency += node->getProcessor()->getLatencySamples();
+            }
+        }
+        trackLatencies_[(size_t)i] = trackLatency;
+        maxLatency = juce::jmax(maxLatency, trackLatency);
+    }
+
+    // Set compensation delays so all tracks align to the maximum latency
+    for (int i = 0; i < numTracks; ++i)
+    {
+        int compensationDelay = maxLatency - trackLatencies_[(size_t)i];
+        if (compensationDelay > 0)
+        {
+            delayCompBuffers_[(size_t)i].setSize(2, compensationDelay);
+            delayCompBuffers_[(size_t)i].clear();
+        }
+    }
+}
+
+int AudioEngine::getTrackLatencySamples(int trackIndex) const
+{
+    if (trackIndex >= 0 && trackIndex < (int)trackLatencies_.size())
+        return trackLatencies_[(size_t)trackIndex];
+    return 0;
+}
+

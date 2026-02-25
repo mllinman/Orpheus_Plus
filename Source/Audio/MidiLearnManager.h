@@ -1,44 +1,105 @@
 #pragma once
 #include <JuceHeader.h>
+#include <vector>
 #include <map>
 
-struct ParameterTarget
-{
-    enum class Type {
-        TrackVolume,
-        TrackPan,
-        TrackSweet,
-        MasterVolume
-    };
-
-    Type type;
-    int trackIndex = -1; // -1 for Master
-
-    bool operator<(const ParameterTarget& other) const {
-        if (type != other.type) return (int)type < (int)other.type;
-        return trackIndex < other.trackIndex;
-    }
-};
-
-class AudioEngine;
-
+/**
+ * Global MIDI Learn manager.
+ * Click any control → move a CC → mapping saved.
+ */
 class MidiLearnManager
 {
 public:
-    MidiLearnManager(AudioEngine& engine);
+    struct MidiMapping
+    {
+        int          channel;       // MIDI channel (1-16, 0=omni)
+        int          cc;            // CC number (0-127)
+        juce::String targetParam;   // Parameter ID (e.g., "vol", "pan")
+        int          trackIndex;    // Track this mapping applies to (-1 = global)
+    };
 
-    void setLearnMode(bool active, ParameterTarget target = {});
-    bool isLearnModeActive() const { return learnMode; }
+    MidiLearnManager() = default;
 
-    void handleIncomingMidi(const juce::MidiMessage& message);
-    
-    void bindCC(int ccNumber, ParameterTarget target);
-    void unbindCC(int ccNumber);
+    // ── Learn Mode ──────────────────────────────────────────────────────
+    void startLearning(const juce::String& targetParam, int trackIndex)
+    {
+        learningTarget_ = targetParam;
+        learningTrack_  = trackIndex;
+        isLearning_     = true;
+    }
+
+    void cancelLearning()
+    {
+        isLearning_ = false;
+        learningTarget_ = {};
+    }
+
+    bool isLearning() const { return isLearning_; }
+
+    /** Call this when a CC message arrives. Returns true if a mapping was created. */
+    bool handleCC(int channel, int cc)
+    {
+        if (!isLearning_) return false;
+
+        // Create mapping
+        MidiMapping m;
+        m.channel     = channel;
+        m.cc          = cc;
+        m.targetParam = learningTarget_;
+        m.trackIndex  = learningTrack_;
+
+        // Remove any existing mapping for this CC
+        mappings_.erase(
+            std::remove_if(mappings_.begin(), mappings_.end(),
+                [&](const MidiMapping& existing) {
+                    return existing.channel == channel && existing.cc == cc;
+                }),
+            mappings_.end());
+
+        mappings_.push_back(m);
+        isLearning_ = false;
+        learningTarget_ = {};
+        return true;
+    }
+
+    /** Look up the value for a given param+track from current CC states. */
+    float getValueForParam(const juce::String& param, int trackIndex) const
+    {
+        for (auto& m : mappings_)
+        {
+            if (m.targetParam == param && m.trackIndex == trackIndex)
+            {
+                auto it = ccValues_.find(makeCCKey(m.channel, m.cc));
+                if (it != ccValues_.end())
+                    return it->second;
+            }
+        }
+        return -1.0f; // No mapping
+    }
+
+    /** Store the latest CC value (called from MIDI input callback). */
+    void updateCCValue(int channel, int cc, float normalizedValue)
+    {
+        ccValues_[makeCCKey(channel, cc)] = normalizedValue;
+    }
+
+    const std::vector<MidiMapping>& getMappings() const { return mappings_; }
+
+    void removeMapping(int index)
+    {
+        if (index >= 0 && index < (int)mappings_.size())
+            mappings_.erase(mappings_.begin() + index);
+    }
+
+    void clearAllMappings() { mappings_.clear(); }
 
 private:
-    AudioEngine& audioEngine;
-    bool learnMode = false;
-    ParameterTarget waitingTarget;
+    static int makeCCKey(int channel, int cc) { return channel * 128 + cc; }
 
-    std::map<int, ParameterTarget> ccToTarget;
+    std::vector<MidiMapping> mappings_;
+    std::map<int, float>     ccValues_;  // key = channel*128+cc → normalized value
+
+    bool         isLearning_     = false;
+    juce::String learningTarget_;
+    int          learningTrack_  = -1;
 };

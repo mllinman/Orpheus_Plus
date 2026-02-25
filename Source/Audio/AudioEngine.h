@@ -7,6 +7,11 @@
 #include "../StemSeparation/StemSeparator.h"
 #include "../AudioToMidi/AudioToMidiConverter.h"
 // #include "../PitchCorrection/AutoTuneProcessor.h"
+#include "MidiLearnManager.h"
+#include "ModulationSource.h"
+#include "TempoFollower.h"
+#include "SurroundPanner.h"
+#include "../UI/LoudnessMeter.h"
 #include "../Timeline/Clip.h"
 #include "../Timeline/AudioClip.h"
 #include "../Timeline/MidiClip.h"
@@ -171,6 +176,41 @@ public:
     juce::MidiMessageCollector& getMidiCollector() { return midiCollector; }
     const juce::MidiBuffer& getCurrentMidiBuffer() const { return midiBuffer; }
 
+    //── MIDI Capture (Retroactive Recording) ─────────────────────────────────
+    void captureMidi(int trackIndex);
+    void setMidiCaptureEnabled(bool e) { midiCaptureEnabled.store(e); }
+    bool isMidiCaptureEnabled() const  { return midiCaptureEnabled.load(); }
+    int  getMidiCaptureSeconds() const { return midiCaptureSeconds_; }
+    void setMidiCaptureSeconds(int s)  { midiCaptureSeconds_ = s; }
+
+    //── Tempo Follower ───────────────────────────────────────────────────────
+    TempoFollower& getTempoFollower() { return tempoFollower_; }
+
+    //── Modulation System ────────────────────────────────────────────────────
+    std::vector<LFOSource>&            getLFOs()       { return lfoSources_; }
+    std::vector<ModulationMapping>&    getModMappings(){ return modMappings_; }
+    int addLFO() { lfoSources_.emplace_back(); return (int)lfoSources_.size() - 1; }
+
+    //── Routing ──────────────────────────────────────────────────────────────
+    struct RoutingPoint { int srcTrack; int srcCh; int dstTrack; int dstCh; float gain = 1.0f; };
+    std::vector<RoutingPoint>& getRoutingPoints() { return routingPoints_; }
+    void addRoutingPoint(RoutingPoint rp) { routingPoints_.push_back(rp); }
+
+    //── Surround / Atmos ─────────────────────────────────────────────────────
+    SurroundPanner& getTrackPanner(int trackIdx);
+
+    //── Track Freeze ─────────────────────────────────────────────────────────
+    void freezeTrack(int trackIndex);
+    void unfreezeTrack(int trackIndex);
+    bool isTrackFrozen(int trackIndex) const;
+
+    //── Delay Compensation ───────────────────────────────────────────────────
+    void recalculateDelayCompensation();
+    int  getTrackLatencySamples(int trackIndex) const;
+
+    //── Pro-Level Metering ───────────────────────────────────────────────────
+    LoudnessMeter& getMasterMeter() { return masterMeter_; }
+
     //── Mono Sum ─────────────────────────────────────────────────────────────
     void setMonoSum(bool shouldSum) { monoSum.store(shouldSum); }
     bool getMonoSum() const { return monoSum.load(); }
@@ -264,6 +304,35 @@ private:
 
     juce::ListenerList<Listener> listeners;
     juce::Array<SpectrumAnalyzer*> analyzers;
+
+    // ── MIDI Capture Ring Buffer ──
+    juce::MidiMessageSequence midiCaptureBuffer_;
+    std::atomic<bool>         midiCaptureEnabled_ { true };
+    int                       midiCaptureSeconds_ = 30;
+
+    // ── Tempo Follower ──
+    TempoFollower tempoFollower_;
+
+    // ── Modulation ──
+    std::vector<LFOSource>          lfoSources_;
+    std::vector<ModulationMapping>  modMappings_;
+
+    // ── Routing ──
+    std::vector<RoutingPoint>       routingPoints_;
+
+    // ── Surround Panners ──
+    std::vector<SurroundPanner>     trackPanners_;
+
+    // ── Pro Meter ──
+    LoudnessMeter masterMeter_;
+
+    // ── Track Freeze ──
+    std::vector<bool> frozenTracks_;
+    std::vector<juce::AudioBuffer<float>> frozenBuffers_;
+
+    // ── Delay Compensation ──
+    std::vector<int> trackLatencies_;
+    std::vector<juce::AudioBuffer<float>> delayCompBuffers_;
 
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(AudioEngine)
