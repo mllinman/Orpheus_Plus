@@ -133,8 +133,11 @@ private:
     int  mixerHeight        = 200;
     int  sidebarWidth       = 280;
 
-    juce::StretchableLayoutManager mainLayout;
-    juce::StretchableLayoutResizerBar* resizerBar = nullptr;
+    juce::StretchableLayoutManager verticalLayout;
+    juce::StretchableLayoutManager horizontalLayout;
+    
+    std::unique_ptr<juce::StretchableLayoutResizerBar> verticalResizerBar;
+    std::unique_ptr<juce::StretchableLayoutResizerBar> horizontalResizerBar;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MainComponent)
 };

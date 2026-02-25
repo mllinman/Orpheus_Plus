@@ -2,6 +2,7 @@
 #include "PluginManager.h"
 #include "AudioEngine.h"
 #include "../UI/PluginWindow.h"
+#include "../Util/OrpheusLogger.h"
 
 PluginManager::PluginManager(AudioEngine& e) : engine(e)
 {
@@ -26,6 +27,7 @@ void PluginManager::scanForPlugins()
 {
     if (scanning.load()) return;
     scanning.store(true);
+    OrpheusLogger::logInfo("Plugin scan started.");
 
     juce::Thread::launch([this]
     {
@@ -63,6 +65,7 @@ void PluginManager::scanForPlugins()
             catch (...)
             {
                 // Broken plugin — skip it and continue
+                OrpheusLogger::logError("Plugin scan crashed on: " + currentPluginName);
                 juce::MessageManager::callAsync([this, currentPluginName]
                 {
                     listeners.call(&Listener::scanProgress, -1.0f,
@@ -89,6 +92,7 @@ void PluginManager::scanForPlugins()
             for (const auto& desc : scannedTypes)
                 knownPlugins.addType(desc);
 
+            OrpheusLogger::logInfo("Plugin scan complete. " + juce::String(knownPlugins.getNumTypes()) + " plugins known.");
             listeners.call(&Listener::scanComplete);
             listeners.call(&Listener::pluginListChanged);
 
@@ -156,10 +160,13 @@ void PluginManager::addPluginToTrack(int trackIndex, const juce::PluginDescripti
     auto instance = loadPlugin(desc, err);
     if (!instance)
     {
+        OrpheusLogger::logError("Failed to load plugin: " + desc.name + " — " + err);
         juce::AlertWindow::showMessageBoxAsync(juce::MessageBoxIconType::WarningIcon,
             "Plugin Load Error", err);
         return;
     }
+
+    OrpheusLogger::logInfo("Plugin loaded: " + desc.name + " on track " + juce::String(trackIndex));
 
     // Add to graph
     auto& graph = engine.processorGraph;

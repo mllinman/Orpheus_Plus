@@ -3,6 +3,7 @@
 #include "../Audio/PluginManager.h"
 #include "../Audio/MidiLearnManager.h"
 #include "../Audio/ClipGeneratorProcessor.h"
+#include "../Util/OrpheusLogger.h"
 #include "../Audio/TrackFaderProcessor.h"
 
 //==============================================================================
@@ -243,7 +244,9 @@ void MixerPanel::paint(juce::Graphics& g)
 
 void MixerPanel::trackListChanged()
 {
+    OrpheusLogger::logInfo("MixerPanel::trackListChanged — rebuilding strips...");
     rebuildStrips();
+    OrpheusLogger::logInfo("MixerPanel::trackListChanged — rebuild done.");
 }
 
 void MixerPanel::timerCallback()
@@ -253,16 +256,22 @@ void MixerPanel::timerCallback()
 
 void MixerPanel::rebuildStrips()
 {
+    OrpheusLogger::logInfo("MixerPanel::rebuildStrips — clearing " + juce::String(strips.size()) + " strips.");
     strips.clear();
     channelContainer.removeAllChildren();
 
-    for (int i = 0; i < audioEngine.getNumTracks(); ++i)
+    int numTracks = audioEngine.getNumTracks();
+    OrpheusLogger::logInfo("MixerPanel::rebuildStrips — creating " + juce::String(numTracks) + " strips.");
+
+    for (int i = 0; i < numTracks; ++i)
     {
         auto* strip = strips.add(new ChannelStrip(i, audioEngine));
         channelContainer.addAndMakeVisible(strip);
     }
 
+    OrpheusLogger::logInfo("MixerPanel::rebuildStrips — calling resized.");
     resized();
+    OrpheusLogger::logInfo("MixerPanel::rebuildStrips — complete.");
 }
 
 bool MixerPanel::ChannelStrip::PluginSlot::isInterestedInDragSource(const SourceDetails& dragSourceDetails)

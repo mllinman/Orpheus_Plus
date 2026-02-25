@@ -1,0 +1,40 @@
+﻿MSBuild version 17.14.23+b0019275e for .NET Framework
+
+  Checking File Globs
+  OrpheusPlus_rc_lib.vcxproj -> C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus_rc_lib.dir\Debug\OrpheusPlus_rc_lib.lib
+  MainComponent.cpp
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\StemSeparation\StemSeparator.h(45,51): warning C4100: 'progress': unreferenced parameter [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+  (compiling source file '../Source/MainComponent.cpp')
+  
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\StemSeparation\StemSeparator.h(46,73): warning C4100: 'result': unreferenced parameter [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+  (compiling source file '../Source/MainComponent.cpp')
+  
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\StemSeparation\StemSeparator.h(47,63): warning C4100: 'error': unreferenced parameter [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+  (compiling source file '../Source/MainComponent.cpp')
+  
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Audio\PluginManager.h(43,71): warning C4100: 'currentPlugin': unreferenced parameter [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+  (compiling source file '../Source/MainComponent.cpp')
+  
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Audio\PluginManager.h(43,41): warning C4100: 'progress': unreferenced parameter [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+  (compiling source file '../Source/MainComponent.cpp')
+  
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\MainComponent.cpp(176,41): error C2039: 'getItemCurrentBounds': is not a member of 'juce::StretchableLayoutManager' [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+      C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\JUCE\modules\juce_gui_basics\layout\juce_StretchableLayoutManager.h(91,17):
+      see declaration of 'juce::StretchableLayoutManager'
+  
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\MainComponent.cpp(180,41): error C3536: 'mixerArea': cannot be used before it is initialized [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\MainComponent.cpp(188,31): error C2039: 'getItemCurrentBounds': is not a member of 'juce::StretchableLayoutManager' [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+      C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\JUCE\modules\juce_gui_basics\layout\juce_StretchableLayoutManager.h(91,17):
+      see declaration of 'juce::StretchableLayoutManager'
+  
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\MainComponent.cpp(204,42): error C2039: 'getItemCurrentBounds': is not a member of 'juce::StretchableLayoutManager' [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+      C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\JUCE\modules\juce_gui_basics\layout\juce_StretchableLayoutManager.h(91,17):
+      see declaration of 'juce::StretchableLayoutManager'
+  
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\MainComponent.cpp(209,38): error C3536: 'sideArea': cannot be used before it is initialized [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\MainComponent.cpp(220,33): error C2039: 'getItemCurrentBounds': is not a member of 'juce::StretchableLayoutManager' [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+      C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\JUCE\modules\juce_gui_basics\layout\juce_StretchableLayoutManager.h(91,17):
+      see declaration of 'juce::StretchableLayoutManager'
+  
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\MainComponent.cpp(708,46): warning C4996: 'juce::Font::Font': Use the constructor that takes a FontOptions argument [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\MainComponent.cpp(756,46): warning C4996: 'juce::Font::Font': Use the constructor that takes a FontOptions argument [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]

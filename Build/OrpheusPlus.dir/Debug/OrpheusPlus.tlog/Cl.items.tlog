@@ -36,6 +36,7 @@ C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\UI\TrackSettingsPan
 C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\UI\StemSeparatorPanel.cpp;C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.dir\Debug\StemSeparatorPanel.obj
 C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\UI\AudioCleanupPanel.cpp;C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.dir\Debug\AudioCleanupPanel.obj
 C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\UI\AutoTunePanel.cpp;C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.dir\Debug\AutoTunePanel.obj
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Util\OrpheusLogger.cpp;C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.dir\Debug\OrpheusLogger.obj
 C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\JUCE\modules\juce_audio_basics\juce_audio_basics.cpp;C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.dir\Debug\juce_audio_basics.obj
 C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\JUCE\modules\juce_core\juce_core.cpp;C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.dir\Debug\juce_core.obj
 C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\JUCE\modules\juce_core\juce_core_CompilationTime.cpp;C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.dir\Debug\juce_core_CompilationTime.obj

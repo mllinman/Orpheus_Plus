@@ -3,6 +3,7 @@
 #include "StemSeparation/StemSeparator.h"
 #include "AudioToMidi/AudioToMidiConverter.h"
 #include "AudioCleanup/AudioCleanupProcessor.h"
+#include "Util/OrpheusLogger.h"
 
 //==============================================================================
 MainComponent::MainComponent()
@@ -95,6 +96,21 @@ MainComponent::MainComponent()
 
     appState.addChangeListener(this);
 
+    // Initialize UI Resizers
+    verticalLayout.setItemLayout(0, -0.1, -1.0, -0.7); // Main Workspace (flexible)
+    verticalLayout.setItemLayout(1, 8, 8, 8);          // Vertical Resizer (fixed 8px)
+    verticalLayout.setItemLayout(2, 50, 600, mixerHeight); // Mixer Panel (fixed bounds)
+
+    horizontalLayout.setItemLayout(0, -0.1, -1.0, -0.7); // Center View (flexible)
+    horizontalLayout.setItemLayout(1, 8, 8, 8);          // Horizontal Resizer (fixed 8px)
+    horizontalLayout.setItemLayout(2, 100, 600, sidebarWidth); // Right Sidebar (fixed bounds)
+
+    verticalResizerBar = std::make_unique<juce::StretchableLayoutResizerBar>(&verticalLayout, 1, true);
+    addAndMakeVisible(verticalResizerBar.get());
+
+    horizontalResizerBar = std::make_unique<juce::StretchableLayoutResizerBar>(&horizontalLayout, 1, false);
+    addAndMakeVisible(horizontalResizerBar.get());
+
     // Keyboard focus for shortcuts
     setWantsKeyboardFocus(true);
     commandManager.setFirstCommandTarget(this);
@@ -130,11 +146,11 @@ void MainComponent::resized()
 {
     auto area = getLocalBounds();
 
-    // ── Top: Menu Bar (32px, matches --menu-bar-h) ─────────────────────
+    // ── Top: Menu Bar (32px) ───────────────────────────────────────────
     if (menuBar)
         menuBar->setBounds(area.removeFromTop(32));
 
-    // ── View Tab Bar (36px, matches --toolbar-h) ───────────────────────
+    // ── View Tab Bar (36px) ────────────────────────────────────────────
     {
         auto tabArea = area.removeFromTop(36);
         int tabW = 90;
@@ -146,52 +162,69 @@ void MainComponent::resized()
         tabAutoTune.setBounds(tabArea.removeFromLeft(tabW));
     }
 
-    // ── Bottom: Transport Bar (56px, matches --transport-h) ────────────
+    // ── Bottom: Transport Bar (56px) ───────────────────────────────────
     if (transportBar)
         transportBar->setBounds(area.removeFromBottom(56));
 
-    // ── Bottom Panel (Mixer & Spectrum, above transport) ───────────────
+    // ── Layout Managers ────────────────────────────────────────────────
     if (showMixer)
     {
-        auto bottomArea = area.removeFromBottom(200);
+        juce::Component dummyTop, dummyBottom;
+        juce::Component* vComps[] = { &dummyTop, verticalResizerBar.get(), &dummyBottom };
+        verticalLayout.layOutComponents(vComps, 3, area.getX(), area.getY(), area.getWidth(), area.getHeight(), true, true);
         
+        auto mixerArea = dummyBottom.getBounds();
         if (spectrumAnalyzer)
         {
             spectrumAnalyzer->setVisible(true);
-            spectrumAnalyzer->setBounds(bottomArea.removeFromRight(300));
+            spectrumAnalyzer->setBounds(mixerArea.removeFromRight(300));
         }
-
         if (mixerPanel)
         {
             mixerPanel->setVisible(true);
-            mixerPanel->setBounds(bottomArea);
+            mixerPanel->setBounds(mixerArea);
         }
+        
+        area = dummyTop.getBounds(); // the remaining top workspace
+        verticalResizerBar->setVisible(true);
     }
     else
     {
         if (spectrumAnalyzer) spectrumAnalyzer->setVisible(false);
         if (mixerPanel) mixerPanel->setVisible(false);
+        verticalResizerBar->setVisible(false);
     }
 
-    // ── Right Sidebar ──────────────────────────────────────────────────
-    if (showPluginBrowser && pluginBrowser)
+    if (showPluginBrowser || showTrackSettings)
     {
-        pluginBrowser->setVisible(true);
-        pluginBrowser->setBounds(area.removeFromRight(250));
-    }
-    else if (pluginBrowser)
-    {
-        pluginBrowser->setVisible(false);
-    }
+        juce::Component dummyLeft, dummyRight;
+        juce::Component* hComps[] = { &dummyLeft, horizontalResizerBar.get(), &dummyRight };
+        horizontalLayout.layOutComponents(hComps, 3, area.getX(), area.getY(), area.getWidth(), area.getHeight(), false, true);
+        
+        auto sideArea = dummyRight.getBounds();
+        
+        if (showPluginBrowser && pluginBrowser)
+        {
+            pluginBrowser->setVisible(true);
+            pluginBrowser->setBounds(sideArea);
+        }
+        else if (pluginBrowser) pluginBrowser->setVisible(false);
 
-    if (showTrackSettings && trackSettingsPanel)
-    {
-        trackSettingsPanel->setVisible(true);
-        trackSettingsPanel->setBounds(area.removeFromRight(280));
+        if (showTrackSettings && trackSettingsPanel)
+        {
+            trackSettingsPanel->setVisible(true);
+            trackSettingsPanel->setBounds(sideArea);
+        }
+        else if (trackSettingsPanel) trackSettingsPanel->setVisible(false);
+        
+        area = dummyLeft.getBounds(); // center workspace
+        horizontalResizerBar->setVisible(true);
     }
-    else if (trackSettingsPanel)
+    else
     {
-        trackSettingsPanel->setVisible(false);
+        if (pluginBrowser) pluginBrowser->setVisible(false);
+        if (trackSettingsPanel) trackSettingsPanel->setVisible(false);
+        horizontalResizerBar->setVisible(false);
     }
 
     // ── Center Area — switch based on currentView ──────────────────────
@@ -529,33 +562,43 @@ bool MainComponent::perform(const InvocationInfo& info)
         // ── Track ───────────────────────────────────────────────────────
         case cmdAddAudioTrack:
         {
+            OrpheusLogger::logInfo("Adding audio track...");
             appState.addAudioTrack();
             if (audioEngine) audioEngine->addAudioTrack();
             if (timeline) timeline->rebuildTracks();
+            OrpheusLogger::logInfo("Audio track added. Total tracks: " + juce::String(audioEngine ? audioEngine->getNumTracks() : 0));
             return true;
         }
 
         case cmdAddMidiTrack:
         {
+            OrpheusLogger::logInfo("Adding MIDI track...");
             appState.addMidiTrack();
             if (audioEngine) audioEngine->addMidiTrack();
             if (timeline) timeline->rebuildTracks();
+            OrpheusLogger::logInfo("MIDI track added. Total tracks: " + juce::String(audioEngine ? audioEngine->getNumTracks() : 0));
             return true;
         }
 
         case cmdAddVocalTrack:
         {
-            appState.addVocalTrack();
-            if (audioEngine) audioEngine->addAudioTrack(); // audio engine treats it as audio
+            auto name = "Vocal " + juce::String(audioEngine ? audioEngine->getNumTracks() + 1 : 1);
+            OrpheusLogger::logInfo("Adding vocal track: " + name);
+            appState.addVocalTrack(name);
+            if (audioEngine) audioEngine->addAudioTrack(name);
             if (timeline) timeline->rebuildTracks();
+            OrpheusLogger::logInfo("Vocal track added. Total tracks: " + juce::String(audioEngine ? audioEngine->getNumTracks() : 0));
             return true;
         }
 
         case cmdAddInstrumentTrack:
         {
-            appState.addInstrumentTrack();
-            if (audioEngine) audioEngine->addMidiTrack(); // instrument tracks use MIDI
+            auto name = "Instrument " + juce::String(audioEngine ? audioEngine->getNumTracks() + 1 : 1);
+            OrpheusLogger::logInfo("Adding instrument track: " + name);
+            appState.addInstrumentTrack(name);
+            if (audioEngine) audioEngine->addMidiTrack(name);
             if (timeline) timeline->rebuildTracks();
+            OrpheusLogger::logInfo("Instrument track added. Total tracks: " + juce::String(audioEngine ? audioEngine->getNumTracks() : 0));
             return true;
         }
 

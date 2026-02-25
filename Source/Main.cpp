@@ -1,5 +1,6 @@
 #include <JuceHeader.h>
 #include "MainComponent.h"
+#include "Util/OrpheusLogger.h"
 
 //==============================================================================
 class OrpheusPlusApplication : public juce::JUCEApplication
@@ -13,12 +14,31 @@ public:
 
     void initialise(const juce::String&) override
     {
-        mainWindow.reset(new MainWindow(getApplicationName()));
+        OrpheusLogger::getInstance().initialise();
+        OrpheusLogger::logInfo("Application initialising...");
+
+        try
+        {
+            mainWindow.reset(new MainWindow(getApplicationName()));
+            OrpheusLogger::logInfo("Main window created successfully.");
+        }
+        catch (const std::exception& e)
+        {
+            OrpheusLogger::logFatal("Exception during startup: " + juce::String(e.what()));
+            juce::AlertWindow::showMessageBoxAsync(juce::MessageBoxIconType::WarningIcon,
+                "Startup Error", juce::String("Failed to start: ") + e.what());
+        }
+        catch (...)
+        {
+            OrpheusLogger::logFatal("Unknown exception during startup.");
+        }
     }
 
     void shutdown() override
     {
+        OrpheusLogger::logInfo("Application shutting down...");
         mainWindow = nullptr;
+        OrpheusLogger::getInstance().shutdown();
     }
 
     void systemRequestedQuit() override

@@ -335,7 +335,19 @@ void AudioEngine::removeTrack(int index)
 
 int AudioEngine::getNumTracks() const { return tracks.size(); }
 
-OrpheusTrackInfo& AudioEngine::getTrackInfo(int index) { return *tracks[index]; }
+OrpheusTrackInfo& AudioEngine::getTrackInfo(int index)
+{
+    if (!juce::isPositiveAndBelow(index, tracks.size()))
+    {
+        // Prevent SIGSEGV — log the bad access and return a safe dummy
+        static OrpheusTrackInfo dummy;
+        juce::Logger::writeToLog("ERROR: getTrackInfo(" + juce::String(index) 
+            + ") out of bounds (size=" + juce::String(tracks.size()) + ")");
+        jassertfalse;
+        return dummy;
+    }
+    return *tracks[index];
+}
 
 void AudioEngine::setTrackVolume(int i, float vol) { 
     tracks[i]->volume = vol; 
