@@ -18,7 +18,6 @@ MixerPanel::ChannelStrip::ChannelStrip(int idx, AudioEngine& e) : trackIndex(idx
         b->setColour(juce::TextButton::buttonColourId, juce::Colour(0xff2d2d3e));
         
         b->onClick = [this, i] {
-            // ... (keep existing click logic, but maybe update text update logic elsewhere usually)
             auto& trackInfo = engine.getTrackInfo(trackIndex);
             int nodeID = trackInfo.pluginSlots[i];
             
@@ -29,30 +28,25 @@ MixerPanel::ChannelStrip::ChannelStrip(int idx, AudioEngine& e) : trackIndex(idx
                 m.addSectionHeader("Add Plugin");
                 
                 auto& pm = engine.getPluginManager();
-                int id = 1;
-
                 const auto& list = pm.getKnownPluginList();
+                
+                // Copy descriptions for async-safe access
+                std::vector<juce::PluginDescription> descs;
+                int id = 1;
                 for (const auto& desc : list.getTypes())
                 {
                     m.addItem(id++, desc.name + " (" + desc.manufacturerName + ")");
+                    descs.push_back(desc);
                 }
                 
-                m.showMenuAsync(juce::PopupMenu::Options{}, [this, &pm, i](int result) {
-                    if (result > 0)
+                m.showMenuAsync(juce::PopupMenu::Options{},
+                    [this, i, descs = std::move(descs)](int result)
                     {
-                        auto& list = pm.getKnownPluginList();
-                        if (result - 1 < list.getTypes().size())
+                        if (result > 0 && result - 1 < (int)descs.size())
                         {
-                            const auto& desc = list.getTypes()[result - 1]; // unsafe if list changes?
-                            pm.addPluginToTrack(trackIndex, desc); // Note: this defaults to first empty slot. 
-                            // We need addPluginToTrack(trackIndex, desc, slotIndex)
-                            // But for now, let's just stick to "add to track" and refactor if needed. 
-                            // Wait, if I click slot 2 but slot 0 is empty, where should it go?
-                            // Ideally slot 2. 
-                            // Let's defer that refinement.
+                            engine.getPluginManager().addPluginToTrack(trackIndex, descs[(size_t)(result - 1)]);
                         }
-                    }
-                });
+                    });
             }
             else
             {

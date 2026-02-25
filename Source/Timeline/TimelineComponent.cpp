@@ -48,6 +48,54 @@ TimelineComponent::TimelineComponent(AudioEngine& e, AppState& s,
     };
     addAndMakeVisible(snapComboBox);
 
+    // Navigation buttons
+    jumpStartBtn.onClick = [this] {
+        audioEngine.setPlayheadPosition(0.0);
+        scrollToPosition(0.0);
+    };
+    addAndMakeVisible(jumpStartBtn);
+
+    jumpEndBtn.onClick = [this] {
+        // Find the end of the last clip
+        double maxEnd = 0.0;
+        for (int i = 0; i < audioEngine.getNumTracks(); ++i) {
+            auto& info = audioEngine.getTrackInfo(i);
+            for (auto* c : info.clips)
+                maxEnd = juce::jmax(maxEnd, c->startTime + c->duration);
+        }
+        if (maxEnd < 1.0) maxEnd = 10.0;
+        audioEngine.setPlayheadPosition(maxEnd);
+        scrollToPosition(juce::jmax(0.0, maxEnd - 2.0));
+    };
+    addAndMakeVisible(jumpEndBtn);
+
+    // Zoom buttons
+    zoomInBtn.onClick  = [this] { zoomIn(); };
+    zoomOutBtn.onClick = [this] { zoomOut(); };
+    addAndMakeVisible(zoomInBtn);
+    addAndMakeVisible(zoomOutBtn);
+
+    // Zoom slider (log scale)
+    zoomSlider.setSliderStyle(juce::Slider::LinearHorizontal);
+    zoomSlider.setRange(std::log2(5.0), std::log2(2000.0), 0.01);
+    zoomSlider.setValue(std::log2(pixelsPerSecond), juce::dontSendNotification);
+    zoomSlider.setTextBoxStyle(juce::Slider::NoTextBox, false, 0, 0);
+    zoomSlider.onValueChange = [this] {
+        setPixelsPerSecond(std::pow(2.0, zoomSlider.getValue()));
+    };
+    addAndMakeVisible(zoomSlider);
+
+    // Track height slider
+    trackHeightSlider.setSliderStyle(juce::Slider::LinearHorizontal);
+    trackHeightSlider.setRange(40.0, 300.0, 1.0);
+    trackHeightSlider.setValue(80.0, juce::dontSendNotification);
+    trackHeightSlider.setTextBoxStyle(juce::Slider::NoTextBox, false, 0, 0);
+    trackHeightSlider.onValueChange = [this] {
+        userTrackHeight = (int) trackHeightSlider.getValue();
+        resized();
+    };
+    addAndMakeVisible(trackHeightSlider);
+
     addAndMakeVisible(horizontalScrollBar);
     addAndMakeVisible(verticalScrollBar);
     addAndMakeVisible(trackViewport);
@@ -94,7 +142,7 @@ void TimelineComponent::resized()
 
     auto ruler    = bounds.removeFromTop(RULER_HEIGHT);
     
-    // Tools
+    // Tools row
     auto toolArea = ruler.removeFromLeft(TRACK_HEADER_W);
     int btnW = toolArea.getWidth() / 4;
     selectButton.setBounds(toolArea.removeFromLeft(btnW).reduced(2));
@@ -102,9 +150,14 @@ void TimelineComponent::resized()
     drawButton.setBounds(toolArea.removeFromLeft(btnW).reduced(2));
     eraseButton.setBounds(toolArea.removeFromLeft(btnW).reduced(2));
 
-    // Snap UI
-    auto snapArea = ruler.removeFromLeft(100);
-    snapComboBox.setBounds(snapArea.reduced(2));
+    // Controls row within ruler area
+    snapComboBox.setBounds(ruler.removeFromLeft(80).reduced(2));
+    jumpStartBtn.setBounds(ruler.removeFromLeft(28).reduced(2));
+    jumpEndBtn.setBounds(ruler.removeFromLeft(28).reduced(2));
+    zoomOutBtn.setBounds(ruler.removeFromLeft(24).reduced(2));
+    zoomSlider.setBounds(ruler.removeFromLeft(100).reduced(2));
+    zoomInBtn.setBounds(ruler.removeFromLeft(24).reduced(2));
+    trackHeightSlider.setBounds(ruler.removeFromLeft(80).reduced(2));
 
     auto viewport = bounds;
 
@@ -118,7 +171,7 @@ void TimelineComponent::resized()
     for (int i = 0; i < trackLanes.size(); ++i)
     {
         auto& info = audioEngine.getTrackInfo(i);
-        int h = DEFAULT_TRACK_H;
+        int h = userTrackHeight;
         if (info.showTakes)
             h += (int)info.takes.size() * TAKE_LANE_H;
         

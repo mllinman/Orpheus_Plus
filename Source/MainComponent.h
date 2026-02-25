@@ -77,6 +77,8 @@ public:
         cmdQuit,
         cmdOpenAutoTune,
         cmdToggleTrackSettings,
+        cmdAddVocalTrack,
+        cmdAddInstrumentTrack,
     };
 
 private:
@@ -128,6 +130,8 @@ private:
     bool showPluginBrowser  = false;
     bool showTrackSettings  = false;
     int  currentView        = 0; // 0=Timeline, 1=PianoRoll, 2=Mastering, 3=StemSep, 4=Cleanup, 5=AutoTune
+    int  mixerHeight        = 200;
+    int  sidebarWidth       = 280;
 
     juce::StretchableLayoutManager mainLayout;
     juce::StretchableLayoutResizerBar* resizerBar = nullptr;

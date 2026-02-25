@@ -11,12 +11,39 @@ PluginBrowser::PluginBrowser(AudioEngine& e, AppState& s)
         audioEngine.getPluginManager().scanForPlugins();
         statusLabel.setText("Scanning...", juce::dontSendNotification);
         progressBar.setVisible(true);
+        cancelScanButton.setVisible(true);
+        scanButton.setEnabled(false);
     };
     addAndMakeVisible(scanButton);
+
+    cancelScanButton.onClick = [this] {
+        audioEngine.getPluginManager().cancelScan();
+        cancelScanButton.setVisible(false);
+        scanButton.setEnabled(true);
+        statusLabel.setText("Scan cancelled.", juce::dontSendNotification);
+    };
+    cancelScanButton.setVisible(false);
+    addAndMakeVisible(cancelScanButton);
 
     searchBox.setTextToShowWhenEmpty("Search plugins...", juce::Colours::grey);
     searchBox.onTextChange = [this] { rebuildFilteredList(); };
     addAndMakeVisible(searchBox);
+
+    // Category filter
+    categoryCombo.addItem("All", 1);
+    categoryCombo.addItem("Instruments", 2);
+    categoryCombo.addItem("Effects", 3);
+    categoryCombo.setSelectedId(1, juce::dontSendNotification);
+    categoryCombo.onChange = [this] { rebuildFilteredList(); };
+    addAndMakeVisible(categoryCombo);
+
+    // Sort order
+    sortCombo.addItem("Name", 1);
+    sortCombo.addItem("Manufacturer", 2);
+    sortCombo.addItem("Format", 3);
+    sortCombo.setSelectedId(1, juce::dontSendNotification);
+    sortCombo.onChange = [this] { rebuildFilteredList(); };
+    addAndMakeVisible(sortCombo);
 
     pluginList.setModel(this);
     pluginList.setRowHeight(22);
@@ -42,10 +69,21 @@ PluginBrowser::~PluginBrowser()
 void PluginBrowser::resized()
 {
     auto bounds = getLocalBounds().reduced(4);
-    scanButton.setBounds(bounds.removeFromTop(28).reduced(0, 2));
+    
+    // Scan row
+    auto scanRow = bounds.removeFromTop(28);
+    cancelScanButton.setBounds(scanRow.removeFromRight(60).reduced(0, 2));
+    scanButton.setBounds(scanRow.reduced(0, 2));
+    
     progressBar.setBounds(bounds.removeFromTop(16));
     statusLabel.setBounds(bounds.removeFromTop(16));
     searchBox.setBounds(bounds.removeFromTop(24).reduced(0, 2));
+    
+    // Filter row
+    auto filterRow = bounds.removeFromTop(24);
+    categoryCombo.setBounds(filterRow.removeFromLeft(filterRow.getWidth() / 2).reduced(0, 2));
+    sortCombo.setBounds(filterRow.reduced(0, 2));
+    
     pluginList.setBounds(bounds);
 }
 
@@ -85,9 +123,13 @@ void PluginBrowser::listBoxItemDoubleClicked(int row, const juce::MouseEvent&)
 {
     if (!juce::isPositiveAndBelow(row, filteredPlugins.size())) return;
 
-    // Load plugin onto currently selected track
-    // TODO: determine selected track from AppState
-    audioEngine.getPluginManager().addPluginToTrack(0, *filteredPlugins[row]);
+    // Load plugin onto selected track (or track 0 if none selected)
+    int trackIdx = appState.getSelectedTrackIndex();
+    if (trackIdx < 0 || trackIdx >= audioEngine.getNumTracks())
+        trackIdx = audioEngine.getNumTracks() > 0 ? 0 : -1;
+    
+    if (trackIdx >= 0)
+        audioEngine.getPluginManager().addPluginToTrack(trackIdx, *filteredPlugins[row]);
 }
 
 juce::var PluginBrowser::getDragSourceDescription(const juce::SparseSet<int>& rows)
@@ -103,18 +145,43 @@ void PluginBrowser::rebuildFilteredList()
 {
     filteredPlugins.clear();
     juce::String query = searchBox.getText().toLowerCase();
+    int category = categoryCombo.getSelectedId();
+    int sortMode = sortCombo.getSelectedId();
 
     const juce::KnownPluginList& list = audioEngine.getPluginManager().getKnownPluginList();
     const juce::Array<juce::PluginDescription>& types = list.getTypes();
 
     for (const auto& desc : types)
     {
+        // Category filter
+        if (category == 2 && !desc.isInstrument) continue;     // Instruments only
+        if (category == 3 && desc.isInstrument) continue;      // Effects only
+
+        // Text search
         if (query.isEmpty() || desc.name.toLowerCase().contains(query) ||
             desc.manufacturerName.toLowerCase().contains(query))
         {
             filteredPlugins.add(&desc);
         }
     }
+
+    // Sort
+    struct NameSorter {
+        static int compareElements(const juce::PluginDescription* a, const juce::PluginDescription* b)
+        { return a->name.compareIgnoreCase(b->name); }
+    };
+    struct MfgSorter {
+        static int compareElements(const juce::PluginDescription* a, const juce::PluginDescription* b)
+        { int r = a->manufacturerName.compareIgnoreCase(b->manufacturerName); return r != 0 ? r : a->name.compareIgnoreCase(b->name); }
+    };
+    struct FmtSorter {
+        static int compareElements(const juce::PluginDescription* a, const juce::PluginDescription* b)
+        { int r = a->pluginFormatName.compareIgnoreCase(b->pluginFormatName); return r != 0 ? r : a->name.compareIgnoreCase(b->name); }
+    };
+
+    if (sortMode == 1) { NameSorter s; filteredPlugins.sort(s); }
+    else if (sortMode == 2) { MfgSorter s; filteredPlugins.sort(s); }
+    else if (sortMode == 3) { FmtSorter s; filteredPlugins.sort(s); }
 
     pluginList.updateContent();
 }
@@ -129,6 +196,8 @@ void PluginBrowser::scanProgress(float progress, const juce::String& name)
 void PluginBrowser::scanComplete()
 {
     progressBar.setVisible(false);
+    cancelScanButton.setVisible(false);
+    scanButton.setEnabled(true);
     rebuildFilteredList();
     statusLabel.setText(juce::String(filteredPlugins.size()) + " plugins found.",
                         juce::dontSendNotification);

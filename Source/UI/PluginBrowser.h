@@ -35,7 +35,10 @@ private:
     AppState&    appState;
 
     juce::TextButton scanButton  { "Scan Plugins" };
+    juce::TextButton cancelScanButton { "Cancel" };
     juce::TextEditor searchBox;
+    juce::ComboBox   categoryCombo;
+    juce::ComboBox   sortCombo;
     juce::ListBox    pluginList;
     juce::Label      statusLabel;
 

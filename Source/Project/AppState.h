@@ -11,7 +11,7 @@ public:
 
     //── Track Info ────────────────────────────────────────────────────────────
     struct TrackInfo {
-        enum class Type { Audio, Midi };
+        enum class Type { Audio, Midi, Vocal, Instrument };
         juce::String  name;
         Type          type   = Type::Audio;
         juce::Colour  colour = juce::Colour(0xff6c5ce7);
@@ -40,6 +40,8 @@ public:
     //── Track management ─────────────────────────────────────────────────────
     int  addAudioTrack(const juce::String& name = {});
     int  addMidiTrack(const juce::String& name = {});
+    int  addVocalTrack(const juce::String& name = {});
+    int  addInstrumentTrack(const juce::String& name = {});
     void removeTrack(int index);
     int  getNumTracks() const;
 

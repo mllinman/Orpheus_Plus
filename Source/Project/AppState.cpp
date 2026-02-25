@@ -53,6 +53,50 @@ int AppState::addMidiTrack(const juce::String& name)
     return getNumTracks() - 1;
 }
 
+int AppState::addVocalTrack(const juce::String& name)
+{
+    auto trackName = name.isEmpty() ? "Vocal " + juce::String(getNumTracks() + 1) : name;
+    auto track = juce::ValueTree("Track");
+    track.setProperty("type",  "vocal", nullptr);
+    track.setProperty("name",  trackName, nullptr);
+    track.setProperty("vol",   1.0,     nullptr);
+    track.setProperty("pan",   0.0,     nullptr);
+    track.setProperty("mute",  false,   nullptr);
+    track.setProperty("solo",  false,   nullptr);
+    valueTree.addChild(track, -1, &undoManager);
+
+    TrackInfo info;
+    info.name   = trackName;
+    info.type   = TrackInfo::Type::Vocal;
+    info.colour = juce::Colour(0xfffd79a8); // pink
+    tracks.push_back(info);
+
+    markDirty();
+    return getNumTracks() - 1;
+}
+
+int AppState::addInstrumentTrack(const juce::String& name)
+{
+    auto trackName = name.isEmpty() ? "Instrument " + juce::String(getNumTracks() + 1) : name;
+    auto track = juce::ValueTree("Track");
+    track.setProperty("type",  "instrument", nullptr);
+    track.setProperty("name",  trackName, nullptr);
+    track.setProperty("vol",   1.0,     nullptr);
+    track.setProperty("pan",   0.0,     nullptr);
+    track.setProperty("mute",  false,   nullptr);
+    track.setProperty("solo",  false,   nullptr);
+    valueTree.addChild(track, -1, &undoManager);
+
+    TrackInfo info;
+    info.name   = trackName;
+    info.type   = TrackInfo::Type::Instrument;
+    info.colour = juce::Colour(0xff00cec9); // teal
+    tracks.push_back(info);
+
+    markDirty();
+    return getNumTracks() - 1;
+}
+
 void AppState::removeTrack(int index)
 {
     if (juce::isPositiveAndBelow(index, getNumTracks()))

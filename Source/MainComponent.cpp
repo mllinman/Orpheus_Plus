@@ -302,6 +302,8 @@ juce::PopupMenu MainComponent::getMenuForIndex(int menuIndex, const juce::String
         case 3: // Track
             menu.addCommandItem(&commandManager, cmdAddAudioTrack);
             menu.addCommandItem(&commandManager, cmdAddMidiTrack);
+            menu.addCommandItem(&commandManager, cmdAddVocalTrack);
+            menu.addCommandItem(&commandManager, cmdAddInstrumentTrack);
             break;
 
         case 4: // AI
@@ -337,7 +339,8 @@ void MainComponent::getAllCommands(juce::Array<juce::CommandID>& commands)
         cmdExportMix, cmdExportStems,
         cmdOpenPluginBrowser, cmdOpenSettings,
         cmdToggleMixer, cmdAudioCleanup, cmdAbout, cmdQuit,
-        cmdOpenAutoTune, cmdToggleTrackSettings
+        cmdOpenAutoTune, cmdToggleTrackSettings,
+        cmdAddVocalTrack, cmdAddInstrumentTrack
     });
 }
 
@@ -447,6 +450,12 @@ void MainComponent::getCommandInfo(juce::CommandID commandID, juce::ApplicationC
             result.setInfo("Track Settings", "Show or hide the track settings panel", "View", 0);
             result.setTicked(showTrackSettings);
             break;
+        case cmdAddVocalTrack:
+            result.setInfo("Add Vocal Track", "Add a new vocal track", "Track", 0);
+            break;
+        case cmdAddInstrumentTrack:
+            result.setInfo("Add Instrument Track", "Add a new instrument track", "Track", 0);
+            break;
         default:
             break;
     }
@@ -530,6 +539,22 @@ bool MainComponent::perform(const InvocationInfo& info)
         {
             appState.addMidiTrack();
             if (audioEngine) audioEngine->addMidiTrack();
+            if (timeline) timeline->rebuildTracks();
+            return true;
+        }
+
+        case cmdAddVocalTrack:
+        {
+            appState.addVocalTrack();
+            if (audioEngine) audioEngine->addAudioTrack(); // audio engine treats it as audio
+            if (timeline) timeline->rebuildTracks();
+            return true;
+        }
+
+        case cmdAddInstrumentTrack:
+        {
+            appState.addInstrumentTrack();
+            if (audioEngine) audioEngine->addMidiTrack(); // instrument tracks use MIDI
             if (timeline) timeline->rebuildTracks();
             return true;
         }

@@ -92,6 +92,15 @@ private:
     juce::ComboBox   snapComboBox;
     SnapTo           currentSnapMode = SnapTo::Beat;
 
+    // Navigation & zoom controls
+    juce::TextButton jumpStartBtn  { "|<" };
+    juce::TextButton jumpEndBtn    { ">|" };
+    juce::TextButton zoomInBtn     { "+" };
+    juce::TextButton zoomOutBtn    { "-" };
+    juce::Slider     zoomSlider;
+    juce::Slider     trackHeightSlider;
+    int              userTrackHeight = 80;
+
     AudioEngine& audioEngine;
     AppState&    appState;
     juce::ApplicationCommandManager& commandManager;

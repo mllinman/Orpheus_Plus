@@ -38,29 +38,65 @@ void PluginManager::scanForPlugins()
         auto deadMansPedal = juce::File::getSpecialLocation(juce::File::userApplicationDataDirectory)
                                .getChildFile("OrpheusPlus/deadmanspedal.txt");
 
-        if (formatManager.getNumFormats() > 0)
+        if (formatManager.getNumFormats() == 0)
         {
-            scanner.reset(new juce::PluginDirectoryScanner(
-                knownPlugins, *formatManager.getFormat(0), paths, true, deadMansPedal));
+            scanning.store(false);
+            juce::MessageManager::callAsync([this] {
+                listeners.call(&Listener::scanComplete);
+            });
+            return;
         }
 
+        // Scan into a temporary list to avoid corrupting knownPlugins on crash
+        juce::KnownPluginList tempList;
+        auto tempScanner = std::make_unique<juce::PluginDirectoryScanner>(
+            tempList, *formatManager.getFormat(0), paths, true, deadMansPedal);
+
         juce::String currentPluginName;
-        while (scanner->scanNextFile(true, currentPluginName))
+        while (scanning.load())
         {
-            float progress = scanner->getProgress();
+            bool moreToScan = false;
+            try
+            {
+                moreToScan = tempScanner->scanNextFile(true, currentPluginName);
+            }
+            catch (...)
+            {
+                // Broken plugin — skip it and continue
+                juce::MessageManager::callAsync([this, currentPluginName]
+                {
+                    listeners.call(&Listener::scanProgress, -1.0f,
+                                   "SKIPPED (crash): " + currentPluginName);
+                });
+                continue;
+            }
+
+            if (!moreToScan) break;
+
+            float progress = tempScanner->getProgress();
             juce::MessageManager::callAsync([this, progress, currentPluginName]
             {
                 listeners.call(&Listener::scanProgress, progress, currentPluginName);
             });
-
-            if (!scanning.load()) break;
         }
 
+        // Merge results safely on the message thread
+        auto scannedTypes = tempList.getTypes();
         scanning.store(false);
-        juce::MessageManager::callAsync([this]
+
+        juce::MessageManager::callAsync([this, scannedTypes]
         {
+            for (const auto& desc : scannedTypes)
+                knownPlugins.addType(desc);
+
             listeners.call(&Listener::scanComplete);
             listeners.call(&Listener::pluginListChanged);
+
+            // Auto-save after scan
+            auto pluginListFile = juce::File::getSpecialLocation(
+                juce::File::userApplicationDataDirectory)
+                .getChildFile("OrpheusPlus/plugins.xml");
+            savePluginList(pluginListFile);
         });
     });
 }
