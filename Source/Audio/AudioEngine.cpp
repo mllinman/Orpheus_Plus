@@ -709,9 +709,30 @@ void AudioEngine::updateTrackGraphConnections(int trackIndex)
     // 3. Connect them in the new linear order
     for (size_t i = 0; i < chain.size() - 1; ++i)
     {
-        for (int ch = 0; ch < 2; ++ch)
+        auto nodeA = processorGraph.getNodeForId(chain[i]);
+        auto nodeB = processorGraph.getNodeForId(chain[i+1]);
+        
+        if (nodeA && nodeB)
         {
-            processorGraph.addConnection({ { chain[i], ch }, { chain[i+1], ch } });
+            auto* procA = nodeA->getProcessor();
+            auto* procB = nodeB->getProcessor();
+            
+            // Connect MIDI if applicable
+            if (procA->producesMidi() && procB->acceptsMidi())
+            {
+                processorGraph.addConnection({ { chain[i], juce::AudioProcessorGraph::midiChannelIndex }, 
+                                               { chain[i+1], juce::AudioProcessorGraph::midiChannelIndex } });
+            }
+
+            // Connect Audio if applicable
+            int numOutsA = procA->getTotalNumOutputChannels();
+            int numInsB  = procB->getTotalNumInputChannels();
+            int audioChans = std::min({numOutsA, numInsB, 2});
+
+            for (int ch = 0; ch < audioChans; ++ch)
+            {
+                processorGraph.addConnection({ { chain[i], ch }, { chain[i+1], ch } });
+            }
         }
     }
 

@@ -97,10 +97,25 @@ void PianoRollComponent::paint(juce::Graphics& g)
     // Account for resizer bar width in visual painting
     bounds.removeFromLeft(8);
 
+    auto noteArea = bounds;
+    noteArea.removeFromBottom(VELOCITY_LANE_HEIGHT);
+
     paintPianoKeys(g, pianoArea);
-    paintGrid(g, bounds);
-    paintNotes(g, bounds);
+    paintGrid(g, noteArea);
+    paintNotes(g, noteArea);
+
+    auto velArea = bounds.removeFromBottom(VELOCITY_LANE_HEIGHT);
+    paintVelocityLane(g, velArea);
+
     paintPlayhead(g);
+
+    if (isLassoDragging)
+    {
+        g.setColour(OrpheusLookAndFeel::accentPrimary().withAlpha(0.3f));
+        g.fillRect(selectionLasso);
+        g.setColour(OrpheusLookAndFeel::accentPrimary().withAlpha(0.8f));
+        g.drawRect(selectionLasso, 1);
+    }
 }
 
 void PianoRollComponent::paintPianoKeys(juce::Graphics& g, juce::Rectangle<int> area)
@@ -240,10 +255,38 @@ void PianoRollComponent::paintNotes(juce::Graphics& g, juce::Rectangle<int> area
         g.setColour(juce::Colours::black.withAlpha(0.4f));
         g.drawRoundedRectangle(bounds, 2.0f, 1.0f);
 
-        // Velocity indicator bar at bottom
-        float velW = bounds.getWidth() * (note->velocity / 127.0f);
-        g.setColour(juce::Colours::white.withAlpha(0.3f));
-        g.fillRect(bounds.getX(), bounds.getBottom() - 2.0f, velW, 2.0f);
+        // Remove velocity indicator from note bounds, it's drawn in the velocity lane now
+    }
+    
+    // Create clip bounds to prevent notes drawing outside grid
+    g.reduceClipRegion(area);
+}
+
+void PianoRollComponent::paintVelocityLane(juce::Graphics& g, juce::Rectangle<int> area)
+{
+    g.setColour(juce::Colour(0xff151525));
+    g.fillRect(area);
+
+    g.setColour(OrpheusLookAndFeel::borderDefault());
+    g.drawHorizontalLine(area.getY(), (float)area.getX(), (float)area.getRight());
+    
+    // Draw stems for all notes
+    for (auto* note : notes)
+    {
+        auto bounds = getNoteBounds(*note);
+        int centerX = bounds.getX() + bounds.getWidth() / 2;
+        int x = area.getX() + centerX - (int)horizontalOffset;
+
+        if (x < area.getX() || x > area.getRight()) continue;
+
+        int stemH = (int)(area.getHeight() * (note->velocity / 127.0f));
+        int stemY = area.getBottom() - stemH;
+
+        juce::Colour col = note->selected ? noteColour.brighter(0.4f) : noteColour;
+        g.setColour(col.withAlpha(0.8f));
+        
+        g.drawVerticalLine(x, (float)stemY, (float)area.getBottom());
+        g.fillEllipse((float)x - 2.5f, (float)stemY - 2.5f, 5.0f, 5.0f);
     }
 }
 
@@ -279,11 +322,17 @@ void PianoRollComponent::mouseDown(const juce::MouseEvent& e)
     double beat = pixelToBeat(e.x - (keyboardWidth + 8) + (int)horizontalOffset);
     double qBeat = std::round(beat / quantizeDivision) * quantizeDivision;
 
+    if (e.y >= getHeight() - VELOCITY_LANE_HEIGHT)
+    {
+        isEditingVelocity = true;
+        mouseDrag(e);
+        return;
+    }
+
     auto* n = getNoteAt(beat, pitch);
 
     if (e.mods.isRightButtonDown() || e.mods.isCommandDown())
     {
-        // Delete note under cursor
         if (n) {
             notes.removeObject(n);
             repaint();
@@ -291,36 +340,53 @@ void PianoRollComponent::mouseDown(const juce::MouseEvent& e)
     }
     else if (n != nullptr)
     {
-        // Clicked an existing note
-        if (!e.mods.isShiftDown())
+        if (!e.mods.isShiftDown() && !n->selected)
             for (auto* other : notes) other->selected = false;
             
         n->selected = true;
 
-        // Check if we clicked the right edge for resizing
         auto bounds = getNoteBounds(*n);
         float rightEdge = bounds.getRight() + keyboardWidth + 8 - (float)horizontalOffset;
         
         if (std::abs(e.x - rightEdge) < 10.0f) {
             resizingNote = n;
         } else {
-            draggingNote = n;
+            draggingNotes.clear();
+            for (auto* note : notes) {
+                if (note->selected) {
+                    draggingNotes.push_back({note, note->startBeat, note->pitch});
+                }
+            }
+            dragStartBeat = beat;
+            dragStartPitch = pitch;
         }
         repaint();
     }
     else
     {
-        // Deselect all
-        for (auto* other : notes) other->selected = false;
+        if (!e.mods.isShiftDown())
+            for (auto* other : notes) other->selected = false;
 
-        // Add new note
-        auto* newNote       = notes.add(new MidiNote());
-        newNote->pitch      = pitch;
-        newNote->startBeat  = qBeat;
-        newNote->duration   = quantizeDivision;
-        newNote->velocity   = 100;
-        newNote->selected   = true;
-        draggingNote        = newNote;
+        if (!isDrawingMode || e.mods.isAltDown() || e.mods.isShiftDown())
+        {
+            isLassoDragging = true;
+            selectionLasso.setPosition(e.getPosition());
+            selectionLasso.setSize(0, 0);
+        }
+        else
+        {
+            auto* newNote       = notes.add(new MidiNote());
+            newNote->pitch      = pitch;
+            newNote->startBeat  = qBeat;
+            newNote->duration   = quantizeDivision;
+            newNote->velocity   = 100;
+            newNote->selected   = true;
+            
+            draggingNotes.clear();
+            draggingNotes.push_back({newNote, newNote->startBeat, newNote->pitch});
+            dragStartBeat = beat;
+            dragStartPitch = pitch;
+        }
         repaint();
     }
 }
@@ -329,9 +395,41 @@ void PianoRollComponent::mouseDrag(const juce::MouseEvent& e)
 {
     if (e.x < keyboardWidth + 8) return;
 
+    if (isEditingVelocity)
+    {
+        double wBeat = pixelToBeat(e.x - (keyboardWidth + 8) + (int)horizontalOffset);
+        float normalizedY = 1.0f - (float)(e.y - (getHeight() - VELOCITY_LANE_HEIGHT)) / VELOCITY_LANE_HEIGHT;
+        int vel = juce::jlimit(0, 127, (int)(normalizedY * 127.0f));
+        
+        for (auto* note : notes) {
+            if (wBeat >= note->startBeat && wBeat <= note->startBeat + note->duration) {
+                note->velocity = vel;
+            }
+        }
+        repaint();
+        return;
+    }
+
     int pitch = pixelToPitch(e.y + (int)verticalOffset);
     double beat = pixelToBeat(e.x - (keyboardWidth + 8) + (int)horizontalOffset);
     double qBeat = std::round(beat / quantizeDivision) * quantizeDivision;
+
+    if (isLassoDragging)
+    {
+        selectionLasso = juce::Rectangle<int>(e.getMouseDownPosition(), e.getPosition());
+        
+        juce::Rectangle<float> lassoF((float)(selectionLasso.getX() - (keyboardWidth + 8) + horizontalOffset),
+                                      (float)(selectionLasso.getY() + verticalOffset),
+                                      (float)selectionLasso.getWidth(),
+                                      (float)selectionLasso.getHeight());
+
+        for (auto* note : notes) {
+            auto bounds = getNoteBounds(*note);
+            note->selected = bounds.intersects(lassoF);
+        }
+        repaint();
+        return;
+    }
 
     if (resizingNote)
     {
@@ -339,21 +437,29 @@ void PianoRollComponent::mouseDrag(const juce::MouseEvent& e)
         resizingNote->duration = juce::jmax(quantizeDivision, newDuration);
         repaint();
     }
-    else if (draggingNote)
+    else if (!draggingNotes.empty())
     {
-        draggingNote->pitch = pitch;
-        draggingNote->startBeat = qBeat;
+        double beatDelta = qBeat - std::round(dragStartBeat / quantizeDivision) * quantizeDivision;
+        int pitchDelta = pitch - dragStartPitch;
+
+        for (auto& state : draggingNotes)
+        {
+            state.note->pitch = juce::jlimit(0, 127, state.originalPitch + pitchDelta);
+            state.note->startBeat = juce::jmax(0.0, state.originalBeat + beatDelta);
+        }
         repaint();
     }
 }
 
 void PianoRollComponent::mouseUp(const juce::MouseEvent&)
 {
-    if (draggingNote || resizingNote)
+    if (!draggingNotes.empty() || resizingNote || isEditingVelocity)
         syncToClip();
 
-    draggingNote = nullptr;
+    draggingNotes.clear();
     resizingNote = nullptr;
+    isLassoDragging = false;
+    isEditingVelocity = false;
 }
 
 bool PianoRollComponent::keyPressed(const juce::KeyPress& key)

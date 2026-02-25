@@ -64,6 +64,9 @@ void MidiGeneratorProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce
         }
     }
 
-    // Render the synth
+    // Output the MIDI to the graph
+    midiMessages.addEvents(trackMidi, 0, numSamples, 0);
+
+    // Render the fallback synth (if no plugin is added, this audio will be heard)
     synth.renderNextBlock(buffer, trackMidi, 0, numSamples);
 }

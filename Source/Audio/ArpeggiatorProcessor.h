@@ -1,16 +1,13 @@
 #pragma once
 #include <JuceHeader.h>
-#include "OrpheusSynth.h"
-#include "AudioEngine.h"
+#include <vector>
+#include <set>
 
-/**
- * A processor that renders MIDI clips using the built-in OrpheusSynth.
- */
-class MidiGeneratorProcessor : public juce::AudioProcessor
+class ArpeggiatorProcessor : public juce::AudioProcessor
 {
 public:
-    MidiGeneratorProcessor(OrpheusTrackInfo& info, AudioEngine& engine);
-    ~MidiGeneratorProcessor() override;
+    ArpeggiatorProcessor();
+    ~ArpeggiatorProcessor() override;
 
     void prepareToPlay(double sampleRate, int samplesPerBlock) override;
     void releaseResources() override;
@@ -18,25 +15,30 @@ public:
 
     juce::AudioProcessorEditor* createEditor() override { return nullptr; }
     bool hasEditor() const override { return false; }
-    const juce::String getName() const override { return "MIDI Synth Generator"; }
+
+    const juce::String getName() const override { return "Arpeggiator"; }
     bool acceptsMidi() const override { return true; }
     bool producesMidi() const override { return true; }
     double getTailLengthSeconds() const override { return 0.0; }
+
     int getNumPrograms() override { return 1; }
     int getCurrentProgram() override { return 0; }
     void setCurrentProgram(int) override {}
     const juce::String getProgramName(int) override { return "Default"; }
     void changeProgramName(int, const juce::String&) override {}
+
     void getStateInformation(juce::MemoryBlock&) override {}
     void setStateInformation(const void*, int) override {}
 
-    void setPlayhead(double pos) { currentPlayhead.store(pos); }
-
 private:
-    OrpheusTrackInfo& trackInfo;
-    AudioEngine& audioEngine;
-    OrpheusSynth synth;
-    std::atomic<double> currentPlayhead { 0.0 };
+    std::set<int> activeNotes;
+    int currentNoteIndex = 0;
+    double timeSinceLastNote = 0.0;
+    int lastNotePlayed = -1;
+    
+    // Simple parameters
+    double rateDivision = 0.25; // 1/16th note default
+    float gateLength = 0.8f;    // 80% of step size
 
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MidiGeneratorProcessor)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ArpeggiatorProcessor)
 };

@@ -49,6 +49,7 @@ private:
     void paintPianoKeys(juce::Graphics&, juce::Rectangle<int>);
     void paintGrid(juce::Graphics&, juce::Rectangle<int>);
     void paintNotes(juce::Graphics&, juce::Rectangle<int>);
+    void paintVelocityLane(juce::Graphics&, juce::Rectangle<int>);
     void paintPlayhead(juce::Graphics&);
     void enableMidiInput();
 
@@ -79,6 +80,22 @@ private:
     double  verticalOffset    = (NUM_NOTES / 2) * NOTE_HEIGHT - 200;
     double  horizontalOffset  = 0.0;
     double  quantizeDivision  = 0.25; // 1/16th note
+
+    // Drag and selection state
+    juce::Rectangle<int> selectionLasso;
+    bool isLassoDragging = false;
+    
+    struct NoteDragState {
+        MidiNote* note;
+        double originalBeat;
+        int originalPitch;
+    };
+    std::vector<NoteDragState> draggingNotes;
+    double dragStartBeat = 0.0;
+    int dragStartPitch = 0;
+
+    bool isEditingVelocity = false;
+    static constexpr int VELOCITY_LANE_HEIGHT = 60;
 
     juce::Colour noteColour { 0xff6c5ce7 };  // Legacy accent purple
 

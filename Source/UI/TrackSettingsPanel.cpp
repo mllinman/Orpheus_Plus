@@ -203,6 +203,11 @@ void TrackSettingsPanel::refreshFromTrack()
 
     bool isAudio = (track.type == AppState::TrackInfo::Type::Audio);
     trackTypeLabel.setText(isAudio ? "AUDIO TRACK" : "MIDI TRACK", juce::dontSendNotification);
+
+    if (isAudio)
+        insertsLabel.setText("INSERTS", juce::dontSendNotification);
+    else
+        insertsLabel.setText("INSTRUMENTS & FX", juce::dontSendNotification);
 }
 
 void TrackSettingsPanel::timerCallback()
