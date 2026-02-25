@@ -14,6 +14,7 @@ C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Audio\MidiGenerator
 C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Audio\ArpeggiatorProcessor.cpp;C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.dir\Debug\ArpeggiatorProcessor.obj
 C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Audio\SimpleDelayProcessor.cpp;C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.dir\Debug\SimpleDelayProcessor.obj
 C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Audio\TransientDetector.cpp;C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.dir\Debug\TransientDetector.obj
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Audio\TempoFollower.cpp;C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.dir\Debug\TempoFollower.obj
 C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Timeline\TimelineComponent.cpp;C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.dir\Debug\TimelineComponent.obj
 C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Timeline\TrackLaneComponent.cpp;C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.dir\Debug\TrackLaneComponent.obj
 C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Timeline\AudioClip.cpp;C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.dir\Debug\AudioClip.obj

@@ -17,7 +17,7 @@ AudioEngine::AudioEngine()
     formatManager.registerBasicFormats();
 
     pluginManager  = std::make_unique<PluginManager>(*this);
-    midiLearnManager = std::make_unique<MidiLearnManager>(*this);
+    midiLearnManager = std::make_unique<MidiLearnManager>();
     stemSeparator  = std::make_unique<StemSeparator>();
     audioToMidi    = std::make_unique<AudioToMidiConverter>();
     // autoTune       = std::make_unique<AutoTuneProcessor>();
@@ -614,7 +614,33 @@ void AudioEngine::processAudioBlock(juce::AudioBuffer<float>& buffer)
 
 void AudioEngine::handleIncomingMidiMessage(juce::MidiInput*, const juce::MidiMessage& message)
 {
-    midiLearnManager->handleIncomingMidi(message);
+    if (message.isController())
+    {
+        int channel = message.getChannel();
+        int cc = message.getControllerNumber();
+        float val = message.getControllerValue() / 127.0f;
+
+        if (midiLearnManager->isLearning())
+        {
+            midiLearnManager->handleCC(channel, cc);
+        }
+        else
+        {
+            midiLearnManager->updateCCValue(channel, cc, val);
+            for (const auto& m : midiLearnManager->getMappings())
+            {
+                if ((m.channel == channel || m.channel == 0) && m.cc == cc)
+                {
+                    if (m.targetParam == "vol" && m.trackIndex >= 0)
+                        setTrackVolume(m.trackIndex, val * 1.5f);
+                    else if (m.targetParam == "pan" && m.trackIndex >= 0)
+                        setTrackPan(m.trackIndex, val * 2.0f - 1.0f);
+                    else if (m.targetParam == "sweet" && m.trackIndex >= 0)
+                        setTrackSweetener(m.trackIndex, val);
+                }
+            }
+        }
+    }
     midiCollector.addMessageToQueue(message);
     
     if (recording.load() && armedTrackIndex >= 0)
@@ -783,7 +809,7 @@ void AudioEngine::captureMidi(int trackIndex)
     if (trackIndex < 0 || trackIndex >= (int)tracks.size()) return;
     if (midiCaptureBuffer_.getNumEvents() == 0) return;
 
-    auto& track = tracks[trackIndex];
+    auto* track = tracks[trackIndex];
 
     // Create a new MidiClip from the captured buffer
     double startTime = playheadPosition.load();
@@ -861,7 +887,7 @@ void AudioEngine::recalculateDelayCompensation()
     for (int i = 0; i < numTracks; ++i)
     {
         int trackLatency = 0;
-        auto& track = tracks[i];
+        auto* track = tracks[i];
         for (auto slot : track->pluginSlots)
         {
             if (slot > 0)

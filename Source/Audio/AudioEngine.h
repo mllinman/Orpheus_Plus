@@ -178,8 +178,8 @@ public:
 
     //── MIDI Capture (Retroactive Recording) ─────────────────────────────────
     void captureMidi(int trackIndex);
-    void setMidiCaptureEnabled(bool e) { midiCaptureEnabled.store(e); }
-    bool isMidiCaptureEnabled() const  { return midiCaptureEnabled.load(); }
+    void setMidiCaptureEnabled(bool e) { midiCaptureEnabled_.store(e); }
+    bool isMidiCaptureEnabled() const  { return midiCaptureEnabled_.load(); }
     int  getMidiCaptureSeconds() const { return midiCaptureSeconds_; }
     void setMidiCaptureSeconds(int s)  { midiCaptureSeconds_ = s; }
 

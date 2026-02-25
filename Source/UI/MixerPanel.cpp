@@ -87,7 +87,7 @@ MixerPanel::ChannelStrip::ChannelStrip(int idx, AudioEngine& e) : trackIndex(idx
     fader.onValueChange = [this] { engine.setTrackVolume(trackIndex, (float)fader.getValue()); };
     fader.setDoubleClickReturnValue(true, 1.0);
     fader.onMidiLearn = [this] {
-        engine.getMidiLearn().setLearnMode(true, { ParameterTarget::Type::TrackVolume, trackIndex });
+        engine.getMidiLearn().startLearning("vol", trackIndex);
     };
     addAndMakeVisible(fader);
 
@@ -96,7 +96,7 @@ MixerPanel::ChannelStrip::ChannelStrip(int idx, AudioEngine& e) : trackIndex(idx
     panKnob.setTextBoxStyle(juce::Slider::NoTextBox, false, 0, 0);
     panKnob.onValueChange = [this] { engine.setTrackPan(trackIndex, (float)panKnob.getValue()); };
     panKnob.onMidiLearn = [this] {
-        engine.getMidiLearn().setLearnMode(true, { ParameterTarget::Type::TrackPan, trackIndex });
+        engine.getMidiLearn().startLearning("pan", trackIndex);
     };
     addAndMakeVisible(panKnob);
 
@@ -107,7 +107,7 @@ MixerPanel::ChannelStrip::ChannelStrip(int idx, AudioEngine& e) : trackIndex(idx
     sweetenerKnob.onValueChange = [this] { engine.setTrackSweetener(trackIndex, (float)sweetenerKnob.getValue()); };
     sweetenerKnob.setDoubleClickReturnValue(true, 0.0);
     sweetenerKnob.onMidiLearn = [this] {
-        engine.getMidiLearn().setLearnMode(true, { ParameterTarget::Type::TrackSweet, trackIndex });
+        engine.getMidiLearn().startLearning("sweet", trackIndex);
     };
     addAndMakeVisible(sweetenerKnob);
 

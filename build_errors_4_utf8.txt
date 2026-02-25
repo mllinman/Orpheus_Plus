@@ -1,0 +1,78 @@
+﻿MSBuild version 17.14.23+b0019275e for .NET Framework
+
+  Checking File Globs
+  OrpheusPlus_rc_lib.vcxproj -> C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus_rc_lib.dir\Debug\OrpheusPlus_rc_lib.lib
+  AudioEngine.cpp
+  MidiLearnManager.cpp
+  MixerPanel.cpp
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Audio\MidiLearnManager.cpp(4,19): error C2511: 'MidiLearnManager::MidiLearnManager(AudioEngine &)': overloaded member function not found in 'MidiLearnManager' [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+      C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Audio\MidiLearnManager.h(10,7):
+      see declaration of 'MidiLearnManager'
+  
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Audio\MidiLearnManager.cpp(4,79): error C2550: 'MidiLearnManager::{ctor}': constructor initializer lists are only allowed on constructor definitions [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Audio\MidiLearnManager.cpp(6,24): error C2039: 'setLearnMode': is not a member of 'MidiLearnManager' [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+      C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Audio\MidiLearnManager.h(10,7):
+      see declaration of 'MidiLearnManager'
+  
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Audio\MidiLearnManager.cpp(6,50): error C2061: syntax error: identifier 'ParameterTarget' [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Audio\MidiLearnManager.cpp(8,5): error C2065: 'learnMode': undeclared identifier [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Audio\MidiLearnManager.cpp(9,5): error C2065: 'waitingTarget': undeclared identifier [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Audio\MidiLearnManager.cpp(9,21): error C2065: 'target': undeclared identifier [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Audio\MidiLearnManager.cpp(12,24): error C2039: 'handleIncomingMidi': is not a member of 'MidiLearnManager' [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+      C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Audio\MidiLearnManager.h(10,7):
+      see declaration of 'MidiLearnManager'
+  
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Audio\MidiLearnManager.cpp(19,13): error C2065: 'learnMode': undeclared identifier [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Audio\MidiLearnManager.cpp(21,27): error C2065: 'waitingTarget': undeclared identifier [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Audio\MidiLearnManager.cpp(21,13): error C3861: 'bindCC': identifier not found [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Audio\MidiLearnManager.cpp(26,19): error C2065: 'ccToTarget': undeclared identifier [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Audio\MidiLearnManager.cpp(27,13): error C3536: 'it': cannot be used before it is initialized [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Audio\MidiLearnManager.cpp(27,19): error C2065: 'ccToTarget': undeclared identifier [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Audio\MidiLearnManager.cpp(29,26): error C2530: 'target': references must be initialized [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Audio\MidiLearnManager.cpp(30,17): error C3536: 'target': cannot be used before it is initialized [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Audio\MidiLearnManager.cpp(30,32): error C2653: 'ParameterTarget': is not a class or namespace name [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Audio\MidiLearnManager.cpp(30,55): error C2065: 'TrackVolume': undeclared identifier [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Audio\MidiLearnManager.cpp(32,17): error C2065: 'audioEngine': undeclared identifier [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Audio\MidiLearnManager.cpp(34,37): error C2653: 'ParameterTarget': is not a class or namespace name [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Audio\MidiLearnManager.cpp(34,60): error C2065: 'TrackPan': undeclared identifier [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Audio\MidiLearnManager.cpp(36,17): error C2065: 'audioEngine': undeclared identifier [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Audio\MidiLearnManager.cpp(38,37): error C2653: 'ParameterTarget': is not a class or namespace name [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Audio\MidiLearnManager.cpp(38,60): error C2065: 'TrackSweet': undeclared identifier [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Audio\MidiLearnManager.cpp(40,17): error C2065: 'audioEngine': undeclared identifier [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Audio\MidiLearnManager.cpp(42,37): error C2653: 'ParameterTarget': is not a class or namespace name [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Audio\MidiLearnManager.cpp(42,60): error C2065: 'MasterVolume': undeclared identifier [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Audio\MidiLearnManager.cpp(44,17): error C2065: 'audioEngine': undeclared identifier [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Audio\MidiLearnManager.cpp(50,24): error C2039: 'bindCC': is not a member of 'MidiLearnManager' [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+      C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Audio\MidiLearnManager.h(10,7):
+      see declaration of 'MidiLearnManager'
+  
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Audio\MidiLearnManager.cpp(50,45): error C2061: syntax error: identifier 'ParameterTarget' [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Audio\MidiLearnManager.cpp(52,5): error C2065: 'ccToTarget': undeclared identifier [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Audio\MidiLearnManager.cpp(52,28): error C2065: 'target': undeclared identifier [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Audio\MidiLearnManager.cpp(55,24): error C2039: 'unbindCC': is not a member of 'MidiLearnManager' [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+      C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Audio\MidiLearnManager.h(10,7):
+      see declaration of 'MidiLearnManager'
+  
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Audio\MidiLearnManager.cpp(57,5): error C2065: 'ccToTarget': undeclared identifier [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\UI\MixerPanel.cpp(90,31): error C2039: 'setLearnMode': is not a member of 'MidiLearnManager' [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+      C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Audio\MidiLearnManager.h(10,7):
+      see declaration of 'MidiLearnManager'
+  
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\UI\MixerPanel.cpp(90,52): error C2653: 'ParameterTarget': is not a class or namespace name [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\UI\MixerPanel.cpp(90,75): error C2065: 'TrackVolume': undeclared identifier [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Audio\AudioEngine.cpp(617,23): error C2039: 'handleIncomingMidi': is not a member of 'MidiLearnManager' [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+      C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Audio\MidiLearnManager.h(10,7):
+      see declaration of 'MidiLearnManager'
+  
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\UI\MixerPanel.cpp(99,31): error C2039: 'setLearnMode': is not a member of 'MidiLearnManager' [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+      C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Audio\MidiLearnManager.h(10,7):
+      see declaration of 'MidiLearnManager'
+  
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\UI\MixerPanel.cpp(99,52): error C2653: 'ParameterTarget': is not a class or namespace name [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\UI\MixerPanel.cpp(99,75): error C2065: 'TrackPan': undeclared identifier [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\UI\MixerPanel.cpp(110,31): error C2039: 'setLearnMode': is not a member of 'MidiLearnManager' [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+      C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Audio\MidiLearnManager.h(10,7):
+      see declaration of 'MidiLearnManager'
+  
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\UI\MixerPanel.cpp(110,52): error C2653: 'ParameterTarget': is not a class or namespace name [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\UI\MixerPanel.cpp(110,75): error C2065: 'TrackSweet': undeclared identifier [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]

@@ -1,0 +1,9 @@
+﻿MSBuild version 17.14.23+b0019275e for .NET Framework
+
+  Checking File Globs
+  OrpheusPlus_rc_lib.vcxproj -> C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus_rc_lib.dir\Debug\OrpheusPlus_rc_lib.lib
+  AudioEngine.cpp
+C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Audio\AudioEngine.cpp(617,23): error C2039: 'handleIncomingMidi': is not a member of 'MidiLearnManager' [C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus.vcxproj]
+      C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Audio\MidiLearnManager.h(10,7):
+      see declaration of 'MidiLearnManager'
+  

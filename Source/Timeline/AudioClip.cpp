@@ -86,7 +86,7 @@ void AudioClip::paint(juce::Graphics& g, juce::Rectangle<float> clipBounds, juce
 
     // Title
     g.setColour(juce::Colours::white.withAlpha(0.9f));
-    g.setFont(juce::Font(10.0f));
+    g.setFont(juce::FontOptions(10.0f));
     g.drawText(name, clipBounds.toNearestInt().reduced(4, 2),
                juce::Justification::topLeft, true);
 

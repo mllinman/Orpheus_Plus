@@ -32,7 +32,7 @@ void MidiClip::paint(juce::Graphics& g, juce::Rectangle<float> clipBounds, juce:
     g.fillRoundedRectangle(clipBounds, 3.0f);
 
     g.setColour(juce::Colours::white.withAlpha(0.9f));
-    g.setFont(juce::Font(10.0f));
+    g.setFont(juce::FontOptions(10.0f));
     g.drawText(name.isEmpty() ? "MIDI Clip" : name,
                clipBounds.toNearestInt().reduced(4, 2),
                juce::Justification::topLeft, true);
