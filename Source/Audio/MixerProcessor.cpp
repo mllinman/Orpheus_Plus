@@ -14,6 +14,7 @@ MixerProcessor::~MixerProcessor()
 void MixerProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
 {
     smoothVolume.reset(sampleRate, 0.05);
+    smoothVolume.setCurrentAndTargetValue(masterVolume.load());
 }
 
 void MixerProcessor::releaseResources()

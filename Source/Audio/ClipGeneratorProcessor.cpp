@@ -99,6 +99,38 @@ void ClipGeneratorProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce
 
                 ac->stretcher.process(sourceSubset, outputSubset, (float)speedRatio);
 
+                if (ac->muted) continue;
+
+                // Apply fades and gain
+                for (int s = 0; s < numToFill; ++s)
+                {
+                    double currentSampleTime = blockStart + ((double)s / sr);
+                    double clipLocalTime = currentSampleTime - ac->startTime;
+                    
+                    float sampleGain = (float)ac->gain;
+                    
+                    if (ac->fadeIn > 0.0 && clipLocalTime < ac->fadeIn)
+                    {
+                        float fadeFactor = (float)(clipLocalTime / ac->fadeIn);
+                        if (ac->fadeInCurve == Clip::FadeCurve::Exponential) fadeFactor = fadeFactor * fadeFactor;
+                        else if (ac->fadeInCurve == Clip::FadeCurve::S_Curve) fadeFactor = 0.5f - 0.5f * std::cos(fadeFactor * juce::MathConstants<float>::pi);
+                        sampleGain *= fadeFactor;
+                    }
+                    if (ac->fadeOut > 0.0 && clipLocalTime > ac->duration - ac->fadeOut)
+                    {
+                        float fadeFactor = (float)((ac->duration - clipLocalTime) / ac->fadeOut);
+                        if (ac->fadeOutCurve == Clip::FadeCurve::Exponential) fadeFactor = fadeFactor * fadeFactor;
+                        else if (ac->fadeOutCurve == Clip::FadeCurve::S_Curve) fadeFactor = 0.5f - 0.5f * std::cos(fadeFactor * juce::MathConstants<float>::pi);
+                        sampleGain *= fadeFactor;
+                    }
+                    
+                    if (sampleGain != 1.0f)
+                    {
+                        for (int ch = 0; ch < outputSubset.getNumChannels(); ++ch)
+                            outputSubset.setSample(ch, s, outputSubset.getSample(ch, s) * sampleGain);
+                    }
+                }
+
                 // Mix into main buffer
                 for (int ch = 0; ch < buffer.getNumChannels(); ++ch)
                 {

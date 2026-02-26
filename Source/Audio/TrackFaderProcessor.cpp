@@ -25,7 +25,9 @@ void TrackFaderProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
     updateSweetener();
 
     smoothVolume.reset(sampleRate, 0.05);
+    smoothVolume.setCurrentAndTargetValue(currentVolume.load());
     smoothPan.reset(sampleRate, 0.05);
+    smoothPan.setCurrentAndTargetValue(currentPan.load());
 }
 
 void TrackFaderProcessor::releaseResources()

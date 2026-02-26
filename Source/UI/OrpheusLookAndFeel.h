@@ -38,39 +38,39 @@ public:
 
     juce::String getCurrentTheme() const { return currentThemeName_; }
     //── Background Layers (from --bg-*) ──────────────────────────────────────
-    static juce::Colour bgDarkest()    { return juce::Colour(0xff0a0a0f); }
-    static juce::Colour bgDarker()     { return juce::Colour(0xff0f0f18); }
-    static juce::Colour bgDark()       { return juce::Colour(0xff141420); }
-    static juce::Colour bgSurface()    { return juce::Colour(0xff1a1a2e); }
-    static juce::Colour bgElevated()   { return juce::Colour(0xff1f1f36); }
-    static juce::Colour bgHover()      { return juce::Colour(0xff25253d); }
-    static juce::Colour bgActive()     { return juce::Colour(0xff2a2a45); }
-    static juce::Colour bgPanel()      { return juce::Colour(0xff12121e); }
-    static juce::Colour bgInput()      { return juce::Colour(0xff0e0e1a); }
-    static juce::Colour bgTrackOdd()   { return juce::Colour(0xff151524); }
-    static juce::Colour bgTrackEven()  { return juce::Colour(0xff171729); }
-    static juce::Colour bgClip()       { return juce::Colour(0xff1e1e3a); }
+    static juce::Colour bgDarkest()    { return juce::Colour(0xff09090b); }
+    static juce::Colour bgDarker()     { return juce::Colour(0xff18181b); }
+    static juce::Colour bgDark()       { return juce::Colour(0xff27272a); }
+    static juce::Colour bgSurface()    { return juce::Colour(0xff18181b); }
+    static juce::Colour bgElevated()   { return juce::Colour(0xff27272a); }
+    static juce::Colour bgHover()      { return juce::Colour(0xff3f3f46); }
+    static juce::Colour bgActive()     { return juce::Colour(0xff52525b); }
+    static juce::Colour bgPanel()      { return juce::Colour(0xff09090b); }
+    static juce::Colour bgInput()      { return juce::Colour(0xff09090b); }
+    static juce::Colour bgTrackOdd()   { return juce::Colour(0xff18181b); }
+    static juce::Colour bgTrackEven()  { return juce::Colour(0xff27272a); }
+    static juce::Colour bgClip()       { return juce::Colour(0xff3f3f46); }
 
     //── Accent Colors (from --accent-*) ──────────────────────────────────────
-    static juce::Colour accentPrimary()   { return juce::Colour(0xff6c5ce7); }
-    static juce::Colour accentPrimaryL()  { return juce::Colour(0xff8b7cf0); }
-    static juce::Colour accentSecondary() { return juce::Colour(0xff00cec9); }
-    static juce::Colour accentTertiary()  { return juce::Colour(0xfffd79a8); }
-    static juce::Colour accentWarning()   { return juce::Colour(0xfffdcb6e); }
-    static juce::Colour accentDanger()    { return juce::Colour(0xffff6b6b); }
-    static juce::Colour accentSuccess()   { return juce::Colour(0xff00b894); }
-    static juce::Colour accentInfo()      { return juce::Colour(0xff74b9ff); }
+    static juce::Colour accentPrimary()   { return juce::Colour(0xff8b5cf6); }  // Violet 500
+    static juce::Colour accentPrimaryL()  { return juce::Colour(0xffa78bfa); }  // Violet 400
+    static juce::Colour accentSecondary() { return juce::Colour(0xff06b6d4); }  // Cyan 500
+    static juce::Colour accentTertiary()  { return juce::Colour(0xffec4899); }  // Pink 500
+    static juce::Colour accentWarning()   { return juce::Colour(0xfff59e0b); }  // Amber 500
+    static juce::Colour accentDanger()    { return juce::Colour(0xffef4444); }  // Red 500
+    static juce::Colour accentSuccess()   { return juce::Colour(0xff10b981); }  // Emerald 500
+    static juce::Colour accentInfo()      { return juce::Colour(0xff3b82f6); }  // Blue 500
 
     //── Text Colors (from --text-*) ──────────────────────────────────────────
-    static juce::Colour textPrimary()   { return juce::Colour(0xffe8e8f0); }
-    static juce::Colour textSecondary() { return juce::Colour(0xffa0a0b8); }
-    static juce::Colour textMuted()     { return juce::Colour(0xff6c6c88); }
-    static juce::Colour textDisabled()  { return juce::Colour(0xff44445a); }
+    static juce::Colour textPrimary()   { return juce::Colour(0xfffafafa); } // Zinc 50
+    static juce::Colour textSecondary() { return juce::Colour(0xffa1a1aa); } // Zinc 400
+    static juce::Colour textMuted()     { return juce::Colour(0xff71717a); } // Zinc 500
+    static juce::Colour textDisabled()  { return juce::Colour(0xff52525b); } // Zinc 600
 
     //── Border Colors (from --border-*) ──────────────────────────────────────
-    static juce::Colour borderSubtle()  { return juce::Colour(0xff1e1e32); }
-    static juce::Colour borderDefault() { return juce::Colour(0xff2a2a42); }
-    static juce::Colour borderStrong()  { return juce::Colour(0xff3a3a55); }
+    static juce::Colour borderSubtle()  { return juce::Colour(0xff27272a); }
+    static juce::Colour borderDefault() { return juce::Colour(0xff3f3f46); }
+    static juce::Colour borderStrong()  { return juce::Colour(0xff52525b); }
 
     //── Track Colors ─────────────────────────────────────────────────────────
     static juce::Colour trackBlue()    { return juce::Colour(0xff4a90d9); }
