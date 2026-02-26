@@ -469,6 +469,6 @@ void OrpheusLookAndFeel::drawTabButton(juce::Graphics& g, int w, int h, const ju
     }
 
     g.setColour(isFront ? textPrimary() : textSecondary());
-    g.setFont(defaultFont.withHeight(12.0f).boldened(isFront));
+    g.setFont(isFront ? defaultFont.withHeight(12.0f).boldened() : defaultFont.withHeight(12.0f));
     g.drawText(text, 0, 0, w, h, juce::Justification::centred);
 }

@@ -31,7 +31,9 @@ TimelineComponent::TimelineComponent(AudioEngine& e, AppState& s,
     snapComboBox.addItem("1/4",  4);
     snapComboBox.addItem("1/8",  5);
     snapComboBox.addItem("1/16", 6);
-    snapComboBox.addItem("Off",  7);
+    snapComboBox.addItem("1/32", 7);
+    snapComboBox.addItem("1/64", 8);
+    snapComboBox.addItem("Off",  9);
     
     snapComboBox.setSelectedId(2, juce::dontSendNotification); // Beat default
     snapComboBox.onChange = [this] {
@@ -43,7 +45,9 @@ TimelineComponent::TimelineComponent(AudioEngine& e, AppState& s,
             case 4: currentSnapMode = SnapTo::Quarter; break;
             case 5: currentSnapMode = SnapTo::Eighth; break;
             case 6: currentSnapMode = SnapTo::Sixteenth; break;
-            case 7: currentSnapMode = SnapTo::Off; break;
+            case 7: currentSnapMode = SnapTo::ThirtySecond; break;
+            case 8: currentSnapMode = SnapTo::SixtyFourth; break;
+            case 9: currentSnapMode = SnapTo::Off; break;
         }
     };
     addAndMakeVisible(snapComboBox);
@@ -476,7 +480,9 @@ double TimelineComponent::snapToGrid(double time) const
                                 break;
         case SnapTo::Quarter:   gridInterval = (60.0 / bpm) * (4.0 / timeSigDen) * 1.0; break;
         case SnapTo::Eighth:    gridInterval = (60.0 / bpm) * (4.0 / timeSigDen) * 0.5; break;
-        case SnapTo::Sixteenth: gridInterval = (60.0 / bpm) * (4.0 / timeSigDen) * 0.25; break;
+        case SnapTo::Sixteenth:    gridInterval = (60.0 / bpm) * (4.0 / timeSigDen) * 0.25; break;
+        case SnapTo::ThirtySecond: gridInterval = (60.0 / bpm) * (4.0 / timeSigDen) * 0.125; break;
+        case SnapTo::SixtyFourth:  gridInterval = (60.0 / bpm) * (4.0 / timeSigDen) * 0.0625; break;
         default: return time;
     }
 
@@ -518,9 +524,9 @@ bool TimelineComponent::isInterestedInFileDrag(const juce::StringArray& files)
 
 void TimelineComponent::filesDropped(const juce::StringArray& files, int x, int y)
 {
-    // Calculate time from x position
-    // x is relative to TimelineComponent
-    double dropTime = snapToGrid(pixelToTime(x));
+    // Default to start of track (time 0) unless dropped onto a specific track in the future.
+    // user requested: Align imported clips to 0 by default (unless specifically moved)
+    double dropTime = 0.0;
 
     // Filter valid files
     for (auto& f : files)

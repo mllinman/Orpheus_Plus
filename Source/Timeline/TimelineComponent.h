@@ -20,7 +20,7 @@ public:
     EditTool getTool() const { return currentTool; }
 
     // Grid Snapping
-    enum class SnapTo { Bar, Beat, Half, Quarter, Eighth, Sixteenth, Off };
+    enum class SnapTo { Bar, Beat, Half, Quarter, Eighth, Sixteenth, ThirtySecond, SixtyFourth, Off };
     void setSnapTo(SnapTo s) { currentSnapMode = s; }
     SnapTo getSnapTo() const { return currentSnapMode; }
     double snapToGrid(double time) const;

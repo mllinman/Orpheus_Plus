@@ -64,6 +64,7 @@ struct OrpheusTrackInfo
     float sweetener = 0.0f;
     bool mute    = false;
     bool solo    = false;
+    bool isMutedBySolo = false;
     bool armed   = false;    // Record-armed
     bool expanded = true;    // Folder state
     bool visible  = true;    // Hierarchy visibility

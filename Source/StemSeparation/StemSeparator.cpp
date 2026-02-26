@@ -83,8 +83,6 @@ bool StemSeparator::runDemucs(const juce::File& inputFile, const juce::File& out
     //   Load model via onnxruntime C++ API, run inference on audio chunks
     //─────────────────────────────────────────────────────────────────────────
 
-    // Try to find Python with demucs
-    juce::String pythonPath = "python3";
     juce::String modelFlag;
 
     switch (currentModel)
@@ -94,38 +92,35 @@ bool StemSeparator::runDemucs(const juce::File& inputFile, const juce::File& out
         default:               modelFlag = "htdemucs";    break;
     }
 
-    juce::StringArray args;
-    args.add(pythonPath);
-    args.add("-m");
-    args.add("demucs");
-    args.add("--name");
-    args.add(modelFlag);
-    args.add("-o");
-    args.add(outputDir.getFullPathName());
-    args.add(inputFile.getFullPathName());
+    auto runWithPython = [&](const juce::String& py) -> bool {
+        juce::StringArray args;
+        args.add(py);
+        args.add("-m");
+        args.add("demucs");
+        args.add("--name");
+        args.add(modelFlag);
+        args.add("-o");
+        args.add(outputDir.getFullPathName());
+        args.add(inputFile.getFullPathName());
 
-    juce::ChildProcess proc;
-    if (!proc.start(args))
-    {
-        // Python/demucs not found — try fallback spleeter
-        return runSpleeter(inputFile, outputDir);
-    }
+        juce::ChildProcess proc;
+        if (!proc.start(args)) return false;
 
-    // Poll progress while running
-    while (proc.isRunning())
-    {
-        if (!running.load()) { proc.kill(); return false; }
-        juce::Thread::sleep(500);
+        while (proc.isRunning())
+        {
+            if (!running.load()) { proc.kill(); return false; }
+            juce::Thread::sleep(500);
+            progress.fetch_add(0.01f);
+            float p = juce::jmin(0.99f, progress.load());
+            juce::MessageManager::callAsync([this, p] {
+                listeners.call(&Listener::stemSeparationProgress, p);
+            });
+        }
+        return (proc.getExitCode() == 0);
+    };
 
-        // TODO: parse demucs stdout for progress %
-        progress.fetch_add(0.01f); // fake increment for now
-        float p = juce::jmin(0.99f, progress.load());
-        juce::MessageManager::callAsync([this, p] {
-            listeners.call(&Listener::stemSeparationProgress, p);
-        });
-    }
-
-    return (proc.getExitCode() == 0);
+    if (runWithPython("python3")) return true;
+    return runWithPython("python");
 }
 
 bool StemSeparator::runSpleeter(const juce::File& inputFile, const juce::File& outputDir)
@@ -139,27 +134,31 @@ bool StemSeparator::runSpleeter(const juce::File& inputFile, const juce::File& o
         default:               stemsFlag = "spleeter:4stems"; break;
     }
 
-    juce::StringArray args;
-    args.add("python3");
-    args.add("-m");
-    args.add("spleeter");
-    args.add("separate");
-    args.add("-p");
-    args.add(stemsFlag);
-    args.add("-o");
-    args.add(outputDir.getFullPathName());
-    args.add(inputFile.getFullPathName());
+    auto runWithPython = [&](const juce::String& py) -> bool {
+        juce::StringArray args;
+        args.add(py);
+        args.add("-m");
+        args.add("spleeter");
+        args.add("separate");
+        args.add("-p");
+        args.add(stemsFlag);
+        args.add("-o");
+        args.add(outputDir.getFullPathName());
+        args.add(inputFile.getFullPathName());
 
-    juce::ChildProcess proc;
-    if (!proc.start(args)) return false;
+        juce::ChildProcess proc;
+        if (!proc.start(args)) return false;
 
-    while (proc.isRunning())
-    {
-        if (!running.load()) { proc.kill(); return false; }
-        juce::Thread::sleep(500);
-    }
+        while (proc.isRunning())
+        {
+            if (!running.load()) { proc.kill(); return false; }
+            juce::Thread::sleep(500);
+        }
+        return (proc.getExitCode() == 0);
+    };
 
-    return (proc.getExitCode() == 0);
+    if (runWithPython("python3")) return true;
+    return runWithPython("python");
 }
 
 bool StemSeparator::runOpenUnmix(const juce::File& inputFile, const juce::File& outputDir)

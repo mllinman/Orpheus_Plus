@@ -1,6 +1,7 @@
 #include "TrackLaneComponent.h"
 #include "TimelineComponent.h"
 #include "../Audio/TransientDetector.h"
+#include "../UI/OrpheusLookAndFeel.h"
 
 TrackLaneComponent::TrackLaneComponent(int idx, AudioEngine& e, AppState& s,
                                        TimelineComponent& t)
