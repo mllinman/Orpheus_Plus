@@ -140,27 +140,27 @@ void TimelineComponent::resized()
                                         .withTrimmedRight(scrollBarThickness));
     verticalScrollBar.setBounds(bounds.removeFromRight(scrollBarThickness));
 
-    auto ruler    = bounds.removeFromTop(RULER_HEIGHT);
-    
-    // Tools row
-    auto toolArea = ruler.removeFromLeft(trackHeaderWidth);
-    int btnW = toolArea.getWidth() / 4;
-    selectButton.setBounds(toolArea.removeFromLeft(btnW).reduced(2));
-    splitButton.setBounds(toolArea.removeFromLeft(btnW).reduced(2));
-    drawButton.setBounds(toolArea.removeFromLeft(btnW).reduced(2));
-    eraseButton.setBounds(toolArea.removeFromLeft(btnW).reduced(2));
+    // Toolbar Row
+    auto toolbarArea = bounds.removeFromTop(TOOLBAR_HEIGHT);
+    auto toolButtonsArea = toolbarArea.removeFromLeft(trackHeaderWidth);
+    int btnW = toolButtonsArea.getWidth() / 4;
+    selectButton.setBounds(toolButtonsArea.removeFromLeft(btnW).reduced(2));
+    splitButton.setBounds(toolButtonsArea.removeFromLeft(btnW).reduced(2));
+    drawButton.setBounds(toolButtonsArea.removeFromLeft(btnW).reduced(2));
+    eraseButton.setBounds(toolButtonsArea.removeFromLeft(btnW).reduced(2));
 
-    // Controls row within ruler area
-    snapComboBox.setBounds(ruler.removeFromLeft(80).reduced(2));
-    jumpStartBtn.setBounds(ruler.removeFromLeft(28).reduced(2));
-    jumpEndBtn.setBounds(ruler.removeFromLeft(28).reduced(2));
-    zoomOutBtn.setBounds(ruler.removeFromLeft(24).reduced(2));
-    zoomSlider.setBounds(ruler.removeFromLeft(100).reduced(2));
-    zoomInBtn.setBounds(ruler.removeFromLeft(24).reduced(2));
-    trackHeightSlider.setBounds(ruler.removeFromLeft(80).reduced(2));
+    snapComboBox.setBounds(toolbarArea.removeFromLeft(80).reduced(2));
+    jumpStartBtn.setBounds(toolbarArea.removeFromLeft(28).reduced(2));
+    jumpEndBtn.setBounds(toolbarArea.removeFromLeft(28).reduced(2));
+    zoomOutBtn.setBounds(toolbarArea.removeFromLeft(24).reduced(2));
+    zoomSlider.setBounds(toolbarArea.removeFromLeft(100).reduced(2));
+    zoomInBtn.setBounds(toolbarArea.removeFromLeft(24).reduced(2));
+    trackHeightSlider.setBounds(toolbarArea.removeFromLeft(80).reduced(2));
+
+    // Ruler Row
+    auto rulerBounds = bounds.removeFromTop(RULER_HEIGHT);
 
     auto viewport = bounds;
-
     trackViewport.setBounds(viewport);
 
     double totalSeconds = 300.0;
@@ -202,11 +202,13 @@ void TimelineComponent::resized()
 
 void TimelineComponent::paint(juce::Graphics& g)
 {
-    auto bounds = getLocalBounds();
     g.fillAll(juce::Colour(0xff1a1a2e));
 
-    // Ruler
-    paintRuler(g, bounds.removeFromTop(RULER_HEIGHT));
+    // Toolbar background (optional for now, will be in LNF later)
+    g.setColour(juce::Colour(0xff16213e));
+    g.fillRect(getToolbarBounds());
+
+    paintRuler(g, getRulerBounds());
     paintPlayhead(g);
     if (loopEnabled)
         paintLoopRegion(g);
@@ -262,16 +264,18 @@ void TimelineComponent::paintPlayhead(juce::Graphics& g)
     double playPos = audioEngine.getPlayheadPosition();
     double xPix    = trackHeaderWidth + (playPos - horizontalScrollOffset) * pixelsPerSecond;
 
+    auto rulerBounds = getRulerBounds();
+
     if (xPix >= trackHeaderWidth && xPix <= getWidth())
     {
         g.setColour(juce::Colour(0xffe94560));
-        g.drawVerticalLine((int)xPix, RULER_HEIGHT, getHeight());
+        g.drawVerticalLine((int)xPix, (float)rulerBounds.getY(), (float)getHeight());
 
         // Playhead triangle
         juce::Path triangle;
-        triangle.addTriangle((float)xPix - 6, (float)RULER_HEIGHT,
-                             (float)xPix + 6, (float)RULER_HEIGHT,
-                             (float)xPix, (float)(RULER_HEIGHT + 12));
+        triangle.addTriangle((float)xPix - 6, (float)rulerBounds.getY(),
+                             (float)xPix + 6, (float)rulerBounds.getY(),
+                             (float)xPix, (float)(rulerBounds.getY() + 12));
         g.fillPath(triangle);
     }
 }
@@ -281,9 +285,11 @@ void TimelineComponent::paintLoopRegion(juce::Graphics& g)
     double x1 = trackHeaderWidth + (loopStart - horizontalScrollOffset) * pixelsPerSecond;
     double x2 = trackHeaderWidth + (loopEnd   - horizontalScrollOffset) * pixelsPerSecond;
 
+    auto rulerBounds = getRulerBounds();
+
     g.setColour(juce::Colour(0x22e94560));
-    g.fillRect(juce::Rectangle<float>((float)x1, (float)RULER_HEIGHT,
-                                      (float)(x2 - x1), (float)(getHeight() - RULER_HEIGHT)));
+    g.fillRect(juce::Rectangle<float>((float)x1, (float)rulerBounds.getY(),
+                                      (float)(x2 - x1), (float)(getHeight() - rulerBounds.getY())));
 }
 
 void TimelineComponent::timerCallback()
@@ -307,7 +313,7 @@ void TimelineComponent::timerCallback()
 
 void TimelineComponent::mouseDown(const juce::MouseEvent& e)
 {
-    if (e.y < RULER_HEIGHT)
+    if (getRulerBounds().contains(e.getPosition()))
     {
         // Click on ruler sets playhead
         double t = pixelToTime(e.x);
@@ -317,7 +323,7 @@ void TimelineComponent::mouseDown(const juce::MouseEvent& e)
 
 void TimelineComponent::mouseDrag(const juce::MouseEvent& e)
 {
-    if (e.y < RULER_HEIGHT)
+    if (getRulerBounds().contains(e.getPosition()))
     {
         double t = pixelToTime(e.x);
         audioEngine.setPlayheadPosition(t);
@@ -487,6 +493,18 @@ void TimelineComponent::scrollToPosition(double posSeconds)
     repaint();
 }
 
+juce::Rectangle<int> TimelineComponent::getToolbarBounds() const
+{
+    return getLocalBounds().removeFromTop(TOOLBAR_HEIGHT);
+}
+
+juce::Rectangle<int> TimelineComponent::getRulerBounds() const
+{
+    auto b = getLocalBounds();
+    b.removeFromTop(TOOLBAR_HEIGHT);
+    return b.removeFromTop(RULER_HEIGHT);
+}
+
 bool TimelineComponent::isInterestedInFileDrag(const juce::StringArray& files)
 {
     for (auto& f : files)
@@ -533,6 +551,7 @@ void TimelineComponent::filesDropped(const juce::StringArray& files, int x, int 
             audioEngine.getTrackInfo(trackIdx).clips.add(clip);
         }
     }
+    rebuildTracks();
 }
 
 void TimelineComponent::clearAllSelections()

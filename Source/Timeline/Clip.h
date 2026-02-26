@@ -20,10 +20,13 @@ public:
     bool selected = false;
 
     // Manipulation properties
-    double fadeIn  = 0.0; // seconds
-    double fadeOut = 0.0; // seconds
-    double gain    = 1.0; // linear gain
-    bool   muted   = false;
+    enum class FadeCurve { Linear, Exponential, S_Curve };
+    double    fadeIn    = 0.0; // seconds
+    double    fadeOut   = 0.0; // seconds
+    FadeCurve fadeInCurve  = FadeCurve::Linear;
+    FadeCurve fadeOutCurve = FadeCurve::Linear;
+    double    gain      = 1.0; // linear gain
+    bool      muted     = false;
 
     virtual void paint(juce::Graphics& g, juce::Rectangle<float> bounds, juce::Rectangle<int> clipArea) = 0;
     virtual std::unique_ptr<Clip> clone() const = 0;

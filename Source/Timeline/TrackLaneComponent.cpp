@@ -269,6 +269,102 @@ void TrackLaneComponent::paintClips(juce::Graphics& g, juce::Rectangle<int> clip
 
         clip->paint(g, bounds, clipArea);
 
+        // Draw Fades Overlay
+        if (clip->fadeIn > 0 || clip->fadeOut > 0)
+        {
+            float pps = (float)timeline.getPixelsPerSecond();
+            float inW  = (float)clip->fadeIn * pps;
+            float outW = (float)clip->fadeOut * pps;
+
+            g.setColour(juce::Colours::white.withAlpha(0.2f));
+
+            // Fade In Path
+            if (inW > 0)
+            {
+                juce::Path p;
+                p.startNewSubPath(bounds.getX(), bounds.getBottom());
+                
+                if (clip->fadeInCurve == Clip::FadeCurve::Linear)
+                {
+                    p.lineTo(bounds.getX() + inW, bounds.getY());
+                }
+                else if (clip->fadeInCurve == Clip::FadeCurve::Exponential)
+                {
+                    for (float i = 1; i <= 10; ++i) {
+                        float t = i / 10.0f;
+                        float val = std::pow(t, 2.0f); // Simple x^2 for expo
+                        p.lineTo(bounds.getX() + inW * t, bounds.getBottom() - (bounds.getHeight() * val));
+                    }
+                }
+                else if (clip->fadeInCurve == Clip::FadeCurve::S_Curve)
+                {
+                    for (float i = 1; i <= 10; ++i) {
+                        float t = i / 10.0f;
+                        float val = 0.5f - 0.5f * std::cos(t * juce::MathConstants<float>::pi);
+                        p.lineTo(bounds.getX() + inW * t, bounds.getBottom() - (bounds.getHeight() * val));
+                    }
+                }
+                
+                p.lineTo(bounds.getX(), bounds.getY());
+                p.closeSubPath();
+                g.fillPath(p);
+            }
+
+            // Fade Out Path
+            if (outW > 0)
+            {
+                juce::Path p;
+                p.startNewSubPath(bounds.getRight(), bounds.getBottom());
+                
+                if (clip->fadeOutCurve == Clip::FadeCurve::Linear)
+                {
+                    p.lineTo(bounds.getRight() - outW, bounds.getY());
+                }
+                else if (clip->fadeOutCurve == Clip::FadeCurve::Exponential)
+                {
+                    for (float i = 1; i <= 10; ++i) {
+                        float t = i / 10.0f;
+                        float val = std::pow(t, 2.0f);
+                        p.lineTo(bounds.getRight() - outW * t, bounds.getBottom() - (bounds.getHeight() * val));
+                    }
+                }
+                else if (clip->fadeOutCurve == Clip::FadeCurve::S_Curve)
+                {
+                    for (float i = 1; i <= 10; ++i) {
+                        float t = i / 10.0f;
+                        float val = 0.5f - 0.5f * std::cos(t * juce::MathConstants<float>::pi);
+                        p.lineTo(bounds.getRight() - outW * t, bounds.getBottom() - (bounds.getHeight() * val));
+                    }
+                }
+
+                p.lineTo(bounds.getRight(), bounds.getY());
+                p.closeSubPath();
+                g.fillPath(p);
+            }
+        }
+
+        // Draw Selection Halo
+        if (clip->selected)
+        {
+            g.setColour(OrpheusLookAndFeel::accentPrimary().withAlpha(0.6f));
+            g.drawRect(bounds.expanded(1.0f), 2.0f);
+        }
+
+        // Draw Fade Handles (only if hovered or selected)
+        if (clip->selected || clip == selectedClip)
+        {
+            float handleSize = 10.0f;
+            g.setColour(juce::Colours::white);
+
+            // Left Handle (Fade In)
+            float inX = bounds.getX() + (float)clip->fadeIn * (float)timeline.getPixelsPerSecond();
+            g.fillEllipse(inX - handleSize*0.5f, bounds.getY(), handleSize, handleSize);
+
+            // Right Handle (Fade Out)
+            float outX = bounds.getRight() - (float)clip->fadeOut * (float)timeline.getPixelsPerSecond();
+            g.fillEllipse(outX - handleSize*0.5f, bounds.getY(), handleSize, handleSize);
+        }
+
         if (isTake)
         {
             // Dim takes slightly
@@ -357,29 +453,27 @@ TrackLaneComponent::DragMode TrackLaneComponent::getZoneAt(int x, int y, Clip* c
 {
     if (!clip) return DragMode::None;
 
-    // x is absolute pixel in TrackLane (inside container)
-    // Clip drawing starts at timeline.getTrackHeaderWidth()?
-    // In getClipScreenBounds, we return (startPixel - timeline.getTrackHeaderWidth()).
-    // So visual X of clip start is timeToAbsolutePixel(start) - timeline.getTrackHeaderWidth().
-    
     int clipX = timeline.timeToAbsolutePixel(clip->startTime) - timeline.getTrackHeaderWidth();
-    int clipW = timeline.timeToAbsolutePixel(clip->duration) - timeline.getTrackHeaderWidth(); // wait, duration is relative? 
-    // timeToAbsolutePixel(dur) = Header + dur*p.
-    // So length is (Header+dur*p) - Header = dur*p.
-    // Or just:
-    int clipLen = (int)(clip->duration * timeline.getPixelsPerSecond());
-    int clipR = clipX + clipLen;
+    int clipW = (int)(clip->duration * timeline.getPixelsPerSecond());
+    int clipR = clipX + clipW;
 
-    if (x >= clipX && x < clipX + 6) return DragMode::ResizeLeft;
-    if (x <= clipR && x > clipR - 6) return DragMode::ResizeRight;
+    // Fade Handles (Circles at the top)
+    float inHandleX  = (float)clipX + (float)clip->fadeIn * (float)timeline.getPixelsPerSecond();
+    float outHandleX = (float)clipR - (float)clip->fadeOut * (float)timeline.getPixelsPerSecond();
     
-    // Fades (simplification: top corners)
-    if (y < 20)
-    {
-        if (x >= clipX && x < clipX + 12) return DragMode::FadeIn;
-        if (x <= clipR && x > clipR - 12) return DragMode::FadeOut;
-    }
+    float handleSize = 12.0f;
+    float handleY = 4.0f; // matches bounds.getY() in paint
 
+    if (juce::Rectangle<float>(inHandleX - handleSize, handleY, handleSize * 2, handleSize * 2).contains((float)x, (float)y))
+        return DragMode::FadeIn;
+        
+    if (juce::Rectangle<float>(outHandleX - handleSize, handleY, handleSize * 2, handleSize * 2).contains((float)x, (float)y))
+        return DragMode::FadeOut;
+
+    // Edges (Resize)
+    if (x >= clipX && x < clipX + 8) return DragMode::ResizeLeft;
+    if (x <= clipR && x > clipR - 8) return DragMode::ResizeRight;
+    
     return DragMode::Move;
 }
 
@@ -398,7 +492,7 @@ void TrackLaneComponent::updateCursor(int x, int y)
         case DragMode::ResizeLeft:
         case DragMode::ResizeRight: setMouseCursor(juce::MouseCursor::LeftRightResizeCursor); break;
         case DragMode::FadeIn:
-        case DragMode::FadeOut:     setMouseCursor(juce::MouseCursor::UpDownResizeCursor); break; 
+        case DragMode::FadeOut:     setMouseCursor(juce::MouseCursor::PointingHandCursor); break; 
         default:                    setMouseCursor(juce::MouseCursor::NormalCursor); break;
     }
 }
@@ -414,7 +508,31 @@ void TrackLaneComponent::mouseDown(const juce::MouseEvent& e)
 
     if (e.mods.isRightButtonDown())
     {
-        // Right click inside track area or header
+        if (auto* clip = getClipAt(e.x, e.y))
+        {
+            auto zone = getZoneAt(e.x, e.y, clip);
+            if (zone == DragMode::FadeIn || zone == DragMode::FadeOut)
+            {
+                bool isIn = (zone == DragMode::FadeIn);
+                juce::PopupMenu m;
+                m.addSectionHeader(isIn ? "Fade In Curve" : "Fade Out Curve");
+                m.addItem(1, "Linear", true, (isIn ? clip->fadeInCurve : clip->fadeOutCurve) == Clip::FadeCurve::Linear);
+                m.addItem(2, "Exponential", true, (isIn ? clip->fadeInCurve : clip->fadeOutCurve) == Clip::FadeCurve::Exponential);
+                m.addItem(3, "S-Curve", true, (isIn ? clip->fadeInCurve : clip->fadeOutCurve) == Clip::FadeCurve::S_Curve);
+                
+                m.showMenuAsync(juce::PopupMenu::Options{}, [this, clip, isIn](int res) {
+                    if (res == 0) return;
+                    auto curve = (res == 1) ? Clip::FadeCurve::Linear : 
+                                 (res == 2) ? Clip::FadeCurve::Exponential : Clip::FadeCurve::S_Curve;
+                    if (isIn) clip->fadeInCurve = curve;
+                    else clip->fadeOutCurve = curve;
+                    repaint();
+                });
+                return;
+            }
+        }
+
+        // Global Track Right Click
         juce::PopupMenu m;
         m.addItem(1, "Change track options...");
         m.addItem(2, "Reset track to empty");
@@ -447,32 +565,26 @@ void TrackLaneComponent::mouseDown(const juce::MouseEvent& e)
             }
             else if (result == 2)
             {
-                // Reset track to empty (delete all clips and automation)
                 auto& engineTrack = audioEngine.getTrackInfo(trackIndex);
                 engineTrack.clips.clear();
                 if (engineTrack.type == OrpheusTrackInfo::Type::Midi)
-                {
                     engineTrack.takes.clear();
-                }
                 timeline.repaint();
             }
             else if (result == 3)
             {
-                // Reset playhead to first frame/clip
                 auto& engineTrack = audioEngine.getTrackInfo(trackIndex);
                 double earliest = 0.0;
                 if (!engineTrack.clips.isEmpty())
                 {
                     earliest = engineTrack.clips.getFirst()->startTime;
-                    for (auto* c : engineTrack.clips)
-                        earliest = juce::jmin(earliest, c->startTime);
+                    for (auto* c : engineTrack.clips) earliest = juce::jmin(earliest, c->startTime);
                 }
                 audioEngine.setPlayheadPosition(earliest);
                 timeline.repaint();
             }
             else if (result == 4)
             {
-                // Delete track
                 appState.removeTrack(trackIndex);
                 audioEngine.removeTrack(trackIndex);
                 timeline.rebuildTracks();
@@ -969,12 +1081,48 @@ void TrackLaneComponent::mouseDrag(const juce::MouseEvent& e)
 
     if (currentDragMode == DragMode::Move)
     {
-        // Snap absolute start time
-        double newStart = timeline.snapToGrid(dragStartTime + deltaTime); 
-        if (newStart < 0) newStart = 0;
+        if (e.mods.isAltDown() && draggingClip->getType() == Clip::Type::Audio)
+        {
+            // Slip Editing: Change offset instead of startTime
+            double timeDelta = mouseTime - timeline.absolutePixelToTime(dragStartPos.x);
+            draggingClip->offset = dragStartOffset - timeDelta; 
+            // Negative delta because moving mouse right (positive delta) should shift waveform left (negative offset adjustment)
+            // Wait: dragging content right means starting earlier in the source file? 
+            // If I drag right, I want to see earlier parts of the file. So offset decreases. 
+            // Yes, offset -= delta.
+        }
+        else
+        {
+            // Regular Move
+            double newStart = timeline.snapToGrid(dragStartTime + deltaTime); 
+            if (newStart < 0) newStart = 0;
+            draggingClip->startTime = newStart;
+        }
         
-        draggingClip->startTime = newStart;
-        // No change to offset/duration
+        // ── Crossfade Logic (existing) ──────────────────────────────
+        // ... (I'll re-apply this in the full block below)
+
+        // ── Crossfade Logic ──────────────────────────────────────────
+        // Check for overlaps with neighbors
+        auto& clips = trackInfo.clips;
+        Clip* nextClip = nullptr;
+        for (auto* c : clips) {
+            if (c != draggingClip && c->startTime >= draggingClip->startTime) {
+                if (!nextClip || c->startTime < nextClip->startTime) nextClip = c;
+            }
+        }
+
+        if (nextClip) {
+            double overlap = (draggingClip->startTime + draggingClip->duration) - nextClip->startTime;
+            if (overlap > 0 && overlap < 2.0) { // Limit auto-crossfade to 2 seconds
+                draggingClip->fadeOut = overlap;
+                nextClip->fadeIn = overlap;
+            } else if (overlap <= 0) {
+                // Remove fade if no longer overlapping? 
+                // Maybe keep it if user manually set it. 
+                // Suggestion: only auto-fade if it was 0 or already an auto-fade.
+            }
+        }
     }
     else if (currentDragMode == DragMode::ResizeLeft)
     {

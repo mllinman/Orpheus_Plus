@@ -131,6 +131,15 @@ public:
                        bool isScrollbarVertical, int thumbStartPosition, int thumbSize,
                        bool isMouseOver, bool isMouseDown) override;
 
+    //── Custom Orpheus Methods ──────────────────────────────────────────────
+    void drawTabButton(juce::Graphics& g, int w, int h, const juce::Colour& backgroundColour,
+                       bool isMouseOver, bool isMouseDown, bool isFront,
+                       const juce::String& text, int tabIndex);
+    
+    void drawToolbarBackground(juce::Graphics& g, int w, int h);
+    void drawGlassBackground(juce::Graphics& g, const juce::Rectangle<float>& area, 
+                             float cornerSize, float alpha = 1.0f);
+
     juce::Font getTextButtonFont(juce::TextButton&, int buttonH) override;
     juce::Font getLabelFont(juce::Label&) override;
     juce::Font getPopupMenuFont() override;

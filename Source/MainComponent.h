@@ -16,12 +16,15 @@
 #include "Project/ProjectManager.h"
 #include "Project/AppState.h"
 
+#include "UI/DockablePanel.h"
+
 //==============================================================================
 class MainComponent : public juce::Component,
                       public juce::DragAndDropContainer,
                       public juce::MenuBarModel,
                       public juce::ApplicationCommandTarget,
                       public juce::ChangeListener,
+                      public DockablePanel::Listener,
                       private juce::Timer
 {
 public:
@@ -109,29 +112,38 @@ private:
     std::unique_ptr<ProjectManager> projectManager;
     juce::ApplicationCommandManager commandManager;
 
-    // Main UI panels
+    // Core UI Panels
     std::unique_ptr<juce::MenuBarComponent> menuBar;
     std::unique_ptr<TransportBar> transportBar;
-    std::unique_ptr<TimelineComponent> timeline;
+
+    // View tab bar replacement
+    juce::TabbedComponent mainTabbedView { juce::TabbedButtonBar::TabsAtTop };
+
+    // DockablePanel::Listener
+    void panelUndocked(DockablePanel* panel) override;
+    void panelRedocked(DockablePanel* panel) override;
+
+    // Wrapped panels (owners)
+    std::unique_ptr<DockablePanel> timelinePanel;
+    std::unique_ptr<DockablePanel> pianoRollPanel;
+    std::unique_ptr<DockablePanel> masteringPanel;
+    std::unique_ptr<DockablePanel> stemSeparatorPanel;
+    std::unique_ptr<DockablePanel> audioCleanupPanel;
+    std::unique_ptr<DockablePanel> autoTunePanel;
+
+    // Component pointers (raw pointers for easy access)
+    TimelineComponent* timeline = nullptr;
+    PianoRollComponent* pianoRoll = nullptr;
+    MasteringModule* masteringModule = nullptr;
+    StemSeparatorPanel* stemSeparator = nullptr;
+    AudioCleanupPanel* audioCleanup = nullptr;
+    AutoTunePanel* autoTune = nullptr;
+
+    // Sidebars & Mixer (managed separately for now)
     std::unique_ptr<MixerPanel> mixerPanel;
     std::unique_ptr<SpectrumAnalyzer> spectrumAnalyzer;
-    std::unique_ptr<PianoRollComponent> pianoRoll;
-    std::unique_ptr<MasteringModule> masteringModule;
     std::unique_ptr<PluginBrowser> pluginBrowser;
-
-    // New panels
     std::unique_ptr<TrackSettingsPanel> trackSettingsPanel;
-    std::unique_ptr<StemSeparatorPanel> stemSeparatorPanel;
-    std::unique_ptr<AudioCleanupPanel> audioCleanupPanel;
-    std::unique_ptr<AutoTunePanel> autoTunePanel;
-
-    // View tab bar
-    juce::TextButton tabTimeline   { "Timeline" };
-    juce::TextButton tabPianoRoll  { "Piano Roll" };
-    juce::TextButton tabMastering  { "Mastering" };
-    juce::TextButton tabStemSep    { "Stem Sep" };
-    juce::TextButton tabCleanup    { "Cleanup" };
-    juce::TextButton tabAutoTune   { "AutoTune" };
 
     // Layout state
     bool showMixer          = true;

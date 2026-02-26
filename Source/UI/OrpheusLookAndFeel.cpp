@@ -107,32 +107,46 @@ void OrpheusLookAndFeel::drawRotarySlider(juce::Graphics& g, int x, int y, int w
 //==============================================================================
 // Linear Slider — horizontal track or vertical fader
 //==============================================================================
+//==============================================================================
+// Linear Slider — horizontal track or vertical fader
+//==============================================================================
 void OrpheusLookAndFeel::drawLinearSlider(juce::Graphics& g, int x, int y, int w, int h,
     float sliderPos, float minPos, float maxPos, juce::Slider::SliderStyle style,
     juce::Slider& slider)
 {
     if (style == juce::Slider::LinearHorizontal || style == juce::Slider::LinearBar)
     {
-        float trackY = y + h * 0.5f;
+        auto bounds = juce::Rectangle<float>((float)x, (float)y, (float)w, (float)h);
+        float trackY = bounds.getCentreY();
         float trackH = 4.0f;
 
-        // Track background
+        // Track background with subtle inner shadow feel
         g.setColour(bgInput());
-        g.fillRoundedRectangle((float)x, trackY - trackH / 2, (float)w, trackH, 2.0f);
+        g.fillRoundedRectangle(bounds.getX(), trackY - trackH / 2, bounds.getWidth(), trackH, 2.0f);
 
-        // Track fill (accent purple)
-        float fillW = sliderPos - x;
+        // Track fill (gradient)
+        float fillW = sliderPos - bounds.getX();
         if (fillW > 0)
         {
-            g.setColour(accentPrimary().withAlpha(0.7f));
-            g.fillRoundedRectangle((float)x, trackY - trackH / 2, fillW, trackH, 2.0f);
+            auto fillBounds = juce::Rectangle<float>(bounds.getX(), trackY - trackH / 2, fillW, trackH);
+            g.setGradientFill(juce::ColourGradient(accentPrimary(), fillBounds.getX(), 0,
+                                                   accentSecondary(), fillBounds.getRight(), 0, false));
+            g.fillRoundedRectangle(fillBounds, 2.0f);
         }
 
-        // Thumb
+        // Thumb with glow
+        auto thumbBounds = juce::Rectangle<float>(sliderPos - 7, trackY - 7, 14, 14);
+        
+        // Glow
+        g.setColour(accentPrimary().withAlpha(0.3f));
+        g.fillEllipse(thumbBounds.expanded(2));
+
+        // Main thumb body
+        g.setColour(juce::Colours::white);
+        g.fillEllipse(thumbBounds);
+        
         g.setColour(accentPrimary());
-        g.fillEllipse(sliderPos - 6, trackY - 6, 12, 12);
-        g.setColour(juce::Colours::white.withAlpha(0.9f));
-        g.fillEllipse(sliderPos - 3, trackY - 3, 6, 6);
+        g.fillEllipse(thumbBounds.reduced(3.5f));
     }
     else if (style == juce::Slider::LinearVertical)
     {
@@ -172,22 +186,32 @@ void OrpheusLookAndFeel::drawButtonBackground(juce::Graphics& g, juce::Button& b
 {
     auto bounds = button.getLocalBounds().toFloat().reduced(0.5f);
     bool isToggle = button.getToggleState();
+    float cornerSize = 6.0f;
 
-    juce::Colour bc = isToggle ? accentPrimary()
-                     : down    ? backgroundColour.darker(0.15f)
-                     : highlighted ? bgHover()
-                     : backgroundColour;
+    if (isToggle || down)
+    {
+        auto bc = isToggle ? accentPrimary() : backgroundColour.darker(0.2f);
+        g.setColour(bc);
+        g.fillRoundedRectangle(bounds, cornerSize);
+        
+        // Inner shadow/glow
+        g.setColour(juce::Colours::black.withAlpha(0.2f));
+        g.drawRoundedRectangle(bounds, cornerSize, 1.0f);
+    }
+    else
+    {
+        drawGlassBackground(g, bounds, cornerSize, highlighted ? 1.0f : 0.7f);
+        
+        if (highlighted)
+        {
+            g.setColour(juce::Colours::white.withAlpha(0.1f));
+            g.fillRoundedRectangle(bounds, cornerSize);
+        }
+    }
 
-    // Background fill
-    g.setColour(bc);
-    g.fillRoundedRectangle(bounds, 4.0f);
-
-    // Border
-    juce::Colour borderC = isToggle    ? accentPrimary()
-                         : highlighted ? borderStrong()
-                                       : borderDefault();
-    g.setColour(borderC);
-    g.drawRoundedRectangle(bounds, 4.0f, 1.0f);
+    // Modern thin border
+    g.setColour(isToggle ? accentPrimary().brighter(0.2f) : borderDefault().withAlpha(highlighted ? 0.8f : 0.5f));
+    g.drawRoundedRectangle(bounds, cornerSize, 1.0f);
 }
 
 //==============================================================================
@@ -235,20 +259,22 @@ void OrpheusLookAndFeel::drawToggleButton(juce::Graphics& g, juce::ToggleButton&
 void OrpheusLookAndFeel::drawComboBox(juce::Graphics& g, int w, int h, bool,
     int, int, int, int, juce::ComboBox&)
 {
-    auto bounds = juce::Rectangle<float>(0, 0, (float)w, (float)h);
-    g.setColour(bgInput());
-    g.fillRoundedRectangle(bounds, 4.0f);
-    g.setColour(borderDefault());
-    g.drawRoundedRectangle(bounds.reduced(0.5f), 4.0f, 1.0f);
+    auto bounds = juce::Rectangle<float>(0, 0, (float)w, (float)h).reduced(0.5f);
+    float cornerSize = bounds.getHeight() * 0.5f; // Pill-shaped
+
+    drawGlassBackground(g, bounds, cornerSize);
+    
+    g.setColour(borderDefault().withAlpha(0.5f));
+    g.drawRoundedRectangle(bounds, cornerSize, 1.0f);
 
     // Arrow
-    auto arrowZone = bounds.removeFromRight(h).reduced(5);
+    auto arrowZone = bounds.removeFromRight(h).reduced(h * 0.3f);
     juce::Path arrow;
-    arrow.startNewSubPath(arrowZone.getCentreX() - 4, arrowZone.getCentreY() - 2);
-    arrow.lineTo(arrowZone.getCentreX() + 4, arrowZone.getCentreY() - 2);
+    arrow.startNewSubPath(arrowZone.getCentreX() - 3.5f, arrowZone.getCentreY() - 2);
+    arrow.lineTo(arrowZone.getCentreX() + 3.5f, arrowZone.getCentreY() - 2);
     arrow.lineTo(arrowZone.getCentreX(), arrowZone.getCentreY() + 3);
     arrow.closeSubPath();
-    g.setColour(textMuted());
+    g.setColour(textSecondary());
     g.fillPath(arrow);
 }
 
@@ -390,4 +416,59 @@ juce::Font OrpheusLookAndFeel::getLabelFont(juce::Label&)
 juce::Font OrpheusLookAndFeel::getPopupMenuFont()
 {
     return defaultFont.withHeight(12.5f);
+}
+
+//==============================================================================
+// Glassmorphism & Custom Components
+//==============================================================================
+
+void OrpheusLookAndFeel::drawGlassBackground(juce::Graphics& g, const juce::Rectangle<float>& area, 
+                                             float cornerSize, float alpha)
+{
+    g.setColour(bgSurface().withAlpha(0.6f * alpha));
+    g.fillRoundedRectangle(area, cornerSize);
+    
+    // Subtle top light highlight
+    g.setGradientFill(juce::ColourGradient(juce::Colours::white.withAlpha(0.1f * alpha), area.getX(), area.getY(),
+                                           juce::Colours::transparentWhite, area.getX(), area.getBottom(), false));
+    g.fillRoundedRectangle(area, cornerSize);
+}
+
+void OrpheusLookAndFeel::drawToolbarBackground(juce::Graphics& g, int w, int h)
+{
+    auto bounds = juce::Rectangle<float>(0, 0, (float)w, (float)h);
+    
+    g.setGradientFill(juce::ColourGradient(bgSurface(), 0, 0, 
+                                           bgDarkest(), 0, (float)h, false));
+    g.fillRect(bounds);
+    
+    g.setColour(borderSubtle());
+    g.drawHorizontalLine(h - 1, 0, (float)w);
+}
+
+void OrpheusLookAndFeel::drawTabButton(juce::Graphics& g, int w, int h, const juce::Colour& backgroundColour,
+                                       bool isMouseOver, bool isMouseDown, bool isFront,
+                                       const juce::String& text, int /*tabIndex*/)
+{
+    auto bounds = juce::Rectangle<float>(0, 0, (float)w, (float)h).reduced(2, 0);
+    float cornerSize = 4.0f;
+
+    if (isFront)
+    {
+        g.setColour(bgSurface());
+        g.fillRoundedRectangle(bounds, cornerSize);
+        
+        // Indicator line at bottom
+        g.setColour(accentPrimary());
+        g.fillRect(bounds.removeFromBottom(2).reduced(4, 0));
+    }
+    else if (isMouseOver || isMouseDown)
+    {
+        g.setColour(bgElevated().withAlpha(0.5f));
+        g.fillRoundedRectangle(bounds, cornerSize);
+    }
+
+    g.setColour(isFront ? textPrimary() : textSecondary());
+    g.setFont(defaultFont.withHeight(12.0f).boldened(isFront));
+    g.drawText(text, 0, 0, w, h, juce::Justification::centred);
 }

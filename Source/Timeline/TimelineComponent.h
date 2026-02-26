@@ -70,10 +70,14 @@ public:
     double timeToAbsolutePixel(double t) const; // Time -> Absolute Pixel
 
     // AudioEngine::Listener
+    static constexpr int  TOOLBAR_HEIGHT  = 36;
     static constexpr int  RULER_HEIGHT    = 30;
     static constexpr int  DEFAULT_TRACK_H = 80;
     static constexpr int  TAKE_LANE_H     = 40;
     static constexpr int  AUTOMATION_LANE_H = 40;
+
+    juce::Rectangle<int> getToolbarBounds() const;
+    juce::Rectangle<int> getRulerBounds() const;
 
     int getTrackHeaderWidth() const { return trackHeaderWidth; }
 

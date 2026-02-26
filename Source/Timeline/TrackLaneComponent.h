@@ -55,9 +55,10 @@ private:
     // Interaction
     Clip* getClipAt(int x, int y);
     
-    enum class DragMode { None, Move, ResizeLeft, ResizeRight, FadeIn, FadeOut, MoveAutomationPoint, SwipeComp };
+    enum class DragMode { None, Move, ResizeLeft, ResizeRight, FadeIn, FadeOut, Crossfade, MoveAutomationPoint, SwipeComp };
     DragMode currentDragMode = DragMode::None;
     Clip*    draggingClip    = nullptr;
+    Clip*    crossfadeClip   = nullptr; // Target clip for crossfading
     int      draggingTakeIndex = -1; // -1 = comp lane, 0+ = take lane
     
     // Automation

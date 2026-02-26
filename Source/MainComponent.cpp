@@ -31,72 +31,41 @@ MainComponent::MainComponent()
     transportBar = std::make_unique<TransportBar>(*audioEngine, commandManager);
     addAndMakeVisible(transportBar.get());
 
-    // View Tab Buttons
-    addAndMakeVisible(tabTimeline);
-    addAndMakeVisible(tabPianoRoll);
-    addAndMakeVisible(tabMastering);
-    addAndMakeVisible(tabStemSep);
-    addAndMakeVisible(tabCleanup);
-    addAndMakeVisible(tabAutoTune);
+    // Initialize Tabbed View
+    addAndMakeVisible(mainTabbedView);
+    mainTabbedView.setTabBarDepth(36);
 
-    auto tabStyle = [](juce::TextButton& btn, bool active) {
-        btn.setColour(juce::TextButton::buttonColourId,
-                      active ? OrpheusLookAndFeel::bgActive() : OrpheusLookAndFeel::bgDark());
-        btn.setColour(juce::TextButton::textColourOnId,   OrpheusLookAndFeel::textPrimary());
-        btn.setColour(juce::TextButton::textColourOffId,  OrpheusLookAndFeel::textSecondary());
+    auto addPanel = [this](std::unique_ptr<DockablePanel>& panelPtr, 
+                           const juce::String& name, 
+                           std::unique_ptr<juce::Component> content) -> juce::Component* {
+        auto* raw = content.get();
+        panelPtr = std::make_unique<DockablePanel>(name, std::move(content));
+        panelPtr->addListener(this);
+        mainTabbedView.addTab(name, OrpheusLookAndFeel::bgDark(), panelPtr.get(), false);
+        return raw;
     };
 
-    tabTimeline.onClick  = [this] { switchToView(0); };
-    tabPianoRoll.onClick = [this] { switchToView(1); };
-    tabMastering.onClick = [this] { switchToView(2); };
-    tabStemSep.onClick   = [this] { switchToView(3); };
-    tabCleanup.onClick   = [this] { switchToView(4); };
-    tabAutoTune.onClick  = [this] { switchToView(5); };
+    // Initialize Panels
+    timeline        = dynamic_cast<TimelineComponent*>(addPanel(timelinePanel,      "Timeline",   std::make_unique<TimelineComponent>(*audioEngine, appState, commandManager)));
+    pianoRoll       = dynamic_cast<PianoRollComponent*>(addPanel(pianoRollPanel,     "Piano Roll", std::make_unique<PianoRollComponent>(appState, *audioEngine)));
+    masteringModule = dynamic_cast<MasteringModule*>(addPanel(masteringPanel,       "Mastering",  std::make_unique<MasteringModule>(*audioEngine)));
+    stemSeparator   = dynamic_cast<StemSeparatorPanel*>(addPanel(stemSeparatorPanel, "Stem Sep",   std::make_unique<StemSeparatorPanel>(*audioEngine, appState)));
+    audioCleanup    = dynamic_cast<AudioCleanupPanel*>(addPanel(audioCleanupPanel,  "Cleanup",    std::make_unique<AudioCleanupPanel>(*audioEngine)));
+    autoTune        = dynamic_cast<AutoTunePanel*>(addPanel(autoTunePanel,      "AutoTune",   std::make_unique<AutoTunePanel>(*audioEngine)));
 
-    tabStyle(tabTimeline, true);
-    tabStyle(tabPianoRoll, false);
-    tabStyle(tabMastering, false);
-    tabStyle(tabStemSep, false);
-    tabStyle(tabCleanup, false);
-    tabStyle(tabAutoTune, false);
-
-    // Initialize Timeline
-    timeline = std::make_unique<TimelineComponent>(*audioEngine, appState, commandManager);
-    addAndMakeVisible(timeline.get());
-
-    // Initialize MixerPanel
+    // Initialize Sidebar / Mixer components (not tabbed)
     mixerPanel = std::make_unique<MixerPanel>(*audioEngine, appState);
     addAndMakeVisible(mixerPanel.get());
 
-    // Initialize SpectrumAnalyzer
     spectrumAnalyzer = std::make_unique<SpectrumAnalyzer>(*audioEngine);
     addChildComponent(spectrumAnalyzer.get());
 
-    // Initialize PluginBrowser
     pluginBrowser = std::make_unique<PluginBrowser>(*audioEngine, appState);
     addChildComponent(pluginBrowser.get());
-    
-    // Initialize PianoRoll
-    pianoRoll = std::make_unique<PianoRollComponent>(appState, *audioEngine);
-    addChildComponent(pianoRoll.get());
 
-    // Initialize MasteringModule
-    masteringModule = std::make_unique<MasteringModule>(*audioEngine);
-    addChildComponent(masteringModule.get());
-
-    // Initialize new panels
     trackSettingsPanel = std::make_unique<TrackSettingsPanel>(*audioEngine, appState);
     addChildComponent(trackSettingsPanel.get());
-
-    stemSeparatorPanel = std::make_unique<StemSeparatorPanel>(*audioEngine, appState);
-    addChildComponent(stemSeparatorPanel.get());
-
-    audioCleanupPanel = std::make_unique<AudioCleanupPanel>(*audioEngine);
-    addChildComponent(audioCleanupPanel.get());
-
-    autoTunePanel = std::make_unique<AutoTunePanel>(*audioEngine);
-    addChildComponent(autoTunePanel.get());
-
+    
     appState.addChangeListener(this);
 
     // Initialize UI Resizers
@@ -152,18 +121,6 @@ void MainComponent::resized()
     // ── Top: Menu Bar (32px) ───────────────────────────────────────────
     if (menuBar)
         menuBar->setBounds(area.removeFromTop(32));
-
-    // ── View Tab Bar (36px) ────────────────────────────────────────────
-    {
-        auto tabArea = area.removeFromTop(36);
-        int tabW = 90;
-        tabTimeline.setBounds(tabArea.removeFromLeft(tabW));
-        tabPianoRoll.setBounds(tabArea.removeFromLeft(tabW));
-        tabMastering.setBounds(tabArea.removeFromLeft(tabW));
-        tabStemSep.setBounds(tabArea.removeFromLeft(tabW));
-        tabCleanup.setBounds(tabArea.removeFromLeft(tabW));
-        tabAutoTune.setBounds(tabArea.removeFromLeft(tabW));
-    }
 
     // ── Bottom: Transport Bar (56px) ───────────────────────────────────
     if (transportBar)
@@ -230,56 +187,23 @@ void MainComponent::resized()
         horizontalResizerBar->setVisible(false);
     }
 
-    // ── Center Area — switch based on currentView ──────────────────────
-    auto centerArea = area;
+    // ── Center Area: mainTabbedView ───────────────────────────────────
+    mainTabbedView.setBounds(area);
+}
 
-    // Hide all center panels first
-    if (timeline) timeline->setVisible(false);
-    if (pianoRoll) pianoRoll->setVisible(false);
-    if (masteringModule) masteringModule->setVisible(false);
-    if (stemSeparatorPanel) stemSeparatorPanel->setVisible(false);
-    if (audioCleanupPanel) audioCleanupPanel->setVisible(false);
-    if (autoTunePanel) autoTunePanel->setVisible(false);
+void MainComponent::panelUndocked(DockablePanel* panel)
+{
+    // If undocked, we might want to hide the tab or show a placeholder
+    // For now, it stays in the tab bar but shows "Undocked" text (handled in DockablePanel::paint)
+}
 
-    switch (currentView) {
-        case 0: // Timeline
-            if (timeline) { timeline->setVisible(true); timeline->setBounds(centerArea); }
-            break;
-        case 1: // Piano Roll
-            if (pianoRoll) { pianoRoll->setVisible(true); pianoRoll->setBounds(centerArea); }
-            break;
-        case 2: // Mastering
-            if (masteringModule) { masteringModule->setVisible(true); masteringModule->setBounds(centerArea); }
-            break;
-        case 3: // Stem Separator
-            if (stemSeparatorPanel) { stemSeparatorPanel->setVisible(true); stemSeparatorPanel->setBounds(centerArea); }
-            break;
-        case 4: // Audio Cleanup
-            if (audioCleanupPanel) { audioCleanupPanel->setVisible(true); audioCleanupPanel->setBounds(centerArea); }
-            break;
-        case 5: // AutoTune
-            if (autoTunePanel) { autoTunePanel->setVisible(true); autoTunePanel->setBounds(centerArea); }
-            break;
-    }
+void MainComponent::panelRedocked(DockablePanel* panel)
+{
 }
 
 void MainComponent::switchToView(int viewIndex)
 {
-    currentView = viewIndex;
-
-    auto updateTab = [](juce::TextButton& btn, bool active) {
-        btn.setColour(juce::TextButton::buttonColourId,
-                      active ? OrpheusLookAndFeel::bgActive() : OrpheusLookAndFeel::bgDark());
-    };
-
-    updateTab(tabTimeline,  viewIndex == 0);
-    updateTab(tabPianoRoll, viewIndex == 1);
-    updateTab(tabMastering, viewIndex == 2);
-    updateTab(tabStemSep,   viewIndex == 3);
-    updateTab(tabCleanup,   viewIndex == 4);
-    updateTab(tabAutoTune,  viewIndex == 5);
-
-    resized();
+    mainTabbedView.setCurrentTabIndex(viewIndex);
 }
 
 void MainComponent::timerCallback() {}
