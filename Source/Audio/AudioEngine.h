@@ -119,6 +119,9 @@ public:
     bool isRecording() const { return recording.load(); }
     bool isExporting() const { return exporting.load(); }
 
+    void setLooping(bool loop) { looping.store(loop); }
+    bool isLooping() const { return looping.load(); }
+
     double getPlayheadPosition() const { return playheadPosition.load(); }
     void   setPlayheadPosition(double posSeconds);
     double getBpm() const    { return bpm.load(); }
@@ -280,6 +283,7 @@ private:
     std::atomic<bool>   playing   { false };
     std::atomic<bool>   recording { false };
     std::atomic<bool>   exporting { false };
+    std::atomic<bool>   looping   { false };
     std::atomic<double> playheadPosition { 0.0 };
     std::atomic<double> bpm             { 120.0 };
     int timeSigNum = 4, timeSigDen = 4;

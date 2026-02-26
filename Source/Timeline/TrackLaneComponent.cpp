@@ -1142,7 +1142,7 @@ bool TrackLaneComponent::isInterestedInFileDrag(const juce::StringArray& files)
 
 void TrackLaneComponent::filesDropped(const juce::StringArray& files, int x, int y)
 {
-    double dropTime = timeline.snapToGrid(timeline.pixelToTime(x));
+    double dropTime = timeline.snapToGrid(timeline.absolutePixelToTime(x));
     for (auto& f : files)
         addAudioClip(juce::File(f), dropTime);
 }

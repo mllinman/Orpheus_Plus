@@ -18,6 +18,7 @@ StemSeparatorPanel::StemSeparatorPanel(AudioEngine& e, AppState& s)
     addAndMakeVisible(modelCombo);
 
     // Browse
+    browseButton.setButtonText("Browse...");
     browseButton.setColour(juce::TextButton::buttonColourId, OrpheusLookAndFeel::bgElevated());
     browseButton.onClick = [this] {
         auto chooser = std::make_shared<juce::FileChooser>("Select audio file...",
@@ -41,11 +42,15 @@ StemSeparatorPanel::StemSeparatorPanel(AudioEngine& e, AppState& s)
     addAndMakeVisible(highQualityToggle);
 
     // Action buttons
+    separateButton.setButtonText("Start Separation");
     separateButton.setColour(juce::TextButton::buttonColourId, OrpheusLookAndFeel::accentPrimary());
+    separateButton.setColour(juce::TextButton::textColourOffId, juce::Colours::white);
+    separateButton.setColour(juce::TextButton::textColourOnId, juce::Colours::white);
     separateButton.onClick = [this] {
         if (selectedFile.existsAsFile())
             startSeparation(selectedFile);
     };
+    cancelButton.setButtonText("Cancel");
     cancelButton.setColour(juce::TextButton::buttonColourId, OrpheusLookAndFeel::accentDanger());
     cancelButton.setVisible(false);
     addAndMakeVisible(separateButton);

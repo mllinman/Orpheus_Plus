@@ -25,6 +25,7 @@ TransportBar::TransportBar(AudioEngine& e, juce::ApplicationCommandManager& c)
     stopButton.onClick   = [this] { audioEngine.stop(); };
     recordButton.onClick = [this] { audioEngine.toggleRecord(); };
     loopButton.setToggleable(true);
+    loopButton.onClick = [this] { audioEngine.setLooping(loopButton.getToggleState()); };
     settingsButton.setTooltip("Audio/MIDI Settings");
     
     // Command ID 5 is cmdOpenSettings from MainComponent
@@ -212,6 +213,10 @@ void TransportBar::timerCallback()
     bool recording = audioEngine.isRecording();
     recordButton.setColour(juce::TextButton::buttonColourId,
         recording ? OrpheusLookAndFeel::accentDanger() : OrpheusLookAndFeel::accentDanger().darker(0.3f));
+
+    bool looping = audioEngine.isLooping();
+    loopButton.setColour(juce::TextButton::buttonOnColourId, juce::Colours::cyan);
+    loopButton.setToggleState(looping, juce::dontSendNotification);
 }
 
 void TransportBar::playbackStarted() { repaint(); }

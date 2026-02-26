@@ -305,6 +305,8 @@ juce::PopupMenu MainComponent::getMenuForIndex(int menuIndex, const juce::String
             menu.addCommandItem(&commandManager, cmdNewProject);
             menu.addCommandItem(&commandManager, cmdOpenProject);
             menu.addSeparator();
+            menu.addCommandItem(&commandManager, cmdImportAudio);
+            menu.addSeparator();
             menu.addCommandItem(&commandManager, cmdSaveProject);
             menu.addCommandItem(&commandManager, cmdSaveProjectAs);
             menu.addSeparator();
@@ -377,7 +379,8 @@ void MainComponent::getAllCommands(juce::Array<juce::CommandID>& commands)
         cmdToggleMixer, cmdAudioCleanup, cmdAbout, cmdQuit,
         cmdOpenAutoTune, cmdToggleTrackSettings,
         cmdAddVocalTrack, cmdAddInstrumentTrack,
-        cmdAddFolderTrack, cmdAddArrangerTrack
+        cmdAddFolderTrack, cmdAddArrangerTrack,
+        cmdImportAudio
     });
 }
 
@@ -392,6 +395,10 @@ void MainComponent::getCommandInfo(juce::CommandID commandID, juce::ApplicationC
         case cmdOpenProject:
             result.setInfo("Open Project...", "Open an existing project", "File", 0);
             result.addDefaultKeypress('o', juce::ModifierKeys::commandModifier);
+            break;
+        case cmdImportAudio:
+            result.setInfo("Import Audio...", "Import an audio file into a new track", "File", 0);
+            result.addDefaultKeypress('i', juce::ModifierKeys::commandModifier | juce::ModifierKeys::shiftModifier);
             break;
         case cmdSaveProject:
             result.setInfo("Save", "Save the current project", "File", 0);
@@ -560,6 +567,28 @@ bool MainComponent::perform(const InvocationInfo& info)
             if (projectManager) projectManager->openProject();
             if (timeline) timeline->rebuildTracks();
             return true;
+
+        case cmdImportAudio:
+        {
+            auto chooser = std::make_shared<juce::FileChooser>("Import Audio",
+                juce::File::getSpecialLocation(juce::File::userMusicDirectory),
+                "*.wav;*.mp3;*.aiff;*.flac");
+            chooser->launchAsync(juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectFiles,
+                [this, chooser](const juce::FileChooser& c) {
+                    if (c.getResult().existsAsFile())
+                    {
+                        auto file = c.getResult();
+                        int trackIdx = audioEngine->addAudioTrack(file.getFileNameWithoutExtension());
+                        auto* clip = new AudioClip(file, 0.0);
+                        clip->colour = audioEngine->getTrackInfo(trackIdx).colour;
+                        clip->loadAudioData(audioEngine->getFormatManager());
+
+                        audioEngine->getTrackInfo(trackIdx).clips.add(clip);
+                        if (timeline) timeline->rebuildTracks();
+                    }
+                });
+            return true;
+        }
 
         case cmdSaveProject:
             if (projectManager) projectManager->saveProject();

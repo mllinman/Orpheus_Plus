@@ -88,6 +88,7 @@ public:
         cmdFreezeTrack,
         cmdScratchPadSave,
         cmdScratchPadLoad,
+        cmdImportAudio,
     };
 
 private:
