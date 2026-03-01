@@ -13,6 +13,7 @@
 #include "UI/StemSeparatorPanel.h"
 #include "UI/AudioCleanupPanel.h"
 #include "UI/AutoTunePanel.h"
+#include "UI/LibraryPanel.h"
 #include "Project/ProjectManager.h"
 #include "Project/AppState.h"
 
@@ -75,6 +76,7 @@ public:
         cmdOpenSettings,
         cmdToggleMixer,
         cmdShowTimeline,
+        cmdToggleLibraryPanel,
         cmdAudioCleanup,
         cmdAbout,
         cmdQuit,
@@ -144,6 +146,7 @@ private:
     std::unique_ptr<SpectrumAnalyzer> spectrumAnalyzer;
     std::unique_ptr<PluginBrowser> pluginBrowser;
     std::unique_ptr<TrackSettingsPanel> trackSettingsPanel;
+    std::unique_ptr<LibraryPanel> libraryPanel;
 
     // Layout state
     bool showMixer          = true;
@@ -151,6 +154,7 @@ private:
     bool showPianoRoll      = false;
     bool showPluginBrowser  = false;
     bool showTrackSettings  = false;
+    bool showLibraryPanel   = false;
     int  currentView        = 0; // 0=Timeline, 1=PianoRoll, 2=Mastering, 3=StemSep, 4=Cleanup, 5=AutoTune
     int  mixerHeight        = 200;
     int  sidebarWidth       = 280;

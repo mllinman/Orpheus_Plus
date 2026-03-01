@@ -66,6 +66,9 @@ MainComponent::MainComponent()
     trackSettingsPanel = std::make_unique<TrackSettingsPanel>(*audioEngine, appState);
     addChildComponent(trackSettingsPanel.get());
     
+    libraryPanel = std::make_unique<LibraryPanel>(*audioEngine, appState);
+    addChildComponent(libraryPanel.get());
+    
     appState.addChangeListener(this);
 
     // Initialize UI Resizers
@@ -155,7 +158,7 @@ void MainComponent::resized()
         verticalResizerBar->setVisible(false);
     }
 
-    if (showPluginBrowser || showTrackSettings)
+    if (showPluginBrowser || showTrackSettings || showLibraryPanel)
     {
         juce::Component dummyLeft, dummyRight;
         juce::Component* hComps[] = { &dummyLeft, horizontalResizerBar.get(), &dummyRight };
@@ -177,6 +180,13 @@ void MainComponent::resized()
         }
         else if (trackSettingsPanel) trackSettingsPanel->setVisible(false);
         
+        if (showLibraryPanel && libraryPanel)
+        {
+            libraryPanel->setVisible(true);
+            libraryPanel->setBounds(sideArea);
+        }
+        else if (libraryPanel) libraryPanel->setVisible(false);
+        
         area = dummyLeft.getBounds(); // center workspace
         horizontalResizerBar->setVisible(true);
     }
@@ -184,6 +194,7 @@ void MainComponent::resized()
     {
         if (pluginBrowser) pluginBrowser->setVisible(false);
         if (trackSettingsPanel) trackSettingsPanel->setVisible(false);
+        if (libraryPanel) libraryPanel->setVisible(false);
         horizontalResizerBar->setVisible(false);
     }
 
@@ -259,6 +270,7 @@ juce::PopupMenu MainComponent::getMenuForIndex(int menuIndex, const juce::String
             menu.addCommandItem(&commandManager, cmdToggleMixer);
             menu.addCommandItem(&commandManager, cmdOpenPluginBrowser);
             menu.addCommandItem(&commandManager, cmdToggleTrackSettings);
+            menu.addCommandItem(&commandManager, cmdToggleLibraryPanel);
             break;
 
         case 3: // Track
@@ -301,7 +313,7 @@ void MainComponent::getAllCommands(juce::Array<juce::CommandID>& commands)
         cmdExportMix, cmdExportStems,
         cmdOpenPluginBrowser, cmdOpenSettings,
         cmdToggleMixer, cmdAudioCleanup, cmdAbout, cmdQuit,
-        cmdOpenAutoTune, cmdToggleTrackSettings,
+        cmdOpenAutoTune, cmdToggleTrackSettings, cmdToggleLibraryPanel,
         cmdAddVocalTrack, cmdAddInstrumentTrack,
         cmdAddFolderTrack, cmdAddArrangerTrack,
         cmdImportAudio
@@ -417,6 +429,11 @@ void MainComponent::getCommandInfo(juce::CommandID commandID, juce::ApplicationC
         case cmdToggleTrackSettings:
             result.setInfo("Track Settings", "Show or hide the track settings panel", "View", 0);
             result.setTicked(showTrackSettings);
+            break;
+        case cmdToggleLibraryPanel:
+            result.setInfo("Library Component", "Show or hide the library panel", "View", 0);
+            result.setTicked(showLibraryPanel);
+            result.addDefaultKeypress('l', juce::ModifierKeys::commandModifier);
             break;
         case cmdAddVocalTrack:
             result.setInfo("Add Vocal Track", "Add a new vocal track", "Track", 0);
@@ -767,6 +784,11 @@ bool MainComponent::perform(const InvocationInfo& info)
 
         case cmdOpenPluginBrowser:
             showPluginBrowser = !showPluginBrowser;
+            if (showPluginBrowser)
+            {
+                showTrackSettings = false;
+                showLibraryPanel = false;
+            }
             resized();
             return true;
 
@@ -789,8 +811,22 @@ bool MainComponent::perform(const InvocationInfo& info)
 
         case cmdToggleTrackSettings:
             showTrackSettings = !showTrackSettings;
-            if (showTrackSettings && trackSettingsPanel)
-                trackSettingsPanel->setTrackIndex(appState.getSelectedTrackIndex());
+            if (showTrackSettings)
+            {
+                showPluginBrowser = false;
+                showLibraryPanel = false;
+                if (trackSettingsPanel) trackSettingsPanel->setTrackIndex(appState.getSelectedTrackIndex());
+            }
+            resized();
+            return true;
+
+        case cmdToggleLibraryPanel:
+            showLibraryPanel = !showLibraryPanel;
+            if (showLibraryPanel)
+            {
+                showPluginBrowser = false;
+                showTrackSettings = false;
+            }
             resized();
             return true;
 

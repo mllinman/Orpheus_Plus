@@ -93,6 +93,7 @@ target_sources(OrpheusPlus PRIVATE
     Source/UI/AutoTunePanel.cpp
     Source/UI/AudioMidiSettingsPanel.cpp
     Source/UI/DockablePanel.cpp
+    Source/UI/LibraryPanel.cpp
 
     # Utility
     Source/Util/OrpheusLogger.cpp
