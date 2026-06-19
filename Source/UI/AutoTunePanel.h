@@ -1,6 +1,6 @@
 #pragma once
 #include <JuceHeader.h>
-#include "../PitchCorrection/AutoTuneProcessor.h"
+#include "../PitchCorrection/VocalSuiteProcessor.h"
 #include "../Audio/AudioEngine.h"
 #include "OrpheusLookAndFeel.h"
 
@@ -22,7 +22,7 @@ private:
     bool isNoteInScale(int noteInOctave) const;
 
     AudioEngine& audioEngine;
-    AutoTuneProcessor processor;
+    VocalSuiteProcessor processor;
 
     // Master
     juce::ToggleButton enableToggle { "ENABLE" };

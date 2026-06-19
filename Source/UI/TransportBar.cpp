@@ -11,7 +11,6 @@ TransportBar::TransportBar(AudioEngine& e, juce::ApplicationCommandManager& c)
     {
         btn.setColour(juce::TextButton::buttonColourId, col);
         btn.setColour(juce::TextButton::textColourOffId, juce::Colours::white);
-        btn.setFont(juce::Font(24.0f).boldened()); // Bigger font for icons
     };
 
     styleBtn(rewindButton,  OrpheusLookAndFeel::bgElevated());
@@ -28,7 +27,6 @@ TransportBar::TransportBar(AudioEngine& e, juce::ApplicationCommandManager& c)
     recordButton.setButtonText(juce::CharPointer_UTF8("\xe2\x8f\xba")); // ⏺
     loopButton.setButtonText(juce::CharPointer_UTF8("\xe2\x86\xba"));   // ↺
     settingsButton.setButtonText(juce::CharPointer_UTF8("\xe2\x9a\x99"));// ⚙
-    settingsButton.setFont(juce::Font(20.0f));
 
     rewindButton.onClick = [this] { audioEngine.stop(); };
     playButton.onClick   = [this] { audioEngine.togglePlayback(); };

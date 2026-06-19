@@ -73,7 +73,7 @@ private:
     std::array<EQBandControls, NUM_EQ_BANDS> eqBands;
 
     // ── Quick Access Toggles ──
-    juce::ToggleButton autoTuneToggle  { "AutoTune" };
+    juce::ToggleButton autoTuneToggle  { "Vocal Suite" };
     juce::ToggleButton cleanupToggle   { "Cleanup" };
 
     // ── Mute / Solo / Arm ──

@@ -164,7 +164,7 @@ public:
     float getMasterVolume() const   { return masterVolume.load(); }
 
     //── AI / DSP Features ────────────────────────────────────────────────────
-    void addAutoTuneToTrack(int trackIndex);
+    void addVocalSuiteToTrack(int trackIndex);
     void addAudioCleanupToTrack(int trackIndex);
     
     StemSeparator&       getStemSeparator()        { return *stemSeparator; }

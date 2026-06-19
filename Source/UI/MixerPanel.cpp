@@ -318,8 +318,8 @@ void MixerPanel::MasterStrip::paint(juce::Graphics& g)
     g.setColour(juce::Colour(0xff0d0d1a));
     g.fillRect(meterX, meterY, meterW * 2 + 2, meterH);
 
-    peakL = audioEngine.getMasterPeakLeft();
-    peakR = audioEngine.getMasterPeakRight();
+    peakL = engine.getMasterPeakLeft();
+    peakR = engine.getMasterPeakRight();
 
     auto drawMeter = [&](juce::Rectangle<float> bounds, float peak)
     {

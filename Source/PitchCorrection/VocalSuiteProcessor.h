@@ -2,18 +2,21 @@
 #include <JuceHeader.h>
 
 //==============================================================================
-// Real-time auto-tune / pitch correction processor
-// Uses YIN pitch detection + phase vocoder pitch shifting
-// For production quality, integrate Rubber Band Library
-//
-class AutoTuneProcessor : public juce::AudioProcessor
+// Vocal Suite Processor
+// Comprehensive vocal processing engine featuring:
+// - Real-time Pitch Correction (YIN + Phase Vocoder)
+// - Formant Shifting (Spectral envelope scaling)
+// - Vocal Doubler / Harmonizer
+// - Real-time automation targets
+//==============================================================================
+class VocalSuiteProcessor : public juce::AudioProcessor
 {
 public:
-    AutoTuneProcessor();
-    ~AutoTuneProcessor() override;
+    VocalSuiteProcessor();
+    ~VocalSuiteProcessor() override;
 
     //── AudioProcessor interface ─────────────────────────────────────────────
-    const juce::String getName() const override { return "AutoTune"; }
+    const juce::String getName() const override { return "VocalSuite"; }
     bool acceptsMidi()  const override { return false; }
     bool producesMidi() const override { return false; }
     bool isMidiEffect() const override { return false; }
@@ -30,16 +33,16 @@ public:
 
     void prepareToPlay(double sampleRate, int blockSize) override;
     void releaseResources() override;
-    void processBlock(juce::AudioBuffer<float>& buffer,
-                      juce::MidiBuffer&) override;
+    void processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer&) override;
 
     //── Parameters ──────────────────────────────────────────────────────────
     void setEnabled(bool e)           { enabled = e; }
-    void setSpeed(float s)            { speed = juce::jlimit(0.0f, 1.0f, s); } // 0=natural, 1=T-Pain
-    void setKey(int semitone)         { key = semitone; }  // 0=C, 1=C# etc.
-    void setScale(int scaleType)      { scale = scaleType; } // 0=chromatic, 1=major, 2=minor
-    void setRobotVoiceAmount(float r) { robotAmount = r; }   // 0-1
-    void setFormantShift(float f)     { formantShift = f; }  // in semitones
+    void setRetuneSpeed(float s)      { retuneSpeed = juce::jlimit(0.0f, 1.0f, s); } // 0=Natural, 1=Robotic
+    void setKey(int semitone)         { key = semitone; }
+    void setScale(int scaleType)      { scale = scaleType; }
+    void setFormantShift(float f)     { formantShift = juce::jlimit(-12.0f, 12.0f, f); } // semitones
+    void setDoublerAmount(float d)    { doublerAmount = juce::jlimit(0.0f, 1.0f, d); }
+    void setHarmonyInterval(int h)    { harmonyInterval = h; } // e.g. +3, -5
 
     float getDetectedPitch() const { return detectedPitch.load(); }
     float getCorrectedPitch() const { return correctedPitch.load(); }
@@ -47,19 +50,24 @@ public:
 private:
     float detectPitchYIN(const float* buffer, int numSamples, double sampleRate);
     float findClosestScalePitch(float detectedHz);
-    void shiftPitch(juce::AudioBuffer<float>& buffer, float semitones);
+    
+    // Advanced DSP Core
+    void processPhaseVocoder(juce::AudioBuffer<float>& buffer, float pitchShiftSemitones, float formantShiftSemitones);
+    void applyDoubler(juce::AudioBuffer<float>& buffer);
+    void applyHarmony(juce::AudioBuffer<float>& buffer);
 
-    // Scale definitions (semitones within octave)
     static constexpr int CHROMATIC[12] = {0,1,2,3,4,5,6,7,8,9,10,11};
     static constexpr int MAJOR[7]      = {0,2,4,5,7,9,11};
     static constexpr int MINOR[7]      = {0,2,3,5,7,8,10};
 
-    bool  enabled      = false;
-    float speed        = 0.5f;
-    int   key          = 0;
-    int   scale        = 1;     // major
-    float robotAmount  = 0.0f;
-    float formantShift = 0.0f;
+    // State
+    bool  enabled         = false;
+    float retuneSpeed     = 0.5f;
+    int   key             = 0;
+    int   scale           = 1;
+    float formantShift    = 0.0f;
+    float doublerAmount   = 0.0f;
+    int   harmonyInterval = 0;
 
     std::atomic<float> detectedPitch  { 0.0f };
     std::atomic<float> correctedPitch { 0.0f };
@@ -67,7 +75,7 @@ private:
     double currentSampleRate = 44100.0;
     int    currentBlockSize  = 512;
 
-    // Phase vocoder state
+    // Phase vocoder structures
     std::vector<float> inputBuffer;
     std::vector<float> outputBuffer;
     std::vector<float> phaseAccumulator;
@@ -77,7 +85,12 @@ private:
     int fftSize       = 2048;
     std::unique_ptr<juce::dsp::FFT> fft;
 
+    // Delay lines for Doubler/Harmonizer
+    juce::dsp::DelayLine<float, juce::dsp::DelayLineInterpolationTypes::Lagrange3rd> delayLineL { 44100 };
+    juce::dsp::DelayLine<float, juce::dsp::DelayLineInterpolationTypes::Lagrange3rd> delayLineR { 44100 };
+    juce::LinearSmoothedValue<float> smoothedLfoPhase { 0.0f };
+
     float pitchSmoothed = 0.0f;
 
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(AutoTuneProcessor)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(VocalSuiteProcessor)
 };

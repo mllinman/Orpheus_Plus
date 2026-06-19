@@ -815,7 +815,7 @@ void TrackLaneComponent::mouseDown(const juce::MouseEvent& e)
                         }
                         else if (result == 3)
                         {
-                            audioEngine.addAutoTuneToTrack(trackIndex);
+                            audioEngine.addVocalSuiteToTrack(trackIndex);
                         }
                         else if (result == 4)
                         {

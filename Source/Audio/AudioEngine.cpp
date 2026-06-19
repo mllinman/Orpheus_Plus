@@ -7,7 +7,7 @@
 #include "MixerProcessor.h"
 #include "MidiLearnManager.h"
 #include "../Project/AppState.h"
-#include "../PitchCorrection/AutoTuneProcessor.h"
+#include "../PitchCorrection/VocalSuiteProcessor.h"
 #include "../AudioCleanup/AudioCleanupProcessor.h"
 // #include "../UI/SpectrumAnalyzer.h"
 
@@ -434,10 +434,7 @@ void AudioEngine::updateSoloState()
 // Insert FX
 //──────────────────────────────────────────────────────────────────────────────
 
-void AudioEngine::addAutoTuneToTrack(int trackIndex)
-{
-    // TODO: Phase 2 - Insert into graph between generator and fader
-}
+
 
 void AudioEngine::addAudioCleanupToTrack(int trackIndex)
 {
@@ -908,6 +905,26 @@ SurroundPanner& AudioEngine::getTrackPanner(int trackIdx)
 //==============================================================================
 // Track Freeze
 //==============================================================================
+void AudioEngine::addVocalSuiteToTrack(int trackIndex)
+{
+    if (trackIndex < 0 || trackIndex >= tracks.size()) return;
+    auto* track = tracks[trackIndex];
+    
+    auto vs = std::make_unique<VocalSuiteProcessor>();
+    auto node = processorGraph.addNode(std::move(vs));
+    
+    for (int i = 0; i < OrpheusTrackInfo::MAX_PLUGINS; ++i)
+    {
+        if (track->pluginSlots[i] == -1)
+        {
+            track->pluginSlots[i] = (int)node->nodeID.uid;
+            break;
+        }
+    }
+    
+    updateTrackGraphConnections(trackIndex);
+}
+
 void AudioEngine::freezeTrack(int trackIndex)
 {
     if (trackIndex < 0 || trackIndex >= (int)tracks.size()) return;

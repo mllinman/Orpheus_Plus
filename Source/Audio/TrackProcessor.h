@@ -1,5 +1,6 @@
 #pragma once
 #include <JuceHeader.h>
+#include "../PitchCorrection/VocalSuiteProcessor.h"
 
 class TrackProcessor : public juce::AudioProcessor
 {
@@ -55,6 +56,7 @@ public:
 
     // Insert FX chain
     juce::OwnedArray<juce::AudioProcessor> insertFX;
+    std::unique_ptr<VocalSuiteProcessor> vocalSuite;
 
 public:
     void addInsertFX(std::unique_ptr<juce::AudioProcessor> p) 

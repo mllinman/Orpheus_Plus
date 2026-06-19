@@ -74,7 +74,7 @@ target_sources(OrpheusPlus PRIVATE
     # AI Features
     Source/StemSeparation/StemSeparator.cpp
     Source/AudioToMidi/AudioToMidiConverter.cpp
-    Source/PitchCorrection/AutoTuneProcessor.cpp
+    Source/PitchCorrection/VocalSuiteProcessor.cpp
     Source/AudioCleanup/AudioCleanupProcessor.cpp
 
     # Project Management

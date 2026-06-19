@@ -51,7 +51,7 @@ AutoTunePanel::AutoTunePanel(AudioEngine& e)
     // Speed knob
     setupKnob(speedKnob, 0.0, 1.0, 0.5, 0.01);
     speedKnob.onValueChange = [this] {
-        processor.setSpeed((float)speedKnob.getValue());
+        processor.setRetuneSpeed((float)speedKnob.getValue());
         int pct = (int)(speedKnob.getValue() * 100);
         speedReadout.setText(juce::String(pct) + "%", juce::dontSendNotification);
     };
@@ -78,11 +78,12 @@ AutoTunePanel::AutoTunePanel(AudioEngine& e)
     // Robot knob
     setupKnob(robotKnob, 0.0, 1.0, 0.0, 0.01);
     robotKnob.onValueChange = [this] {
-        processor.setRobotVoiceAmount((float)robotKnob.getValue());
+        processor.setDoublerAmount((float)robotKnob.getValue());
         int pct = (int)(robotKnob.getValue() * 100);
         robotReadout.setText(juce::String(pct) + "%", juce::dontSendNotification);
     };
     setupLabel(robotLabel);
+    robotLabel.setText("DOUBLER", juce::dontSendNotification);
     setupReadout(robotReadout);
     robotReadout.setText("0%", juce::dontSendNotification);
     addAndMakeVisible(robotKnob);
@@ -268,7 +269,7 @@ void AutoTunePanel::paint(juce::Graphics& g)
     g.fillRect(header);
     g.setColour(OrpheusLookAndFeel::textPrimary());
     g.setFont(juce::Font(14.0f).boldened());
-    g.drawText("AUTOTUNE", header.reduced(16, 0), juce::Justification::centredLeft);
+    g.drawText("VOCAL SUITE", header.reduced(16, 0), juce::Justification::centredLeft);
 
     auto area = getLocalBounds().reduced(16).withTrimmedTop(48);
 
