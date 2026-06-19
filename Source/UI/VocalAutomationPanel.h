@@ -65,9 +65,11 @@ private:
     juce::Slider doublerSlider;
     juce::Slider harmonySlider;
 
-    // ── Real-time visual feedback ──
-    float detectedPitch  = 0.0f;
-    float correctedPitch = 0.0f;
+    juce::TextButton smoothBtn{"Smooth Automation"};
+    juce::TextButton clearBtn{"Clear Automation"};
+
+    juce::LinearSmoothedValue<float> detectedPitch { 0.0f };
+    juce::LinearSmoothedValue<float> correctedPitch { 0.0f };
     std::array<float, 128> waveformBuffer;
     int waveformWritePos = 0;
 

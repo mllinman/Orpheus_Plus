@@ -56,46 +56,66 @@ VocalAutomationPanel::VocalAutomationPanel(AudioEngine& e, MainComponent* mainCo
     setupKnob(emphasisKnob,     "EMPHASIS",     "%",   pink.brighter(0.3f),   0.0, 1.0, 0.0, 0.01);
     setupKnob(projectionKnob,   "PROJECTION",   "%",   green.brighter(0.3f),  0.0, 1.0, 0.0, 0.01);
 
+    // Helper lambda for recording automation
+    auto recordAutomation = [this](const juce::String& paramID, float value) {
+        int trackIndex = -1;
+        if (mainComponent) trackIndex = mainComponent->getAppState()->getSelectedTrackIndex();
+        if (trackIndex >= 0) {
+            double time = audioEngine.getPlayheadPosition();
+            audioEngine.recordAutomationPoint(trackIndex, paramID, time, value);
+        }
+    };
+
     // Wire callbacks
-    pitchKnob.slider.onValueChange = [this] {
-        if (auto* p = getActiveProcessor())
-            p->setPitchShift((float)pitchKnob.slider.getValue());
+    pitchKnob.slider.onValueChange = [this, recordAutomation] {
+        float val = (float)pitchKnob.slider.getValue();
+        if (auto* p = getActiveProcessor()) p->setPitchShift(val);
+        recordAutomation("pitch", val);
     };
-    volumeKnob.slider.onValueChange = [this] {
-        if (auto* p = getActiveProcessor())
-            p->setVolumeLevel((float)volumeKnob.slider.getValue());
+    volumeKnob.slider.onValueChange = [this, recordAutomation] {
+        float val = (float)volumeKnob.slider.getValue();
+        if (auto* p = getActiveProcessor()) p->setVolumeLevel(val);
+        recordAutomation("volume", val);
     };
-    toneKnob.slider.onValueChange = [this] {
-        if (auto* p = getActiveProcessor())
-            p->setFormantShift((float)toneKnob.slider.getValue());
+    toneKnob.slider.onValueChange = [this, recordAutomation] {
+        float val = (float)toneKnob.slider.getValue();
+        if (auto* p = getActiveProcessor()) p->setFormantShift(val);
+        recordAutomation("tone", val);
     };
-    paceKnob.slider.onValueChange = [this] {
-        if (auto* p = getActiveProcessor())
-            p->setPaceStretch((float)paceKnob.slider.getValue());
+    paceKnob.slider.onValueChange = [this, recordAutomation] {
+        float val = (float)paceKnob.slider.getValue();
+        if (auto* p = getActiveProcessor()) p->setPaceStretch(val);
+        recordAutomation("pace", val);
     };
-    rhythmKnob.slider.onValueChange = [this] {
-        if (auto* p = getActiveProcessor())
-            p->setRhythmQuantize((float)rhythmKnob.slider.getValue());
+    rhythmKnob.slider.onValueChange = [this, recordAutomation] {
+        float val = (float)rhythmKnob.slider.getValue();
+        if (auto* p = getActiveProcessor()) p->setRhythmQuantize(val);
+        recordAutomation("rhythm", val);
     };
-    articulationKnob.slider.onValueChange = [this] {
-        if (auto* p = getActiveProcessor())
-            p->setArticulation((float)articulationKnob.slider.getValue());
+    articulationKnob.slider.onValueChange = [this, recordAutomation] {
+        float val = (float)articulationKnob.slider.getValue();
+        if (auto* p = getActiveProcessor()) p->setArticulation(val);
+        recordAutomation("articulation", val);
     };
-    resonanceKnob.slider.onValueChange = [this] {
-        if (auto* p = getActiveProcessor())
-            p->setResonance((float)resonanceKnob.slider.getValue());
+    resonanceKnob.slider.onValueChange = [this, recordAutomation] {
+        float val = (float)resonanceKnob.slider.getValue();
+        if (auto* p = getActiveProcessor()) p->setResonance(val);
+        recordAutomation("resonance", val);
     };
-    inflectionKnob.slider.onValueChange = [this] {
-        if (auto* p = getActiveProcessor())
-            p->setInflection((float)inflectionKnob.slider.getValue());
+    inflectionKnob.slider.onValueChange = [this, recordAutomation] {
+        float val = (float)inflectionKnob.slider.getValue();
+        if (auto* p = getActiveProcessor()) p->setInflection(val);
+        recordAutomation("inflection", val);
     };
-    emphasisKnob.slider.onValueChange = [this] {
-        if (auto* p = getActiveProcessor())
-            p->setEmphasis((float)emphasisKnob.slider.getValue());
+    emphasisKnob.slider.onValueChange = [this, recordAutomation] {
+        float val = (float)emphasisKnob.slider.getValue();
+        if (auto* p = getActiveProcessor()) p->setEmphasis(val);
+        recordAutomation("emphasis", val);
     };
-    projectionKnob.slider.onValueChange = [this] {
-        if (auto* p = getActiveProcessor())
-            p->setProjection((float)projectionKnob.slider.getValue());
+    projectionKnob.slider.onValueChange = [this, recordAutomation] {
+        float val = (float)projectionKnob.slider.getValue();
+        if (auto* p = getActiveProcessor()) p->setProjection(val);
+        recordAutomation("projection", val);
     };
 
     // Retune speed
@@ -130,6 +150,39 @@ VocalAutomationPanel::VocalAutomationPanel(AudioEngine& e, MainComponent* mainCo
             p->setHarmonyInterval((int)harmonySlider.getValue());
     };
     addAndMakeVisible(harmonySlider);
+
+    // Automation Management Buttons
+    smoothBtn.setColour(juce::TextButton::buttonColourId, OrpheusLookAndFeel::bgDark());
+    smoothBtn.setColour(juce::TextButton::buttonOnColourId, OrpheusLookAndFeel::accentInfo());
+    smoothBtn.onClick = [this] {
+        if (mainComponent) {
+            int trackIndex = mainComponent->getAppState()->getSelectedTrackIndex();
+            if (trackIndex >= 0) {
+                // Smooth a range (0 to 1 hour) for all parameters (using an empty string as a signal or iterate)
+                // We'll iterate the curves in the audio engine for this track
+                auto& trackInfo = audioEngine.getTrackInfo(trackIndex);
+                for (const auto& curve : trackInfo.automationCurves) {
+                    audioEngine.smoothAutomationRange(trackIndex, curve.parameterID, 0.0, 3600.0);
+                }
+            }
+        }
+    };
+    addAndMakeVisible(smoothBtn);
+
+    clearBtn.setColour(juce::TextButton::buttonColourId, OrpheusLookAndFeel::bgDark());
+    clearBtn.setColour(juce::TextButton::buttonOnColourId, OrpheusLookAndFeel::accentWarning());
+    clearBtn.onClick = [this] {
+        if (mainComponent) {
+            int trackIndex = mainComponent->getAppState()->getSelectedTrackIndex();
+            if (trackIndex >= 0) {
+                auto& trackInfo = audioEngine.getTrackInfo(trackIndex);
+                for (const auto& curve : trackInfo.automationCurves) {
+                    audioEngine.deleteAutomationRange(trackIndex, curve.parameterID, 0.0, 3600.0);
+                }
+            }
+        }
+    };
+    addAndMakeVisible(clearBtn);
 
     startTimerHz(30);
 }
@@ -451,7 +504,7 @@ void VocalAutomationPanel::resized()
 
     area.removeFromTop(10);
 
-    // FX Chain sliders
+    // FX Chain sliders and buttons
     auto fxArea = area.removeFromTop(100).reduced(12, 24).withTrimmedTop(4);
     int rowH = fxArea.getHeight() / 3;
     int sliderX = fxArea.getX() + 95;
@@ -460,4 +513,11 @@ void VocalAutomationPanel::resized()
     retuneSpeedSlider.setBounds(sliderX, fxArea.getY(), sliderW, rowH);
     doublerSlider.setBounds(sliderX, fxArea.getY() + rowH, sliderW, rowH);
     harmonySlider.setBounds(sliderX, fxArea.getY() + rowH * 2, sliderW, rowH);
+
+    // Automation Management Buttons
+    // Place them in the bottom area
+    auto btnArea = getLocalBounds().removeFromBottom(40).reduced(12, 8);
+    int btnW = btnArea.getWidth() / 2 - 4;
+    smoothBtn.setBounds(btnArea.getX(), btnArea.getY(), btnW, btnArea.getHeight());
+    clearBtn.setBounds(btnArea.getX() + btnW + 8, btnArea.getY(), btnW, btnArea.getHeight());
 }

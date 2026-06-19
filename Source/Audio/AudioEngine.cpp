@@ -474,6 +474,56 @@ void AudioEngine::updateSoloState()
 }
 
 //──────────────────────────────────────────────────────────────────────────────
+// Automation Editing
+//──────────────────────────────────────────────────────────────────────────────
+void AudioEngine::recordAutomationPoint(int trackIndex, const juce::String& paramID, double time, float value)
+{
+    if (!juce::isPositiveAndBelow(trackIndex, tracks.size())) return;
+    auto* track = tracks[trackIndex];
+    
+    // Find or create curve
+    AutomationCurve* targetCurve = nullptr;
+    for (auto& curve : track->automationCurves) {
+        if (curve.parameterID == paramID) {
+            targetCurve = &curve;
+            break;
+        }
+    }
+    if (!targetCurve) {
+        track->automationCurves.push_back({paramID, {}, true});
+        targetCurve = &track->automationCurves.back();
+    }
+    
+    targetCurve->addPoint(time, value);
+    // Mark dirty for UI update and project save
+    // AppState handles project dirty logic, but AudioEngine is autonomous. 
+}
+
+void AudioEngine::deleteAutomationRange(int trackIndex, const juce::String& paramID, double startTime, double endTime)
+{
+    if (!juce::isPositiveAndBelow(trackIndex, tracks.size())) return;
+    auto* track = tracks[trackIndex];
+    for (auto& curve : track->automationCurves) {
+        if (curve.parameterID == paramID) {
+            curve.removePointsInRange(startTime, endTime);
+            break;
+        }
+    }
+}
+
+void AudioEngine::smoothAutomationRange(int trackIndex, const juce::String& paramID, double startTime, double endTime)
+{
+    if (!juce::isPositiveAndBelow(trackIndex, tracks.size())) return;
+    auto* track = tracks[trackIndex];
+    for (auto& curve : track->automationCurves) {
+        if (curve.parameterID == paramID) {
+            curve.smoothPointsInRange(startTime, endTime, 10); // Window size 10 points
+            break;
+        }
+    }
+}
+
+//──────────────────────────────────────────────────────────────────────────────
 // Insert FX
 //──────────────────────────────────────────────────────────────────────────────
 

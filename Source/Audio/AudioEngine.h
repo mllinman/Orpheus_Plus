@@ -4,6 +4,8 @@
 #include <memory>
 #include <atomic>
 #include <array>
+#include <cmath>
+#include <algorithm>
 #include "../StemSeparation/StemSeparator.h"
 #include "../AudioToMidi/AudioToMidiConverter.h"
 // #include "../PitchCorrection/AutoTuneProcessor.h"
@@ -36,15 +38,54 @@ struct AutomationPoint
 
 struct AutomationCurve
 {
-    juce::String parameterID; // e.g., "vol", "pan"
+    juce::String parameterID; // e.g., "vol", "pan", "pitch", "resonance"
     std::vector<AutomationPoint> points;
     bool active = false;
 
     void addPoint(double time, float value)
     {
-        // Simple insert sorted
-        points.push_back({time, value});
-        std::sort(points.begin(), points.end());
+        // For high-resolution, we can just push back and sort later if we know it's append-only
+        // Or we can find and update if time is very close
+        auto it = std::lower_bound(points.begin(), points.end(), AutomationPoint{time, 0.0f});
+        if (it != points.end() && std::abs(it->time - time) < 0.001) {
+            it->value = value;
+        } else {
+            points.insert(it, {time, value});
+        }
+    }
+
+    void removePointsInRange(double startTime, double endTime)
+    {
+        points.erase(
+            std::remove_if(points.begin(), points.end(),
+                [=](const AutomationPoint& p) { return p.time >= startTime && p.time <= endTime; }),
+            points.end());
+    }
+
+    void smoothPointsInRange(double startTime, double endTime, int windowSize = 5)
+    {
+        if (points.size() < (size_t)windowSize) return;
+        std::vector<float> smoothed(points.size());
+        for (size_t i = 0; i < points.size(); ++i) {
+            if (points[i].time >= startTime && points[i].time <= endTime) {
+                float sum = 0.0f;
+                int count = 0;
+                for (int j = -(windowSize/2); j <= (windowSize/2); ++j) {
+                    if (i + j >= 0 && i + j < points.size()) {
+                        sum += points[i + j].value;
+                        count++;
+                    }
+                }
+                smoothed[i] = sum / (float)count;
+            } else {
+                smoothed[i] = points[i].value;
+            }
+        }
+        for (size_t i = 0; i < points.size(); ++i) {
+            if (points[i].time >= startTime && points[i].time <= endTime) {
+                points[i].value = smoothed[i];
+            }
+        }
     }
 };
 
@@ -153,6 +194,11 @@ public:
     void setTrackMute(int trackIndex, bool mute);
     void setTrackSolo(int trackIndex, bool solo);
     void armTrack(int trackIndex, bool armed);
+    
+    // High-resolution Automation
+    void recordAutomationPoint(int trackIndex, const juce::String& paramID, double time, float value);
+    void deleteAutomationRange(int trackIndex, const juce::String& paramID, double startTime, double endTime);
+    void smoothAutomationRange(int trackIndex, const juce::String& paramID, double startTime, double endTime);
 
     //── Plugin Graph ─────────────────────────────────────────────────────────
     juce::AudioProcessorGraph& getGraph() { return processorGraph; }

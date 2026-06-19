@@ -203,6 +203,26 @@ CMAKE_STATIC_LINKER_FLAGS_RELWITHDEBINFO:STRING=
 // Studio IDE projects all commands are done without /nologo.
 CMAKE_VERBOSE_MAKEFILE:BOOL=FALSE
 
+//Directory under which to collect all populated content
+FETCHCONTENT_BASE_DIR:PATH=C:/Users/mllin/OneDrive/Documents/GitHub/Orpheus_Plus/Build/_deps
+
+//Disables all attempts to download or update content and assumes
+// source dirs already exist
+FETCHCONTENT_FULLY_DISCONNECTED:BOOL=OFF
+
+//Enables QUIET option for all content population
+FETCHCONTENT_QUIET:BOOL=ON
+
+//When not empty, overrides where to find pre-populated content
+// for onnxruntime
+FETCHCONTENT_SOURCE_DIR_ONNXRUNTIME:PATH=
+
+//Enables UPDATE_DISCONNECTED behavior for all content population
+FETCHCONTENT_UPDATES_DISCONNECTED:BOOL=OFF
+
+//Enables UPDATE_DISCONNECTED behavior just for population of onnxruntime
+FETCHCONTENT_UPDATES_DISCONNECTED_ONNXRUNTIME:BOOL=OFF
+
 //Value Computed by CMake
 JUCE_BINARY_DIR:STATIC=C:/Users/mllin/OneDrive/Documents/GitHub/Orpheus_Plus/Build/JUCE
 

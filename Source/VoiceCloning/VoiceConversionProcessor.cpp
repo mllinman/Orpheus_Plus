@@ -89,21 +89,64 @@ void VoiceConversionProcessor::processBlock(juce::AudioBuffer<float>& buffer, ju
     // If ONNX is available and session is loaded, run real-time inference
     if (ortSession && speakerEmbeddingData.size() > 0)
     {
-        // Convert input buffer, pitch, and embedding into Ort::Value tensors
-        // In a real RVC model:
-        // - content tensor: shape [1, seq_len, 256] (requires HuBERT extraction first)
-        // - pitch tensor: shape [1, seq_len]
-        // - speaker tensor: shape [1, emb_size]
-        
-        // *Placeholder for ONNX inference execution*
-        // std::vector<const char*> inputNames = {"audio", "pitch", "speaker"};
-        // std::vector<Ort::Value> inputTensors;
-        // ...
-        // auto outputTensors = ortSession->Run(Ort::RunOptions{nullptr}, inputNames.data(), inputTensors.data(), inputNames.size(), outputNames.data(), outputNames.size());
-        
-        // *Simulate output*
-        for (int i = 0; i < numSamples; ++i) {
-            outputBuffer[i] = inputBuffer[i]; // Normally read from outputTensors[0]
+        try {
+            // A typical RVC or Voice Conversion model might take:
+            // 1. Audio/Hubert PPGs (we'll just use raw audio for generic ONNX testing here)
+            // 2. F0 (Pitch)
+            // 3. Speaker Embedding
+            
+            auto allocatorInfo = Ort::MemoryInfo::CreateCpu(OrtArenaAllocator, OrtMemTypeDefault);
+
+            // Shape: [1, seq_len]
+            std::vector<int64_t> audioShape = {1, numSamples};
+            Ort::Value audioTensor = Ort::Value::CreateTensor<float>(
+                allocatorInfo, inputBuffer.data(), inputBuffer.size(), audioShape.data(), audioShape.size());
+
+            // Shape: [1, seq_len] -> We duplicate pitch across the block for simplicity
+            std::vector<float> pitchBuffer(numSamples, targetPitch);
+            std::vector<int64_t> pitchShape = {1, numSamples};
+            Ort::Value pitchTensor = Ort::Value::CreateTensor<float>(
+                allocatorInfo, pitchBuffer.data(), pitchBuffer.size(), pitchShape.data(), pitchShape.size());
+
+            // Shape: [1, emb_size]
+            std::vector<int64_t> spkShape = {1, (int64_t)speakerEmbeddingData.size()};
+            Ort::Value spkTensor = Ort::Value::CreateTensor<float>(
+                allocatorInfo, speakerEmbeddingData.data(), speakerEmbeddingData.size(), spkShape.data(), spkShape.size());
+
+            std::vector<const char*> inputNames = {"audio", "pitch", "speaker"};
+            std::vector<Ort::Value> inputTensors;
+            inputTensors.push_back(std::move(audioTensor));
+            inputTensors.push_back(std::move(pitchTensor));
+            inputTensors.push_back(std::move(spkTensor));
+
+            std::vector<const char*> outputNames = {"audio_out"};
+
+            auto outputTensors = ortSession->Run(
+                Ort::RunOptions{nullptr}, 
+                inputNames.data(), 
+                inputTensors.data(), 
+                inputNames.size(), 
+                outputNames.data(), 
+                outputNames.size()
+            );
+
+            // Extract output
+            if (outputTensors.size() > 0 && outputTensors[0].IsTensor()) {
+                float* outData = outputTensors[0].GetTensorMutableData<float>();
+                auto typeInfo = outputTensors[0].GetTensorTypeAndShapeInfo();
+                size_t outLen = typeInfo.GetElementCount();
+                
+                size_t limit = juce::jmin((size_t)numSamples, outLen);
+                for (size_t i = 0; i < limit; ++i) {
+                    outputBuffer[i] = outData[i];
+                }
+            }
+        } catch (const Ort::Exception& e) {
+            // Inference failed, pass dry signal to avoid stutter
+            juce::Logger::writeToLog("ONNX Inference Error: " + juce::String(e.what()));
+            for (int i = 0; i < numSamples; ++i) {
+                outputBuffer[i] = inputBuffer[i];
+            }
         }
     }
 #else

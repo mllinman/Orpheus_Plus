@@ -14,7 +14,16 @@ add_subdirectory(JUCE)
 # find_package(RubberBand REQUIRED)
 
 # ONNX Runtime (AI model inference for stem sep, audio-to-MIDI, noise removal)
-# find_package(onnxruntime REQUIRED)
+include(FetchContent)
+FetchContent_Declare(
+    onnxruntime
+    URL "https://github.com/microsoft/onnxruntime/releases/download/v1.17.1/onnxruntime-win-x64-1.17.1.zip"
+)
+FetchContent_MakeAvailable(onnxruntime)
+
+# We must explicitly add the include directory and link the library for ONNX Runtime since it doesn't provide standard CMake targets in the ZIP release.
+set(ONNXRUNTIME_INCLUDE_DIR ${onnxruntime_SOURCE_DIR}/include)
+set(ONNXRUNTIME_LIB_DIR ${onnxruntime_SOURCE_DIR}/lib)
 
 # RNNoise (neural noise suppression) - compile from source
 # add_subdirectory(third_party/rnnoise)
@@ -113,6 +122,10 @@ target_sources(OrpheusPlus PRIVATE
 
 )
 
+target_include_directories(OrpheusPlus PRIVATE
+    ${ONNXRUNTIME_INCLUDE_DIR}
+)
+
 target_compile_definitions(OrpheusPlus PRIVATE
     JUCE_WEB_BROWSER=0
     JUCE_USE_CURL=0
@@ -121,6 +134,7 @@ target_compile_definitions(OrpheusPlus PRIVATE
     JUCE_PLUGINHOST_VST3=1
     JUCE_PLUGINHOST_AU=1
     JUCE_PLUGINHOST_LADSPA=0
+    USE_ONNX_RUNTIME=1
 )
 
 target_link_libraries(OrpheusPlus PRIVATE
@@ -138,4 +152,12 @@ target_link_libraries(OrpheusPlus PRIVATE
     juce::juce_gui_extra
     juce::juce_recommended_config_flags
     juce::juce_recommended_lto_flags
+    ${ONNXRUNTIME_LIB_DIR}/onnxruntime.lib
+)
+
+# Copy the onnxruntime.dll to the output directory so the executable can find it at runtime
+add_custom_command(TARGET OrpheusPlus POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        "${ONNXRUNTIME_LIB_DIR}/onnxruntime.dll"
+        "$<TARGET_FILE_DIR:OrpheusPlus>"
 )
