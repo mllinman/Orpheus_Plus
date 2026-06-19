@@ -50,13 +50,15 @@ void MasteringModule::paint(juce::Graphics& g)
     ChainBlock blocks[] = {
         { "M/S",    midSideEnabled,  OrpheusLookAndFeel::accentSecondary() },
         { "EQ",     eqEnabled,       OrpheusLookAndFeel::accentPrimary() },
+        { "DYN",    dynamicEqEnabled,OrpheusLookAndFeel::accentPrimary().brighter() },
         { "COMP",   mbCompEnabled,   OrpheusLookAndFeel::accentWarning() },
         { "SAT",    satEnabled,      OrpheusLookAndFeel::accentDanger() },
         { "REVERB", reverbEnabled,   OrpheusLookAndFeel::accentSecondary() },
-        { "LIMIT",  limiterEnabled,  OrpheusLookAndFeel::accentPrimary() }
+        { "LIMIT",  limiterEnabled,  OrpheusLookAndFeel::accentPrimary() },
+        { "A-LUFS", autoLufsEnabled, OrpheusLookAndFeel::accentSuccess() }
     };
-    int blockW = chainArea.getWidth() / 6;
-    for (int i = 0; i < 6; ++i) {
+    int blockW = chainArea.getWidth() / 8;
+    for (int i = 0; i < 8; ++i) {
         auto blockBounds = chainArea.removeFromLeft(blockW).reduced(3);
         // Block background
         g.setColour(blocks[i].enabled ? blocks[i].col.withAlpha(0.15f) : OrpheusLookAndFeel::bgDark());
@@ -70,7 +72,7 @@ void MasteringModule::paint(juce::Graphics& g)
         g.setColour(blocks[i].enabled ? blocks[i].col : OrpheusLookAndFeel::textMuted().withAlpha(0.3f));
         g.fillEllipse(ledX, ledY, 6.0f, 6.0f);
         // Arrow between blocks
-        if (i < 5) {
+        if (i < 7) {
             float ax = (float)blockBounds.getRight() + 2;
             float ay = (float)blockBounds.getCentreY();
             g.setColour(OrpheusLookAndFeel::textMuted());
@@ -225,13 +227,15 @@ void MasteringModule::resized()
 
     // Toggle buttons row
     auto topArea = area.removeFromTop(40).reduced(8, 4);
-    int toggleW = topArea.getWidth() / 6;
+    int toggleW = topArea.getWidth() / 8;
     eqToggle.setBounds(topArea.removeFromLeft(toggleW).reduced(4));
+    dynEqToggle.setBounds(topArea.removeFromLeft(toggleW).reduced(4));
     compToggle.setBounds(topArea.removeFromLeft(toggleW).reduced(4));
     msToggle.setBounds(topArea.removeFromLeft(toggleW).reduced(4));
     satToggle.setBounds(topArea.removeFromLeft(toggleW).reduced(4));
     reverbToggle.setBounds(topArea.removeFromLeft(toggleW).reduced(4));
-    limiterToggle.setBounds(topArea.reduced(4));
+    limiterToggle.setBounds(topArea.removeFromLeft(toggleW).reduced(4));
+    autoLufsToggle.setBounds(topArea.reduced(4));
 
     // Meters are painted, so nothing to layout for them
     // The rest (signal chain strip, EQ visualization, etc.) are all painted
@@ -266,6 +270,18 @@ void MasteringModule::processBlock(juce::AudioBuffer<float>& buffer, double samp
     if (satEnabled) processSaturation(buffer);
     if (reverbEnabled) processReverb(buffer);
     if (midSideEnabled) processMidSide(buffer, false);
+    
+    // Auto-LUFS gain adjustment
+    if (autoLufsEnabled) {
+        float lufs = currentLUFS.load();
+        if (lufs > -70.0f) {
+            float diff = targetLUFS - lufs;
+            autoGainDb += diff * 0.005f; // Slow integration
+            autoGainDb = juce::jlimit(-12.0f, 12.0f, autoGainDb);
+        }
+        buffer.applyGain(juce::Decibels::decibelsToGain(autoGainDb));
+    }
+    
     if (limiterEnabled) processLimiter(buffer);
     updateMeters(buffer);
 }
@@ -274,6 +290,30 @@ void MasteringModule::updateChain() { repaint(); }
 
 void MasteringModule::processEQ(juce::AudioBuffer<float>& buffer)
 {
+    if (dynamicEqEnabled) {
+        float rms = buffer.getRMSLevel(0, 0, buffer.getNumSamples());
+        float rmsDb = juce::Decibels::gainToDecibels(rms, -80.0f);
+        
+        for (int b = 0; b < NUM_EQ_BANDS; ++b) {
+            float originalGain = (float)eqBands[b].gain;
+            float dynGain = originalGain;
+            
+            // Duck frequencies dynamically if they get too loud
+            if (rmsDb > -24.0f) {
+                float duckAmount = (rmsDb + 24.0f) * 0.25f;
+                // Only duck peaking bands
+                if (eqBands[b].type == EQBand::Type::Peak)
+                    dynGain -= juce::jlimit(0.0f, 4.0f, duckAmount);
+            }
+            linearPhaseEQ.setBandParameters(b, (float)eqBands[b].frequency, (float)eqBands[b].q, dynGain);
+        }
+    } else {
+        // Restore static gains
+        for (int b = 0; b < NUM_EQ_BANDS; ++b) {
+            linearPhaseEQ.setBandParameters(b, (float)eqBands[b].frequency, (float)eqBands[b].q, (float)eqBands[b].gain);
+        }
+    }
+
     juce::dsp::AudioBlock<float> block(buffer);
     juce::dsp::ProcessContextReplacing<float> context(block);
     linearPhaseEQ.process(context);
@@ -346,25 +386,31 @@ void MasteringModule::updateMeters(const juce::AudioBuffer<float>& buffer)
 void MasteringModule::buildUI()
 {
     addAndMakeVisible(eqToggle);
+    addAndMakeVisible(dynEqToggle);
     addAndMakeVisible(compToggle);
     addAndMakeVisible(msToggle);
     addAndMakeVisible(satToggle);
     addAndMakeVisible(reverbToggle);
     addAndMakeVisible(limiterToggle);
+    addAndMakeVisible(autoLufsToggle);
 
     eqToggle.onClick = [this] { setEQEnabled(eqToggle.getToggleState()); };
+    dynEqToggle.onClick = [this] { setDynamicEQEnabled(dynEqToggle.getToggleState()); };
     compToggle.onClick = [this] { setMultibandCompEnabled(compToggle.getToggleState()); };
     msToggle.onClick = [this] { setMidSideEnabled(msToggle.getToggleState()); };
     satToggle.onClick = [this] { setSaturationEnabled(satToggle.getToggleState()); };
     reverbToggle.onClick = [this] { setReverbEnabled(reverbToggle.getToggleState()); };
     limiterToggle.onClick = [this] { setLimiterEnabled(limiterToggle.getToggleState()); };
+    autoLufsToggle.onClick = [this] { setAutoLUFSEnabled(autoLufsToggle.getToggleState()); };
 
     eqToggle.setToggleState(eqEnabled, juce::dontSendNotification);
+    dynEqToggle.setToggleState(dynamicEqEnabled, juce::dontSendNotification);
     compToggle.setToggleState(mbCompEnabled, juce::dontSendNotification);
     msToggle.setToggleState(midSideEnabled, juce::dontSendNotification);
     satToggle.setToggleState(satEnabled, juce::dontSendNotification);
     reverbToggle.setToggleState(reverbEnabled, juce::dontSendNotification);
     limiterToggle.setToggleState(limiterEnabled, juce::dontSendNotification);
+    autoLufsToggle.setToggleState(autoLufsEnabled, juce::dontSendNotification);
 }
 
 void MasteringModule::setEQBand(int band, double freq, double gainDB, double q, EQBand::Type type)

@@ -39,6 +39,9 @@ public:
     void setSaturationEnabled(bool e)    { satEnabled = e; updateChain(); }
     void setReverbEnabled(bool e)        { reverbEnabled = e; updateChain(); }
     void setLimiterEnabled(bool e)       { limiterEnabled = e; updateChain(); }
+    void setAutoLUFSEnabled(bool e)      { autoLufsEnabled = e; updateChain(); }
+    void setDynamicEQEnabled(bool e)     { dynamicEqEnabled = e; updateChain(); }
+    void setTargetLUFS(float target)     { targetLUFS = target; }
 
     // EQ
     void setEQBand(int band, double freq, double gainDB, double q, EQBand::Type type);
@@ -83,6 +86,10 @@ private:
     bool satEnabled     = false;
     bool reverbEnabled  = false;
     bool limiterEnabled = true;
+    bool autoLufsEnabled = false;
+    bool dynamicEqEnabled = false;
+    float targetLUFS      = -14.0f;
+    float autoGainDb      = 0.0f;
 
     ConvolutionReverbProcessor reverbProcessor;
 
@@ -116,6 +123,8 @@ private:
     juce::ToggleButton satToggle     { "SAT" };
     juce::ToggleButton reverbToggle  { "REVERB" };
     juce::ToggleButton limiterToggle { "LIMIT" };
+    juce::ToggleButton autoLufsToggle { "AUTO-LUFS" };
+    juce::ToggleButton dynEqToggle    { "DYN-EQ" };
 
     juce::Slider lufsSlider;  // display only
     juce::Label  lufsLabel;

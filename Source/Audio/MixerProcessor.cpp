@@ -1,4 +1,5 @@
 #include "MixerProcessor.h"
+#include "../Mastering/MasteringModule.h"
 
 MixerProcessor::MixerProcessor()
     : AudioProcessor(BusesProperties()
@@ -15,6 +16,12 @@ void MixerProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
 {
     smoothVolume.reset(sampleRate, 0.05);
     smoothVolume.setCurrentAndTargetValue(masterVolume.load());
+
+    if (masteringModule)
+    {
+        juce::dsp::ProcessSpec spec { sampleRate, (juce::uint32)samplesPerBlock, (juce::uint32)getTotalNumOutputChannels() };
+        masteringModule->prepare(spec);
+    }
 }
 
 void MixerProcessor::releaseResources()
@@ -30,6 +37,12 @@ void MixerProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBu
 
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
         buffer.clear(i, 0, buffer.getNumSamples());
+
+    // Apply Mastering
+    if (masteringModule)
+    {
+        masteringModule->processBlock(buffer, getSampleRate());
+    }
 
     // Apply master volume
     smoothVolume.setTargetValue(masterVolume.load());

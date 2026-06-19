@@ -9,6 +9,7 @@
 #include "../Project/AppState.h"
 #include "../PitchCorrection/VocalSuiteProcessor.h"
 #include "../AudioCleanup/AudioCleanupProcessor.h"
+#include "../Mastering/MasteringModule.h"
 // #include "../UI/SpectrumAnalyzer.h"
 
 
@@ -70,6 +71,17 @@ void AudioEngine::shutdown()
 
     deviceManager.removeAudioCallback(this);
     deviceManager.removeMidiInputDeviceCallback({}, this);
+}
+
+void AudioEngine::setMasteringModule(MasteringModule* m)
+{
+    if (masterNode)
+    {
+        if (auto* mixer = dynamic_cast<MixerProcessor*>(masterNode->getProcessor()))
+        {
+            mixer->setMasteringModule(m);
+        }
+    }
 }
 
 //──────────────────────────────────────────────────────────────────────────────

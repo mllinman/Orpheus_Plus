@@ -22,6 +22,7 @@ struct OrpheusTrackInfo;
 class SpectrumAnalyzer;
 class PluginManager;
 class MidiLearnManager;
+class MasteringModule;
 
 
 //==============================================================================
@@ -169,6 +170,8 @@ public:
     
     StemSeparator&       getStemSeparator()        { return *stemSeparator; }
     AudioToMidiConverter& getAudioToMidiConverter() { return *audioToMidi; }
+
+    void setMasteringModule(MasteringModule* m);
 
     //── Export ───────────────────────────────────────────────────────────────
     void exportMix(const juce::File& outputFile,

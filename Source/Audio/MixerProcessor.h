@@ -1,6 +1,8 @@
 #pragma once
 #include <JuceHeader.h>
 
+class MasteringModule;
+
 class MixerProcessor : public juce::AudioProcessor
 {
 public:
@@ -35,7 +37,10 @@ public:
     float getRMSLeft() const  { return rmsLeft.load(); }
     float getRMSRight() const { return rmsRight.load(); }
 
+    void setMasteringModule(MasteringModule* module) { masteringModule = module; }
+
 private:
+    MasteringModule* masteringModule = nullptr;
     std::atomic<float> masterVolume { 1.0f };
     juce::LinearSmoothedValue<float> smoothVolume { 1.0f };
 
