@@ -77,6 +77,8 @@ target_sources(OrpheusPlus PRIVATE
     Source/AudioToMidi/AudioToMidiConverter.cpp
     Source/PitchCorrection/VocalSuiteProcessor.cpp
     Source/AudioCleanup/AudioCleanupProcessor.cpp
+    Source/VoiceCloning/VoiceConversionProcessor.cpp
+    Source/VoiceCloning/SpeakerEmbeddingExtractor.cpp
 
     # Project Management
     Source/Project/ProjectManager.cpp
@@ -98,6 +100,7 @@ target_sources(OrpheusPlus PRIVATE
     Source/UI/SessionViewPanel.cpp
     Source/UI/ModulationMatrixPanel.cpp
     Source/UI/VocalAutomationPanel.cpp
+    Source/UI/VoiceCloningPanel.cpp
     Source/UI/AudioMidiSettingsPanel.cpp
     Source/UI/DockablePanel.cpp
     Source/UI/LibraryPanel.cpp

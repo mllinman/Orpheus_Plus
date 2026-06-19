@@ -1,8 +1,9 @@
 #include "VocalAutomationPanel.h"
+#include "../MainComponent.h"
 #include <cmath>
 
-VocalAutomationPanel::VocalAutomationPanel(AudioEngine& e)
-    : audioEngine(e)
+VocalAutomationPanel::VocalAutomationPanel(AudioEngine& e, MainComponent* mainComp)
+    : audioEngine(e), mainComponent(mainComp)
 {
     waveformBuffer.fill(0.0f);
 
@@ -154,9 +155,14 @@ void VocalAutomationPanel::setupKnob(VocalKnob& vk, const juce::String& name, co
 
 VocalSuiteProcessor* VocalAutomationPanel::getActiveProcessor()
 {
-    // Return the VocalSuiteProcessor for the selected track (if routed).
-    // For now, we'll return nullptr since the processor lives inside AutoTunePanel.
-    // In a full integration, the AudioEngine would own VocalSuiteProcessors per-track.
+    // Fetch the processor from the AutoTunePanel instance via MainComponent
+    if (mainComponent)
+    {
+        if (auto* atp = mainComponent->getAutoTunePanel())
+        {
+            return &atp->getProcessor();
+        }
+    }
     return nullptr;
 }
 

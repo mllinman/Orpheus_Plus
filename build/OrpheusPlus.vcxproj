@@ -450,6 +450,8 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
     <ClCompile Include="C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\AudioToMidi\AudioToMidiConverter.cpp" />
     <ClCompile Include="C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\PitchCorrection\VocalSuiteProcessor.cpp" />
     <ClCompile Include="C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\AudioCleanup\AudioCleanupProcessor.cpp" />
+    <ClCompile Include="C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\VoiceCloning\VoiceConversionProcessor.cpp" />
+    <ClCompile Include="C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\VoiceCloning\SpeakerEmbeddingExtractor.cpp" />
     <ClCompile Include="C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Project\ProjectManager.cpp" />
     <ClCompile Include="C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Project\AppState.cpp" />
     <ClCompile Include="C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\UI\OrpheusLookAndFeel.cpp" />
@@ -467,6 +469,7 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
     <ClCompile Include="C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\UI\SessionViewPanel.cpp" />
     <ClCompile Include="C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\UI\ModulationMatrixPanel.cpp" />
     <ClCompile Include="C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\UI\VocalAutomationPanel.cpp" />
+    <ClCompile Include="C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\UI\VoiceCloningPanel.cpp" />
     <ClCompile Include="C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\UI\AudioMidiSettingsPanel.cpp" />
     <ClCompile Include="C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\UI\DockablePanel.cpp" />
     <ClCompile Include="C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\UI\LibraryPanel.cpp" />

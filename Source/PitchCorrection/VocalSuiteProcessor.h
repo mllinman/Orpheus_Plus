@@ -1,6 +1,6 @@
 #pragma once
 #include <JuceHeader.h>
-
+#include "../Audio/TimeStretcher.h"
 //==============================================================================
 // Vocal Suite Processor
 // Comprehensive vocal processing engine featuring:
@@ -136,7 +136,9 @@ private:
     IIRFilter projectionEQHigh;
     IIRFilter projectionEQLow;
 
-    // Pace State
+    // Pace State — routes through existing TimeStretcher
+    TimeStretcher timeStretcher;
+    juce::AudioBuffer<float> stretchBuffer;
     int currentHopOut = 512;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(VocalSuiteProcessor)

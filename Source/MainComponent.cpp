@@ -7,6 +7,7 @@
 #include "UI/AudioMidiSettingsPanel.h"
 #include "AI/MixingAssistant.h"
 #include "Timeline/AudioClip.h"
+#include "UI/VoiceCloningPanel.h"
 
 //==============================================================================
 MainComponent::MainComponent()
@@ -57,7 +58,8 @@ MainComponent::MainComponent()
     tablature       = dynamic_cast<TablaturePanel*>(addPanel(tablaturePanel, "Tablature", std::make_unique<TablaturePanel>(*audioEngine)));
     sessionView     = dynamic_cast<SessionViewPanel*>(addPanel(sessionViewPanel, "Session View", std::make_unique<SessionViewPanel>(*audioEngine)));
     modulationMatrix = dynamic_cast<ModulationMatrixPanel*>(addPanel(modulationPanel, "Modulation", std::make_unique<ModulationMatrixPanel>(*audioEngine)));
-    vocalAutomation  = dynamic_cast<VocalAutomationPanel*>(addPanel(vocalAutomationPanel, "Vocal Auto", std::make_unique<VocalAutomationPanel>(*audioEngine)));
+    vocalAutomation  = dynamic_cast<VocalAutomationPanel*>(addPanel(vocalAutomationPanel, "Vocal Auto", std::make_unique<VocalAutomationPanel>(*audioEngine, this)));
+    voiceCloning     = dynamic_cast<VoiceCloningPanel*>(addPanel(voiceCloningPanel, "Voice Clone", std::make_unique<VoiceCloningPanel>(*audioEngine, this)));
 
     // Initialize Sidebar / Mixer components (not tabbed)
     mixerPanel = std::make_unique<MixerPanel>(*audioEngine, appState);

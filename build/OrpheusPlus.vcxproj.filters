@@ -97,6 +97,12 @@
     <ClCompile Include="C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\AudioCleanup\AudioCleanupProcessor.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\VoiceCloning\VoiceConversionProcessor.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\VoiceCloning\SpeakerEmbeddingExtractor.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Project\ProjectManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -146,6 +152,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\UI\VocalAutomationPanel.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\UI\VoiceCloningPanel.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\UI\AudioMidiSettingsPanel.cpp">

@@ -23,6 +23,8 @@
 
 #include "UI/DockablePanel.h"
 
+class VoiceCloningPanel;
+
 //==============================================================================
 class MainComponent : public juce::Component,
                       public juce::DragAndDropContainer,
@@ -56,6 +58,10 @@ public:
     bool perform(const InvocationInfo&) override;
 
     juce::ApplicationCommandManager& getCommandManager();
+
+    AutoTunePanel* getAutoTunePanel() const { return autoTune; }
+    class VoiceCloningPanel* getVoiceCloningPanel() const { return voiceCloning; }
+    AppState* getAppState() { return &appState; }
 
     enum CommandIDs
     {
@@ -141,6 +147,7 @@ private:
     std::unique_ptr<DockablePanel> sessionViewPanel;
     std::unique_ptr<DockablePanel> modulationPanel;
     std::unique_ptr<DockablePanel> vocalAutomationPanel;
+    std::unique_ptr<DockablePanel> voiceCloningPanel;
 
     // Component pointers (raw pointers for easy access)
     TimelineComponent* timeline = nullptr;
@@ -154,6 +161,7 @@ private:
     SessionViewPanel* sessionView = nullptr;
     ModulationMatrixPanel* modulationMatrix = nullptr;
     VocalAutomationPanel* vocalAutomation = nullptr;
+    class VoiceCloningPanel* voiceCloning = nullptr;
 
     // Sidebars & Mixer (managed separately for now)
     std::unique_ptr<MixerPanel> mixerPanel;

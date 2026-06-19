@@ -23,6 +23,9 @@ void VocalSuiteProcessor::prepareToPlay(double sampleRate, int blockSize)
     lastPhase.assign(fftSize, 0.0f);
     outputAccumulator.assign(fftSize * 2, 0.0f);
 
+    timeStretcher.reset(sampleRate, 2);
+    stretchBuffer.setSize(2, blockSize);
+
     juce::dsp::ProcessSpec spec { sampleRate, (juce::uint32)blockSize, 2 };
     delayLineL.prepare(spec);
     delayLineR.prepare(spec);
@@ -269,22 +272,22 @@ float VocalSuiteProcessor::findClosestScalePitch(float hz)
 
 void VocalSuiteProcessor::processPhaseVocoder(juce::AudioBuffer<float>& buffer, float pitchShiftSemitones, float formantShiftSemitones)
 {
-    // A full phase vocoder requires overlap-add block memory which persists between processBlock calls.
-    // For this prototype, we'll approximate the processing by delegating to a time-domain pitch shift 
-    // or simplified overlapping.
-    // Real implementation would use Rubber Band Library for high-fidelity formants and pitch shifting.
-    
-    // Fallback simple resampling/pitch shift approximation for now
+    // We delegate the overlapping/pitch shifting engine to TimeStretcher
     float pitchRatio = std::pow(2.0f, pitchShiftSemitones / 12.0f);
-    float formantRatio = std::pow(2.0f, formantShiftSemitones / 12.0f);
+    float stretchRatio = paceStretch; // How fast to move through the audio
     
-    // (In a real product, we process the magnitudes by resampling the envelope for formants, 
-    // and process phase for pitch shift).
+    // In a full implementation, formant shifting involves spectral envelope extraction. 
+    // Here we focus on the requested time-stretching and pitch shifting via TimeStretcher engine.
     
-    // Dummy bypass to avoid silence, preserving real-time structure
+    stretchBuffer.setSize(buffer.getNumChannels(), buffer.getNumSamples());
+    
+    // Use the timeStretcher engine to process our buffer
+    timeStretcher.process(buffer, stretchBuffer, stretchRatio, pitchRatio);
+    
+    // Copy the stretched output back to the original buffer
     for (int ch = 0; ch < buffer.getNumChannels(); ++ch)
     {
-        // apply slight gain to indicate processing if we were really doing vocoding
+        buffer.copyFrom(ch, 0, stretchBuffer, ch, 0, buffer.getNumSamples());
     }
 }
 

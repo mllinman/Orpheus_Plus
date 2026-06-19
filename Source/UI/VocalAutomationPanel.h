@@ -4,6 +4,8 @@
 #include "../Audio/AudioEngine.h"
 #include "OrpheusLookAndFeel.h"
 
+class MainComponent;
+
 //==============================================================================
 // VocalAutomationPanel — Dedicated glassmorphic vocal control surface.
 // Provides granular knobs with live waveform feedback for all 10 vocal parameters.
@@ -12,7 +14,7 @@ class VocalAutomationPanel : public juce::Component,
                               private juce::Timer
 {
 public:
-    VocalAutomationPanel(AudioEngine& engine);
+    VocalAutomationPanel(AudioEngine& engine, MainComponent* mainComp = nullptr);
     ~VocalAutomationPanel() override;
 
     void paint(juce::Graphics&) override;
@@ -27,6 +29,7 @@ private:
                            juce::Colour col, const juce::String& label, const juce::String& readout);
 
     AudioEngine& audioEngine;
+    MainComponent* mainComponent = nullptr;
 
     // ── Enable Toggle ──
     juce::ToggleButton enableToggle { "ENABLE" };

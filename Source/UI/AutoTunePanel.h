@@ -12,6 +12,8 @@ public:
     AutoTunePanel(AudioEngine& engine);
     ~AutoTunePanel() override;
 
+    VocalSuiteProcessor& getProcessor() { return processor; }
+
     void paint(juce::Graphics&) override;
     void resized() override;
 
