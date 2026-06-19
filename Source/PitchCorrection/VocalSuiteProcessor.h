@@ -98,21 +98,45 @@ private:
     int    currentBlockSize  = 512;
 
     // Phase vocoder structures
+    int fftSize = 2048;
+    int hopSize = 512;
+    std::unique_ptr<juce::dsp::FFT> fft;
+
     std::vector<float> inputBuffer;
     std::vector<float> outputBuffer;
     std::vector<float> phaseAccumulator;
     std::vector<float> lastPhase;
     std::vector<float> outputAccumulator;
-    int overlapFactor = 4;
-    int fftSize       = 2048;
-    std::unique_ptr<juce::dsp::FFT> fft;
-
-    // Delay lines for Doubler/Harmonizer
-    juce::dsp::DelayLine<float, juce::dsp::DelayLineInterpolationTypes::Lagrange3rd> delayLineL { 44100 };
-    juce::dsp::DelayLine<float, juce::dsp::DelayLineInterpolationTypes::Lagrange3rd> delayLineR { 44100 };
-    juce::LinearSmoothedValue<float> smoothedLfoPhase { 0.0f };
-
+    
+    // Vocal DSP States
     float pitchSmoothed = 0.0f;
+    juce::dsp::DelayLine<float, juce::dsp::DelayLineInterpolationTypes::Linear> delayLineL;
+    juce::dsp::DelayLine<float, juce::dsp::DelayLineInterpolationTypes::Linear> delayLineR;
+    juce::SmoothedValue<float> smoothedLfoPhase;
 
+    // Articulation (Transient) State
+    float envelopeFollower = 0.0f;
+    
+    // Resonance State
+    float combDelayL[3] = {0.0f};
+    float combDelayR[3] = {0.0f};
+    float resDelayLinesL[3][2048] = {{0.0f}};
+    float resDelayLinesR[3][2048] = {{0.0f}};
+    int resIndex = 0;
+    
+    // Inflection State
+    float lfoPhase = 0.0f;
+    
+    // Emphasis State
+    float emphasisEnv = 0.0f;
+    
+    // Projection State
+    juce::dsp::Compressor<float> projectionCompressor;
+    juce::dsp::IIR::Filter<float> projectionEQHigh;
+    juce::dsp::IIR::Filter<float> projectionEQLow;
+
+    // Pace State
+    int currentHopOut = 512;
+    
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(VocalSuiteProcessor)
 };

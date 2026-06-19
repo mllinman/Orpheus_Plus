@@ -29,6 +29,10 @@ void VocalSuiteProcessor::prepareToPlay(double sampleRate, int blockSize)
     delayLineL.setMaximumDelayInSamples(44100);
     delayLineR.setMaximumDelayInSamples(44100);
     smoothedLfoPhase.reset(sampleRate, 0.01);
+
+    projectionCompressor.prepare(spec);
+    projectionEQHigh.prepare(spec);
+    projectionEQLow.prepare(spec);
 }
 
 void VocalSuiteProcessor::releaseResources()
@@ -56,31 +60,41 @@ void VocalSuiteProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::M
     float detectedHz = detectPitchYIN(channelData, numSamples, currentSampleRate);
     detectedPitch.store(detectedHz);
 
+    // Inflection (LFO Vibrato)
+    float inflection = 0.0f;
+    if (inflectionAmount > 0.01f)
+    {
+        float lfoRate = 5.0f; // 5 Hz vibrato
+        lfoPhase += (float)(numSamples * lfoRate / currentSampleRate);
+        if (lfoPhase > 1.0f) lfoPhase -= 1.0f;
+        inflection = std::sin(lfoPhase * juce::MathConstants<float>::twoPi) * inflectionAmount * 0.5f; // +/- 0.5 semitones max
+    }
+
     // 2. Calculate Pitch Shift
     float shiftSemitones = 0.0f;
     if (detectedHz > 50.0f && detectedHz < 1000.0f)
     {
         float targetHz = findClosestScalePitch(detectedHz);
         
-        // Retune speed logic (0 = natural/slow, 1 = robotic/instant)
-        // Convert to a smoothing factor
         float smoothFactor = juce::jmap(retuneSpeed, 0.0f, 1.0f, 0.05f, 1.0f);
         pitchSmoothed = pitchSmoothed + smoothFactor * (targetHz - pitchSmoothed);
-        
-        if (pitchSmoothed < 50.0f) pitchSmoothed = targetHz; // Init
+        if (pitchSmoothed < 50.0f) pitchSmoothed = targetHz;
 
         correctedPitch.store(pitchSmoothed);
         
-        shiftSemitones = 12.0f * std::log2(pitchSmoothed / detectedHz);
+        // Add manual Pitch Shift offset and Inflection
+        shiftSemitones = 12.0f * std::log2(pitchSmoothed / detectedHz) + pitchShift + inflection;
     }
     else
     {
         correctedPitch.store(detectedHz);
         pitchSmoothed = detectedHz;
+        shiftSemitones = pitchShift + inflection;
     }
 
-    // 3. Process Phase Vocoder (Pitch + Formant)
-    if (std::abs(shiftSemitones) > 0.05f || std::abs(formantShift) > 0.05f)
+    // 3. Process Phase Vocoder (Pitch + Formant + Pace)
+    // Pace affects the hop size read ratio
+    if (std::abs(shiftSemitones) > 0.05f || std::abs(formantShift) > 0.05f || paceStretch != 1.0f)
     {
         processPhaseVocoder(buffer, shiftSemitones, formantShift);
     }
@@ -91,32 +105,84 @@ void VocalSuiteProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::M
         applyDoubler(buffer);
     }
 
-    // 5. Apply advanced vocal controls (Volume, Projection, Resonance, etc.)
-    // Note: Pace, Rhythm, Articulation, Inflection, and Emphasis are structurally mapped 
-    // and ready for upcoming granular/AI time-stretching integration.
-    if (volumeLevel != 1.0f || projectionAmount > 0.01f || resonanceAmount > 0.01f)
+    // 5. Apply advanced vocal controls
+    for (int ch = 0; ch < buffer.getNumChannels(); ++ch)
     {
-        for (int ch = 0; ch < buffer.getNumChannels(); ++ch)
+        auto* data = buffer.getWritePointer(ch);
+        for (int i = 0; i < buffer.getNumSamples(); ++i)
         {
-            auto* data = buffer.getWritePointer(ch);
-            for (int i = 0; i < buffer.getNumSamples(); ++i)
-            {
-                float sample = data[i];
-                
-                // Resonance heuristic (slight harmonic emphasis)
-                if (resonanceAmount > 0.0f) {
-                    sample *= (1.0f + resonanceAmount * 0.2f); 
+            float sample = data[i];
+
+            // Articulation: Transient expansion (simplified high-pass envelope follower)
+            if (articulation > 0.0f) {
+                float absSample = std::abs(sample);
+                envelopeFollower = 0.9f * envelopeFollower + 0.1f * absSample;
+                if (absSample > envelopeFollower * 1.5f) {
+                    sample *= 1.0f + (articulation * 0.5f);
                 }
-                
-                // Projection heuristic (tanh saturation)
-                if (projectionAmount > 0.0f) {
-                    sample = std::tanh(sample * (1.0f + projectionAmount * 2.0f));
+            }
+            
+            // Resonance: Comb filter to emulate vocal tract
+            if (resonanceAmount > 0.0f) {
+                float delayTime = 0.002f; // ~500 Hz formant
+                int delaySamples = (int)(delayTime * currentSampleRate);
+                if (ch == 0) {
+                    float delayed = resDelayLinesL[0][resIndex % 2048];
+                    resDelayLinesL[0][resIndex % 2048] = sample;
+                    sample += delayed * resonanceAmount * 0.5f;
+                } else {
+                    float delayed = resDelayLinesR[0][resIndex % 2048];
+                    resDelayLinesR[0][resIndex % 2048] = sample;
+                    sample += delayed * resonanceAmount * 0.5f;
                 }
-                
-                // Volume
-                sample *= volumeLevel;
-                
-                data[i] = sample;
+            }
+
+            // Emphasis: Upward compression & soft clipping
+            if (emphasisAmount > 0.0f) {
+                float env = std::abs(sample);
+                emphasisEnv = 0.99f * emphasisEnv + 0.01f * env;
+                if (emphasisEnv < 0.1f && emphasisEnv > 0.001f) {
+                    sample *= 1.0f + (emphasisAmount * 0.5f); // pull up quiet parts
+                }
+                sample = std::tanh(sample * (1.0f + emphasisAmount)); // soft clip transients
+            }
+            
+            // Volume
+            sample *= volumeLevel;
+            
+            data[i] = sample;
+        }
+        resIndex++;
+    }
+
+    // Projection: Parallel Compression + High Shelf
+    if (projectionAmount > 0.0f)
+    {
+        juce::dsp::AudioBlock<float> block(buffer);
+        juce::dsp::ProcessContextReplacing<float> context(block);
+        
+        projectionCompressor.setRatio(4.0f);
+        projectionCompressor.setThreshold(-20.0f);
+        projectionCompressor.setAttack(5.0f);
+        projectionCompressor.setRelease(100.0f);
+        
+        // Wet/Dry mix for parallel compression
+        juce::AudioBuffer<float> dryBuffer;
+        dryBuffer.makeCopyOf(buffer);
+        
+        projectionCompressor.process(context);
+        
+        // High shelf boost for air
+        float highGain = juce::Decibels::decibelsToGain(projectionAmount * 6.0f);
+        *projectionEQHigh.state = *juce::dsp::IIR::Coefficients<float>::makeHighShelf(currentSampleRate, 5000.0f, 0.707f, highGain);
+        projectionEQHigh.process(context);
+
+        // Mix back
+        for (int ch = 0; ch < buffer.getNumChannels(); ++ch) {
+            auto* out = buffer.getWritePointer(ch);
+            auto* dry = dryBuffer.getReadPointer(ch);
+            for (int i = 0; i < buffer.getNumSamples(); ++i) {
+                out[i] = (dry[i] * (1.0f - projectionAmount * 0.5f)) + (out[i] * projectionAmount * 0.8f);
             }
         }
     }
