@@ -11,6 +11,7 @@ TransportBar::TransportBar(AudioEngine& e, juce::ApplicationCommandManager& c)
     {
         btn.setColour(juce::TextButton::buttonColourId, col);
         btn.setColour(juce::TextButton::textColourOffId, juce::Colours::white);
+        btn.setFont(juce::Font(24.0f).boldened()); // Bigger font for icons
     };
 
     styleBtn(rewindButton,  OrpheusLookAndFeel::bgElevated());
@@ -19,6 +20,15 @@ TransportBar::TransportBar(AudioEngine& e, juce::ApplicationCommandManager& c)
     styleBtn(recordButton,  OrpheusLookAndFeel::accentDanger().darker(0.3f));
     styleBtn(loopButton,    OrpheusLookAndFeel::bgElevated());
     styleBtn(settingsButton,OrpheusLookAndFeel::bgElevated());
+
+    // Use Unicode Icons for Transport
+    rewindButton.setButtonText(juce::CharPointer_UTF8("\xe2\x8f\xaa")); // ⏪
+    playButton.setButtonText(juce::CharPointer_UTF8("\xe2\x96\xb6"));   // ▶
+    stopButton.setButtonText(juce::CharPointer_UTF8("\xe2\x96\xa0"));   // ■
+    recordButton.setButtonText(juce::CharPointer_UTF8("\xe2\x8f\xba")); // ⏺
+    loopButton.setButtonText(juce::CharPointer_UTF8("\xe2\x86\xba"));   // ↺
+    settingsButton.setButtonText(juce::CharPointer_UTF8("\xe2\x9a\x99"));// ⚙
+    settingsButton.setFont(juce::Font(20.0f));
 
     rewindButton.onClick = [this] { audioEngine.stop(); };
     playButton.onClick   = [this] { audioEngine.togglePlayback(); };
@@ -59,18 +69,17 @@ TransportBar::TransportBar(AudioEngine& e, juce::ApplicationCommandManager& c)
     addAndMakeVisible(timeSigNumerator);
     addAndMakeVisible(timeSigDenominator);
 
-    // Position display
-    // Fix Font deprecation and casts
-    auto monoFont = juce::Font(juce::Font::getDefaultMonospacedFontName(), 14.0f, juce::Font::plain);
+    // Position display (LCD Style)
+    auto digitalFont = juce::Font(juce::Font::getDefaultMonospacedFontName(), 20.0f, juce::Font::bold);
 
-    positionLabel.setFont(monoFont);
-    positionLabel.setColour(juce::Label::textColourId, OrpheusLookAndFeel::accentSecondary());
+    positionLabel.setFont(digitalFont);
+    positionLabel.setColour(juce::Label::textColourId, juce::Colour(0xff00ffcc)); // Bright cyan LED
     positionLabel.setJustificationType(juce::Justification::centred);
     addAndMakeVisible(positionLabel);
 
     barBeatLabel.setText("1 | 1 | 000", juce::dontSendNotification);
-    barBeatLabel.setFont(monoFont);
-    barBeatLabel.setColour(juce::Label::textColourId, OrpheusLookAndFeel::accentWarning());
+    barBeatLabel.setFont(digitalFont);
+    barBeatLabel.setColour(juce::Label::textColourId, juce::Colour(0xffffca28)); // Bright yellow LED
     barBeatLabel.setJustificationType(juce::Justification::centred);
     addAndMakeVisible(barBeatLabel);
 
@@ -141,36 +150,74 @@ void TransportBar::resized()
 
 void TransportBar::paint(juce::Graphics& g)
 {
-    // Gradient matching legacy .transport-bar
-    g.setGradientFill(juce::ColourGradient(
-        OrpheusLookAndFeel::bgSurface(), 0, 0,
-        OrpheusLookAndFeel::bgDarker(), 0, (float)getHeight(), false));
+    // Hardware console metallic background
+    juce::ColourGradient grad(juce::Colour(0xff2a2a3e), 0, 0,
+                              juce::Colour(0xff12121e), 0, (float)getHeight(), false);
+    g.setGradientFill(grad);
     g.fillRect(getLocalBounds());
-    g.setColour(OrpheusLookAndFeel::borderSubtle());
-    g.drawHorizontalLine(0, 0.0f, (float)getWidth());
 
-    // Level meter bars
-    auto meterArea = getLocalBounds().removeFromRight(80).reduced(4);
+    // Top and bottom bevels
+    g.setColour(juce::Colours::white.withAlpha(0.1f));
+    g.drawHorizontalLine(1, 0.0f, (float)getWidth());
+    g.setColour(juce::Colours::black.withAlpha(0.6f));
+    g.drawHorizontalLine(getHeight() - 1, 0.0f, (float)getWidth());
+
+    // LCD Screen Background
+    auto lcdArea = getLocalBounds().removeFromLeft(450 + 120 + 70 + 240).removeFromRight(240).reduced(2, 4).toFloat();
+    // Inset shadow
+    g.setColour(juce::Colours::black.withAlpha(0.9f));
+    g.fillRoundedRectangle(lcdArea, 4.0f);
+    // Dark glass reflection
+    juce::ColourGradient lcdGrad(juce::Colour(0xff08141e), lcdArea.getX(), lcdArea.getY(),
+                                 juce::Colour(0xff020810), lcdArea.getX(), lcdArea.getBottom(), false);
+    g.setGradientFill(lcdGrad);
+    g.fillRoundedRectangle(lcdArea, 4.0f);
+    g.setColour(juce::Colours::white.withAlpha(0.05f));
+    g.drawRoundedRectangle(lcdArea, 4.0f, 1.0f);
+
+    // Level meter bars (Segmented LED style)
+    auto meterArea = getLocalBounds().removeFromRight(80).reduced(6, 6);
     auto mL = meterArea.removeFromLeft(meterArea.getWidth() / 2 - 2);
     auto mR = meterArea;
 
-    g.setColour(OrpheusLookAndFeel::bgDark());
+    // Meter backgrounds (dark empty LEDs)
+    g.setColour(juce::Colour(0xff101015));
     g.fillRect(mL);
     g.fillRect(mR);
 
-    float h = (float)mL.getHeight();
-    // Meter gradient: green -> yellow -> red
-    juce::Colour meterCol = peakL > 0.9f ? OrpheusLookAndFeel::accentDanger() :
-                            peakL > 0.7f ? OrpheusLookAndFeel::accentWarning() :
-                                           OrpheusLookAndFeel::accentSuccess();
-    g.setColour(meterCol);
-    g.fillRect(mL.withTrimmedTop((int)((1.0f - peakL) * h)));
+    auto drawMeter = [&](juce::Rectangle<int> bounds, float peak)
+    {
+        int numSegments = 20;
+        float segmentH = bounds.getHeight() / (float)numSegments;
+        float gap = 1.0f;
+        int activeSegments = (int)(peak * numSegments);
 
-    meterCol = peakR > 0.9f ? OrpheusLookAndFeel::accentDanger() :
-               peakR > 0.7f ? OrpheusLookAndFeel::accentWarning() :
-                               OrpheusLookAndFeel::accentSuccess();
-    g.setColour(meterCol);
-    g.fillRect(mR.withTrimmedTop((int)((1.0f - peakR) * h)));
+        for (int i = 0; i < numSegments; ++i)
+        {
+            float yPos = bounds.getBottom() - (i + 1) * segmentH;
+            juce::Rectangle<float> seg(bounds.getX(), yPos + gap / 2, bounds.getWidth(), segmentH - gap);
+
+            if (i < activeSegments)
+            {
+                juce::Colour c = (i > 16) ? OrpheusLookAndFeel::accentDanger() :
+                                 (i > 13) ? OrpheusLookAndFeel::accentWarning() :
+                                            OrpheusLookAndFeel::accentSuccess();
+                g.setColour(c);
+                g.fillRect(seg);
+                // LED Glow
+                g.setColour(c.withAlpha(0.3f));
+                g.fillRect(seg.expanded(1.0f));
+            }
+            else
+            {
+                g.setColour(juce::Colours::white.withAlpha(0.03f));
+                g.fillRect(seg);
+            }
+        }
+    };
+
+    drawMeter(mL, peakL);
+    drawMeter(mR, peakR);
 }
 
 void TransportBar::updatePositionDisplay()
@@ -206,9 +253,10 @@ void TransportBar::timerCallback()
     peakR = audioEngine.getMasterPeakRight();
     repaint(getWidth() - 84, 0, 84, getHeight());
 
-    // Update play button text
+    // Update play button state
     bool playing = audioEngine.isPlaying();
-    playButton.setButtonText(playing ? "Pause" : "Play");
+    playButton.setColour(juce::TextButton::buttonColourId, playing ? juce::Colour(0xff2e7d32) : juce::Colour(0xff1b5e20));
+    playButton.setButtonText(playing ? juce::CharPointer_UTF8("\xe2\x8f\xb8") : juce::CharPointer_UTF8("\xe2\x96\xb6")); // Pause: ⏸, Play: ▶
 
     bool recording = audioEngine.isRecording();
     recordButton.setColour(juce::TextButton::buttonColourId,

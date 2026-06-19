@@ -61,54 +61,77 @@ OrpheusLookAndFeel::OrpheusLookAndFeel()
 }
 
 //==============================================================================
-// Rotary Slider — glowing arc style with accent purple
+// Rotary Slider — Skeuomorphic Glassy Knob
 //==============================================================================
 void OrpheusLookAndFeel::drawRotarySlider(juce::Graphics& g, int x, int y, int w, int h,
     float sliderPos, float startAngle, float endAngle, juce::Slider&)
 {
     float cx = x + w * 0.5f, cy = y + h * 0.5f;
     float radius = juce::jmin(w, h) * 0.38f;
-
-    // Track arc (dark groove)
-    juce::Path trackArc;
-    trackArc.addArc(cx - radius, cy - radius, radius * 2, radius * 2,
-                    startAngle, endAngle, true);
-    g.setColour(bgDarkest().withAlpha(0.7f));
-    g.strokePath(trackArc, juce::PathStrokeType(4.0f,
-        juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
-
-    // Value arc with glow
     float currentAngle = startAngle + sliderPos * (endAngle - startAngle);
+
+    // Drop Shadow
+    g.setColour(juce::Colours::black.withAlpha(0.6f));
+    g.fillEllipse(cx - radius, cy - radius + 2.0f, radius * 2, radius * 2);
+
+    // Knob Base (Dark Metallic/Glass)
+    juce::ColourGradient baseGrad(juce::Colour(0xff2a2a3e), cx, cy - radius,
+                                  juce::Colour(0xff12121e), cx, cy + radius, false);
+    g.setGradientFill(baseGrad);
+    g.fillEllipse(cx - radius, cy - radius, radius * 2, radius * 2);
+
+    // Inner Bevel / Rim
+    juce::ColourGradient rimGrad(juce::Colours::white.withAlpha(0.15f), cx, cy - radius,
+                                 juce::Colours::black.withAlpha(0.4f), cx, cy + radius, false);
+    g.setGradientFill(rimGrad);
+    g.drawEllipse(cx - radius, cy - radius, radius * 2, radius * 2, 1.5f);
+
+    // LED Ring / Arc Track (Deep groove)
+    float arcRadius = radius + 6.0f;
+    juce::Path trackArc;
+    trackArc.addArc(cx - arcRadius, cy - arcRadius, arcRadius * 2, arcRadius * 2, startAngle, endAngle, true);
+    g.setColour(juce::Colours::black.withAlpha(0.8f));
+    g.strokePath(trackArc, juce::PathStrokeType(3.5f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
+
+    // LED Value Arc (Glowing)
     if (sliderPos > 0.0f)
     {
         juce::Path valueArc;
-        valueArc.addArc(cx - radius, cy - radius, radius * 2, radius * 2,
-                        startAngle, currentAngle, true);
+        valueArc.addArc(cx - arcRadius, cy - arcRadius, arcRadius * 2, arcRadius * 2, startAngle, currentAngle, true);
         
-        // Outer glow
-        g.setColour(accentSecondary().withAlpha(0.15f));
-        g.strokePath(valueArc, juce::PathStrokeType(7.0f,
-            juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
+        g.setColour(accentPrimary().withAlpha(0.3f));
+        g.strokePath(valueArc, juce::PathStrokeType(6.0f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
 
-        // Main arc
-        g.setColour(accentSecondary());
-        g.strokePath(valueArc, juce::PathStrokeType(3.5f,
-            juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
+        g.setColour(accentPrimary());
+        g.strokePath(valueArc, juce::PathStrokeType(2.5f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
     }
 
-    // Thumb dot
-    float arcRadius = radius * 0.82f;
-    float thumbX = cx + std::sin(currentAngle) * arcRadius;
-    float thumbY = cy - std::cos(currentAngle) * arcRadius;
-    g.setColour(juce::Colours::white);
-    g.fillEllipse(thumbX - 3.0f, thumbY - 3.0f, 6.0f, 6.0f);
+    // Specular Highlight (Glass reflection on top edge)
+    juce::Path highlight;
+    highlight.addArc(cx - radius + 2, cy - radius + 2, radius * 2 - 4, radius * 2 - 4, 
+                     startAngle - 0.5f, startAngle + 1.5f, true);
+    g.setColour(juce::Colours::white.withAlpha(0.15f));
+    g.strokePath(highlight, juce::PathStrokeType(2.0f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
+
+    // Indicator Line (Skeuomorphic indent with glow)
+    float indLength = radius * 0.6f;
+    float indX = cx + std::sin(currentAngle) * indLength;
+    float indY = cy - std::cos(currentAngle) * indLength;
+    
+    // Indent shadow
+    g.setColour(juce::Colours::black.withAlpha(0.7f));
+    g.drawLine(cx, cy, indX, indY + 1.0f, 3.0f);
+    
+    // Indicator fill
+    g.setColour(juce::Colours::white.withAlpha(0.9f));
+    g.drawLine(cx, cy, indX, indY, 2.0f);
 }
 
 //==============================================================================
 // Linear Slider — horizontal track or vertical fader
 //==============================================================================
 //==============================================================================
-// Linear Slider — horizontal track or vertical fader
+// Linear Slider — Skeuomorphic Fader
 //==============================================================================
 void OrpheusLookAndFeel::drawLinearSlider(juce::Graphics& g, int x, int y, int w, int h,
     float sliderPos, float minPos, float maxPos, juce::Slider::SliderStyle style,
@@ -118,59 +141,82 @@ void OrpheusLookAndFeel::drawLinearSlider(juce::Graphics& g, int x, int y, int w
     {
         auto bounds = juce::Rectangle<float>((float)x, (float)y, (float)w, (float)h);
         float trackY = bounds.getCentreY();
-        float trackH = 4.0f;
+        float trackH = 6.0f;
 
-        // Track background with subtle inner shadow feel
-        g.setColour(bgInput());
-        g.fillRoundedRectangle(bounds.getX(), trackY - trackH / 2, bounds.getWidth(), trackH, 2.0f);
+        // Track Groove (Inset shadow)
+        g.setColour(juce::Colours::black.withAlpha(0.8f));
+        g.fillRoundedRectangle(bounds.getX(), trackY - trackH / 2, bounds.getWidth(), trackH, 3.0f);
+        g.setColour(juce::Colours::white.withAlpha(0.1f));
+        g.drawRoundedRectangle(bounds.getX(), trackY - trackH / 2, bounds.getWidth(), trackH, 3.0f, 1.0f);
 
-        // Track fill (gradient)
+        // Track fill (LED strip)
         float fillW = sliderPos - bounds.getX();
         if (fillW > 0)
         {
-            auto fillBounds = juce::Rectangle<float>(bounds.getX(), trackY - trackH / 2, fillW, trackH);
+            auto fillBounds = juce::Rectangle<float>(bounds.getX() + 1, trackY - trackH / 2 + 1, fillW - 2, trackH - 2);
             g.setGradientFill(juce::ColourGradient(accentPrimary(), fillBounds.getX(), 0,
                                                    accentSecondary(), fillBounds.getRight(), 0, false));
             g.fillRoundedRectangle(fillBounds, 2.0f);
         }
 
-        // Thumb with glow
-        auto thumbBounds = juce::Rectangle<float>(sliderPos - 7, trackY - 7, 14, 14);
+        // Thumb Cap (3D Glassy)
+        auto thumbBounds = juce::Rectangle<float>(sliderPos - 10, trackY - 12, 20, 24);
         
-        // Glow
-        g.setColour(accentPrimary().withAlpha(0.3f));
-        g.fillEllipse(thumbBounds.expanded(2));
+        // Shadow
+        g.setColour(juce::Colours::black.withAlpha(0.6f));
+        g.fillRoundedRectangle(thumbBounds.translated(0, 2), 4.0f);
 
-        // Main thumb body
-        g.setColour(juce::Colours::white);
-        g.fillEllipse(thumbBounds);
+        // Gradient body
+        g.setGradientFill(juce::ColourGradient(juce::Colour(0xff3a3a4e), 0, thumbBounds.getY(),
+                                               juce::Colour(0xff1f1f2e), 0, thumbBounds.getBottom(), false));
+        g.fillRoundedRectangle(thumbBounds, 4.0f);
+
+        // Highlight
+        g.setColour(juce::Colours::white.withAlpha(0.15f));
+        g.drawRoundedRectangle(thumbBounds, 4.0f, 1.0f);
         
-        g.setColour(accentPrimary());
-        g.fillEllipse(thumbBounds.reduced(3.5f));
+        // Indicator Line
+        g.setColour(juce::Colours::white);
+        g.fillRect(sliderPos - 1.0f, thumbBounds.getY() + 4.0f, 2.0f, thumbBounds.getHeight() - 8.0f);
     }
     else if (style == juce::Slider::LinearVertical)
     {
         float trackX = x + w * 0.5f;
-        float trackW = 6.0f;
+        float trackW = 8.0f;
 
-        // Fader slot groove
-        g.setColour(bgDarkest());
-        g.fillRoundedRectangle(trackX - trackW / 2, (float)y, trackW, (float)h, 3.0f);
+        // Fader slot groove (deep shadow)
+        g.setColour(juce::Colours::black.withAlpha(0.9f));
+        g.fillRoundedRectangle(trackX - trackW / 2, (float)y, trackW, (float)h, 4.0f);
+        // Inner rim light
+        g.setColour(juce::Colours::white.withAlpha(0.05f));
+        g.drawRoundedRectangle(trackX - trackW / 2, (float)y, trackW, (float)h, 4.0f, 1.0f);
 
-        // Fader Cap — sleek dark grey with indicator line
-        float capW = 22.0f;
-        float capH = 32.0f;
+        // Fader Cap (Skeuomorphic console style)
+        float capW = 26.0f;
+        float capH = 42.0f;
         juce::Rectangle<float> capBounds(trackX - capW / 2, sliderPos - capH / 2, capW, capH);
         
-        g.setColour(bgActive());
+        // Drop shadow
+        g.setColour(juce::Colours::black.withAlpha(0.8f));
+        g.fillRoundedRectangle(capBounds.translated(0, 3.0f), 3.0f);
+        
+        // Gradient Body
+        g.setGradientFill(juce::ColourGradient(juce::Colour(0xff4a4a5e), capBounds.getX(), capBounds.getY(),
+                                               juce::Colour(0xff12121e), capBounds.getRight(), capBounds.getY(), false));
         g.fillRoundedRectangle(capBounds, 3.0f);
         
-        g.setColour(borderDefault());
-        g.drawRoundedRectangle(capBounds, 3.0f, 1.0f);
+        // Concave finger indent
+        auto indentBounds = capBounds.reduced(4.0f, 8.0f);
+        g.setGradientFill(juce::ColourGradient(juce::Colour(0xff12121e), indentBounds.getX(), indentBounds.getY(),
+                                               juce::Colour(0xff2a2a3e), indentBounds.getX(), indentBounds.getBottom(), false));
+        g.fillRoundedRectangle(indentBounds, 2.0f);
+
+        // Horizontal indicator line (glowing LED strip)
+        g.setColour(juce::Colours::white);
+        g.fillRect(capBounds.getX() + 2, capBounds.getCentreY() - 1.0f, capW - 4, 2.0f);
         
-        // Horizontal indicator line
-        g.setColour(juce::Colours::white.withAlpha(0.7f));
-        g.fillRect(capBounds.getX() + 3, capBounds.getCentreY() - 0.5f, capW - 6, 1.0f);
+        g.setColour(accentPrimary().withAlpha(0.5f));
+        g.fillRect(capBounds.getX() + 2, capBounds.getCentreY() - 2.0f, capW - 4, 4.0f);
     }
     else
     {
@@ -179,77 +225,95 @@ void OrpheusLookAndFeel::drawLinearSlider(juce::Graphics& g, int x, int y, int w
 }
 
 //==============================================================================
-// Button Background — matching .btn in components.css
+// Button Background — Glassy/3D Buttons
 //==============================================================================
 void OrpheusLookAndFeel::drawButtonBackground(juce::Graphics& g, juce::Button& button,
     const juce::Colour& backgroundColour, bool highlighted, bool down)
 {
-    auto bounds = button.getLocalBounds().toFloat().reduced(0.5f);
+    auto bounds = button.getLocalBounds().toFloat().reduced(1.0f);
     bool isToggle = button.getToggleState();
-    float cornerSize = 6.0f;
+    float cornerSize = 4.0f;
 
-    if (isToggle || down)
+    // Drop Shadow
+    g.setColour(juce::Colours::black.withAlpha(0.4f));
+    g.fillRoundedRectangle(bounds.translated(0, 1.5f), cornerSize);
+
+    juce::Colour baseColor = isToggle ? accentPrimary().darker(0.1f) : backgroundColour;
+    if (down) baseColor = baseColor.darker(0.3f);
+    else if (highlighted) baseColor = baseColor.brighter(0.15f);
+
+    // Main Gradient (Glassy Convex)
+    juce::ColourGradient grad(baseColor.brighter(0.2f), 0, bounds.getY(),
+                              baseColor.darker(0.3f), 0, bounds.getBottom(), false);
+    g.setGradientFill(grad);
+    g.fillRoundedRectangle(bounds, cornerSize);
+
+    // Inner top highlight (Glass reflection)
+    if (!down)
     {
-        auto bc = isToggle ? accentPrimary() : backgroundColour.darker(0.2f);
-        g.setColour(bc);
+        g.setGradientFill(juce::ColourGradient(juce::Colours::white.withAlpha(0.15f), 0, bounds.getY(),
+                                               juce::Colours::transparentWhite, 0, bounds.getY() + bounds.getHeight() * 0.4f, false));
         g.fillRoundedRectangle(bounds, cornerSize);
-        
-        // Inner shadow/glow
-        g.setColour(juce::Colours::black.withAlpha(0.2f));
-        g.drawRoundedRectangle(bounds, cornerSize, 1.0f);
-    }
-    else
-    {
-        drawGlassBackground(g, bounds, cornerSize, highlighted ? 1.0f : 0.7f);
-        
-        if (highlighted)
-        {
-            g.setColour(juce::Colours::white.withAlpha(0.1f));
-            g.fillRoundedRectangle(bounds, cornerSize);
-        }
     }
 
-    // Modern thin border
-    g.setColour(isToggle ? accentPrimary().brighter(0.2f) : borderDefault().withAlpha(highlighted ? 0.8f : 0.5f));
+    // Border
+    g.setColour(juce::Colours::black.withAlpha(0.7f));
     g.drawRoundedRectangle(bounds, cornerSize, 1.0f);
+    
+    // Bottom Rim highlight
+    g.setColour(juce::Colours::white.withAlpha(0.05f));
+    g.drawRoundedRectangle(bounds.reduced(1.0f), cornerSize - 1.0f, 1.0f);
 }
 
 //==============================================================================
-// Toggle Button — LED-style (M/S/R buttons on mixer)
+// Toggle Button — 3D Hardware LED Button (M/S/R)
 //==============================================================================
 void OrpheusLookAndFeel::drawToggleButton(juce::Graphics& g, juce::ToggleButton& button,
-    bool highlighted, bool /*down*/)
+    bool highlighted, bool down)
 {
-    auto bounds = button.getLocalBounds().toFloat().reduced(0.5f);
+    auto bounds = button.getLocalBounds().toFloat().reduced(1.0f);
     bool toggled = button.getToggleState();
 
-    // Background
-    g.setColour(bgDark());
+    juce::Colour ledColour = accentPrimary();
+    auto text = button.getButtonText().toLowerCase();
+    if (text == "s")    ledColour = juce::Colour(0xffffca28); // Vibrant yellow
+    if (text == "m")    ledColour = juce::Colour(0xfff44336); // Red
+    if (text == "r" || text == "arm") ledColour = juce::Colour(0xffd32f2f);
+
+    // Drop Shadow
+    g.setColour(juce::Colours::black.withAlpha(0.5f));
+    g.fillRoundedRectangle(bounds.translated(0, 1.0f), 3.0f);
+
+    // Button Body
+    juce::Colour bodyColour = down ? bgDarkest() : (highlighted ? bgDarker().brighter(0.1f) : bgDarker());
+    g.setGradientFill(juce::ColourGradient(bodyColour.brighter(0.1f), 0, bounds.getY(),
+                                           bodyColour.darker(0.2f), 0, bounds.getBottom(), false));
     g.fillRoundedRectangle(bounds, 3.0f);
 
+    // Outer Bezel
+    g.setColour(juce::Colours::black.withAlpha(0.8f));
+    g.drawRoundedRectangle(bounds, 3.0f, 1.0f);
+
+    // LED State
     if (toggled)
     {
-        juce::Colour ledColour = accentPrimary();
-        auto text = button.getButtonText().toLowerCase();
-        if (text == "s")    ledColour = accentWarning();   // Solo = yellow
-        if (text == "m")    ledColour = accentDanger();    // Mute = red
-        if (text == "r" || text == "arm") ledColour = accentDanger(); // Record
-
-        // Glow + fill
-        g.setColour(ledColour.withAlpha(0.25f));
-        g.fillRoundedRectangle(bounds, 3.0f);
+        // Bright LED glow
+        g.setColour(ledColour.withAlpha(0.4f));
+        g.fillRoundedRectangle(bounds.reduced(1.5f), 2.0f);
+        
         g.setColour(ledColour);
-        g.fillRoundedRectangle(bounds.reduced(1.5f), 2.5f);
-        g.setColour(juce::Colours::black.withAlpha(0.5f));
+        g.drawRoundedRectangle(bounds.reduced(1.5f), 2.0f, 1.5f);
+        g.setColour(juce::Colours::black.withAlpha(0.8f)); // Text dark inside bright LED
     }
     else
     {
-        g.setColour(bgElevated());
-        g.fillRoundedRectangle(bounds.reduced(1.5f), 2.5f);
-        g.setColour(textMuted());
+        // Off State
+        g.setColour(juce::Colours::black.withAlpha(0.4f));
+        g.fillRoundedRectangle(bounds.reduced(1.5f), 2.0f);
+        g.setColour(textMuted()); // Text dim
     }
 
-    g.setFont(defaultFont.withHeight(10.0f).boldened());
+    g.setFont(defaultFont.withHeight(11.0f).boldened());
     g.drawText(button.getButtonText(), bounds, juce::Justification::centred);
 }
 
@@ -425,13 +489,22 @@ juce::Font OrpheusLookAndFeel::getPopupMenuFont()
 void OrpheusLookAndFeel::drawGlassBackground(juce::Graphics& g, const juce::Rectangle<float>& area, 
                                              float cornerSize, float alpha)
 {
-    g.setColour(bgSurface().withAlpha(0.6f * alpha));
+    // High-end glassmorphism effect
+    g.setColour(bgSurface().withAlpha(0.4f * alpha));
     g.fillRoundedRectangle(area, cornerSize);
     
-    // Subtle top light highlight
-    g.setGradientFill(juce::ColourGradient(juce::Colours::white.withAlpha(0.1f * alpha), area.getX(), area.getY(),
-                                           juce::Colours::transparentWhite, area.getX(), area.getBottom(), false));
+    // Diagonal glass reflection gradient
+    g.setGradientFill(juce::ColourGradient(juce::Colours::white.withAlpha(0.15f * alpha), area.getX(), area.getY(),
+                                           juce::Colours::transparentWhite, area.getBottomRight().getX(), area.getBottomRight().getY(), false));
     g.fillRoundedRectangle(area, cornerSize);
+    
+    // Inner white rim (thin frosted glass edge)
+    g.setColour(juce::Colours::white.withAlpha(0.08f * alpha));
+    g.drawRoundedRectangle(area.reduced(0.5f), cornerSize, 1.0f);
+    
+    // Outer drop shadow rim (dark)
+    g.setColour(juce::Colours::black.withAlpha(0.3f * alpha));
+    g.drawRoundedRectangle(area.expanded(0.5f), cornerSize, 1.0f);
 }
 
 void OrpheusLookAndFeel::drawToolbarBackground(juce::Graphics& g, int w, int h)

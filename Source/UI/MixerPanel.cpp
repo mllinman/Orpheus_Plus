@@ -129,19 +129,29 @@ MixerPanel::ChannelStrip::~ChannelStrip()
 void MixerPanel::ChannelStrip::resized()
 {
     auto b = getLocalBounds().reduced(2);
-    nameLabel.setBounds(b.removeFromTop(14));
     
-    // Plugin Slots AREA
-    auto slotArea = b.removeFromTop(b.getHeight() / 2); // Top half for plugins
-    int slotH = 18;
+    // Header (Track Name)
+    nameLabel.setBounds(b.removeFromTop(18));
+    
+    // Plugin Slots AREA (Inset Rack Bay)
+    auto slotArea = b.removeFromTop(70).reduced(2);
+    int slotH = 16;
     for (auto* btn : pluginSlots)
         btn->setBounds(slotArea.removeFromTop(slotH).reduced(0, 1));
     
-    auto btnRow = b.removeFromBottom(24);
-    muteBtn.setBounds(btnRow.removeFromLeft(btnRow.getWidth() / 2).reduced(1));
-    soloBtn.setBounds(btnRow.reduced(1));
+    // Middle section (Knobs and Buttons)
+    b.removeFromTop(4);
+    muteBtn.setBounds(b.removeFromTop(18).reduced(4, 0));
+    b.removeFromTop(2);
+    soloBtn.setBounds(b.removeFromTop(18).reduced(4, 0));
+    b.removeFromTop(4);
+    
+    // Knobs side by side or stacked
     sweetenerKnob.setBounds(b.removeFromTop(36).reduced(2));
     panKnob.setBounds(b.removeFromTop(36).reduced(2));
+    
+    b.removeFromTop(4);
+    // Fader Area (bottom half)
     fader.setBounds(b.reduced(4, 0));
 }
 
@@ -150,45 +160,53 @@ void MixerPanel::ChannelStrip::paint(juce::Graphics& g)
     auto& info = engine.getTrackInfo(trackIndex);
     
     // Update Plugin Names 
-    // (In paint? usually separate update, but fine for prototype)
     for (int i=0; i < pluginSlots.size(); ++i)
     {
         int nodeID = info.pluginSlots[i];
         if (nodeID != -1)
-        {
-            pluginSlots[i]->setButtonText(engine.getPluginManager().getPluginName(nodeID)); // Optimization needed
-        }
+            pluginSlots[i]->setButtonText(engine.getPluginManager().getPluginName(nodeID));
         else
-        {
             pluginSlots[i]->setButtonText("+");
-        }
     }
     
-    g.fillAll(juce::Colour(0xff1a1a2e));
-    g.setColour(info.colour.withAlpha(0.6f));
-    g.fillRect(0, 0, getWidth(), 3);
-    g.setColour(juce::Colour(0xff0d0d1a));
-    g.drawRect(getLocalBounds());
+    // Hardware Module Body
+    g.fillAll(juce::Colour(0xff1f1f2e));
+    
+    // Left/Right Bevels to simulate individual hardware strips
+    g.setColour(juce::Colours::white.withAlpha(0.05f));
+    g.drawVerticalLine(0, 0, (float)getHeight());
+    g.setColour(juce::Colours::black.withAlpha(0.4f));
+    g.drawVerticalLine(getWidth() - 1, 0, (float)getHeight());
 
-    // Level meter
+    // Track Name Header Background (Track Color)
+    juce::Rectangle<float> headerBg(0, 0, (float)getWidth(), 20);
+    juce::ColourGradient headerGrad(info.colour.withAlpha(0.8f), 0, 0,
+                                    info.colour.withAlpha(0.3f), 0, 20, false);
+    g.setGradientFill(headerGrad);
+    g.fillRect(headerBg);
+    
+    // Rack Bay Inset for Plugins
+    auto slotArea = juce::Rectangle<float>(2, 22, (float)getWidth() - 4, 70);
+    g.setColour(juce::Colours::black.withAlpha(0.5f));
+    g.fillRoundedRectangle(slotArea, 2.0f);
+    g.setColour(juce::Colours::white.withAlpha(0.05f));
+    g.drawRoundedRectangle(slotArea, 2.0f, 1.0f);
+
+    // Fader Area Inset
+    auto faderArea = fader.getBounds().toFloat().expanded(2);
+    g.setColour(juce::Colours::black.withAlpha(0.2f));
+    g.fillRoundedRectangle(faderArea, 4.0f);
+
+    // Level meter (drawn alongside fader)
     float meterW = 6.0f;
-    float meterX = (float)(getWidth() - 16);
-    float meterH = (float)(getHeight() - 50);
-    float meterY = 14.0f; 
-   
-    meterY = 14.0f + (float)(pluginSlots.size() * 18); // Simple shift
-    meterH -= (float)(pluginSlots.size() * 18);
+    float meterX = faderArea.getRight() - meterW - 2;
+    float meterY = faderArea.getY() + 10; 
+    float meterH = faderArea.getHeight() - 20;
 
-    g.setColour(juce::Colour(0xff0d0d1a));
+    g.setColour(juce::Colour(0xff0d0d1a)); // Empty LED track
     g.fillRect(meterX, meterY, meterW * 2 + 2, meterH);
 
-    auto meterColour = [](float peak) {
-        return peak > 0.9f ? juce::Colour(0xffe94560) :
-               peak > 0.7f ? juce::Colour(0xffffd54f) :
-                             juce::Colour(0xff4caf50);
-    };
-
-    // Grab peak from graph via node -> processor
+    // Grab peak from graph
     if (auto* node = engine.getGraph().getNodeForId(juce::AudioProcessorGraph::NodeID(info.faderNodeID)))
     {
         if (auto* faderProc = dynamic_cast<TrackFaderProcessor*>(node->getProcessor()))
@@ -198,10 +216,37 @@ void MixerPanel::ChannelStrip::paint(juce::Graphics& g)
         }
     }
 
-    g.setColour(meterColour(peakL));
-    g.fillRect(meterX, meterY + meterH * (1.0f - peakL), meterW, meterH * peakL);
-    g.setColour(meterColour(peakR));
-    g.fillRect(meterX + meterW + 2, meterY + meterH * (1.0f - peakR), meterW, meterH * peakR);
+    // Segmented LED Drawing
+    auto drawMeter = [&](juce::Rectangle<float> bounds, float peak)
+    {
+        int numSegments = 30;
+        float segmentH = bounds.getHeight() / (float)numSegments;
+        float gap = 1.0f;
+        int activeSegments = (int)(peak * numSegments);
+
+        for (int i = 0; i < numSegments; ++i)
+        {
+            float segY = bounds.getBottom() - (i + 1) * segmentH;
+            juce::Rectangle<float> seg(bounds.getX(), segY + gap, bounds.getWidth(), segmentH - gap);
+
+            if (i < activeSegments)
+            {
+                juce::Colour c = (i > 24) ? juce::Colour(0xffe94560) :
+                                 (i > 20) ? juce::Colour(0xffffca28) :
+                                            juce::Colour(0xff4caf50);
+                g.setColour(c);
+                g.fillRect(seg);
+            }
+            else
+            {
+                g.setColour(juce::Colours::white.withAlpha(0.03f));
+                g.fillRect(seg);
+            }
+        }
+    };
+
+    drawMeter(juce::Rectangle<float>(meterX, meterY, meterW, meterH), peakL);
+    drawMeter(juce::Rectangle<float>(meterX + meterW + 2, meterY, meterW, meterH), peakR);
 }
 
 //==============================================================================
@@ -244,37 +289,68 @@ void MixerPanel::MasterStrip::resized()
 
 void MixerPanel::MasterStrip::paint(juce::Graphics& g)
 {
-    g.fillAll(juce::Colour(0xff16213e));
-    g.setColour(juce::Colour(0xff0f3460));
-    g.drawRect(getLocalBounds());
+    // Master Strip Body (Darker than normal tracks)
+    g.fillAll(juce::Colour(0xff14141e));
+    
+    // Bevels
+    g.setColour(juce::Colours::white.withAlpha(0.05f));
+    g.drawVerticalLine(0, 0, (float)getHeight());
+    g.setColour(juce::Colours::black.withAlpha(0.6f));
+    g.drawVerticalLine(getWidth() - 1, 0, (float)getHeight());
 
-    // Master meters
-    auto b = getLocalBounds();
-    b.removeFromBottom(232); // text + fader space
-    b.removeFromTop(24);     // spacing
+    // Red Header for Master
+    juce::Rectangle<float> headerBg(0, 0, (float)getWidth(), 20);
+    juce::ColourGradient headerGrad(juce::Colour(0xffe94560).withAlpha(0.5f), 0, 0,
+                                    juce::Colour(0xff14141e), 0, 20, false);
+    g.setGradientFill(headerGrad);
+    g.fillRect(headerBg);
 
-    int meterW = 6;
-    int meterX = b.getCentreX() - meterW - 1;
-    int meterY = b.getY();
-    int meterH = b.getHeight();
+    // Master meters (Segmented LED style)
+    auto b = fader.getBounds().toFloat().expanded(4);
+    g.setColour(juce::Colours::black.withAlpha(0.3f));
+    g.fillRoundedRectangle(b, 4.0f);
 
-    g.setColour(juce::Colours::black);
+    float meterW = 10.0f;
+    float meterX = b.getRight() - meterW * 2 - 6;
+    float meterY = b.getY() + 10;
+    float meterH = b.getHeight() - 20;
+
+    g.setColour(juce::Colour(0xff0d0d1a));
     g.fillRect(meterX, meterY, meterW * 2 + 2, meterH);
 
-    // TODO: implement master peak retrieval from AudioEngine
-    peakL = peakL * 0.9f;
-    peakR = peakR * 0.9f;
+    peakL = audioEngine.getMasterPeakLeft();
+    peakR = audioEngine.getMasterPeakRight();
 
-    auto meterColour = [](float val) {
-        if (val > 0.9f) return juce::Colours::red;
-        if (val > 0.75f) return juce::Colours::yellow;
-        return juce::Colours::green;
+    auto drawMeter = [&](juce::Rectangle<float> bounds, float peak)
+    {
+        int numSegments = 40;
+        float segmentH = bounds.getHeight() / (float)numSegments;
+        float gap = 1.0f;
+        int activeSegments = (int)(peak * numSegments);
+
+        for (int i = 0; i < numSegments; ++i)
+        {
+            float segY = bounds.getBottom() - (i + 1) * segmentH;
+            juce::Rectangle<float> seg(bounds.getX(), segY + gap, bounds.getWidth(), segmentH - gap);
+
+            if (i < activeSegments)
+            {
+                juce::Colour c = (i > 32) ? juce::Colour(0xffe94560) :
+                                 (i > 26) ? juce::Colour(0xffffca28) :
+                                            juce::Colour(0xff4caf50);
+                g.setColour(c);
+                g.fillRect(seg);
+            }
+            else
+            {
+                g.setColour(juce::Colours::white.withAlpha(0.03f));
+                g.fillRect(seg);
+            }
+        }
     };
 
-    g.setColour(meterColour(peakL));
-    g.fillRect((float)meterX, meterY + meterH * (1.0f - peakL), (float)meterW, meterH * peakL);
-    g.setColour(meterColour(peakR));
-    g.fillRect((float)(meterX + meterW + 2), meterY + meterH * (1.0f - peakR), (float)meterW, meterH * peakR);
+    drawMeter(juce::Rectangle<float>(meterX, meterY, meterW, meterH), peakL);
+    drawMeter(juce::Rectangle<float>(meterX + meterW + 2, meterY, meterW, meterH), peakR);
 }
 
 //==============================================================================

@@ -268,7 +268,26 @@ void TrackLaneComponent::paintClips(juce::Graphics& g, juce::Rectangle<int> clip
         // Intersect with clipArea (which might be a sub-lane)
         bounds = bounds.withY((float)clipArea.getY() + 4).withHeight((float)clipArea.getHeight() - 8);
 
+        // Drop Shadow behind clip
+        g.setColour(juce::Colours::black.withAlpha(0.6f));
+        g.fillRoundedRectangle(bounds.expanded(1.0f).translated(0, 2.0f), 4.0f);
+
+        // Draw Clip Body
         clip->paint(g, bounds, clipArea);
+
+        // Glossy 3D Overlay on top of the clip
+        juce::ColourGradient glossy(juce::Colours::white.withAlpha(0.15f), bounds.getX(), bounds.getY(),
+                                    juce::Colours::transparentWhite, bounds.getX(), bounds.getY() + bounds.getHeight() * 0.4f, false);
+        g.setGradientFill(glossy);
+        g.fillRoundedRectangle(bounds, 4.0f);
+
+        // Inner Light Rim
+        g.setColour(juce::Colours::white.withAlpha(0.1f));
+        g.drawRoundedRectangle(bounds.reduced(1.0f), 3.0f, 1.0f);
+        
+        // Outer dark border
+        g.setColour(juce::Colours::black.withAlpha(0.4f));
+        g.drawRoundedRectangle(bounds, 4.0f, 1.0f);
 
         // Draw Fades Overlay
         if (clip->fadeIn > 0 || clip->fadeOut > 0)
@@ -347,8 +366,12 @@ void TrackLaneComponent::paintClips(juce::Graphics& g, juce::Rectangle<int> clip
         // Draw Selection Halo
         if (clip->selected)
         {
-            g.setColour(OrpheusLookAndFeel::accentPrimary().withAlpha(0.6f));
-            g.drawRect(bounds.expanded(1.0f), 2.0f);
+            g.setColour(OrpheusLookAndFeel::accentPrimary().withAlpha(0.8f));
+            g.drawRoundedRectangle(bounds.expanded(1.0f), 4.0f, 2.0f);
+            
+            // Selection Glow
+            g.setColour(OrpheusLookAndFeel::accentPrimary().withAlpha(0.2f));
+            g.fillRoundedRectangle(bounds, 4.0f);
         }
 
         // Draw Fade Handles (only if hovered or selected)

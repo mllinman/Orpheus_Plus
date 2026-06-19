@@ -16,7 +16,7 @@ void StemSeparator::separate(const juce::File& inputFile, AppState& appState,
     outputDir.createDirectory();
 
     // Run on background thread
-    juce::Thread::launch([this, inputFile, outputDir, onComplete = std::move(onComplete)]
+    juce::Thread::launch([this, inputFile, outputDir, onComplete]
     {
         bool success = false;
 
