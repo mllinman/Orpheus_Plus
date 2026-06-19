@@ -5,6 +5,8 @@
 #include "../Audio/ClipGeneratorProcessor.h"
 #include "../Util/OrpheusLogger.h"
 #include "../Audio/TrackFaderProcessor.h"
+#include "../AI/MixingAssistant.h"
+#include "../Timeline/AudioClip.h"
 
 //==============================================================================
 MixerPanel::ChannelStrip::ChannelStrip(int idx, AudioEngine& e) : trackIndex(idx), engine(e)
@@ -273,6 +275,30 @@ MixerPanel::MasterStrip::MasterStrip(AudioEngine& e)
     nameLabel.setJustificationType(juce::Justification::centred);
     nameLabel.setColour(juce::Label::textColourId, juce::Colour(0xffe94560));
     addAndMakeVisible(nameLabel);
+
+    autoMixBtn.setColour(juce::TextButton::buttonColourId, juce::Colour(0xff533483));
+    autoMixBtn.onClick = [this] {
+        MixingAssistant assistant;
+        for (int i = 0; i < engine.getNumTracks(); ++i) {
+            auto& track = engine.getTrackInfo(i);
+            if (track.type == OrpheusTrackInfo::Type::Audio) {
+                if (!track.clips.isEmpty()) {
+                    if (auto* ac = dynamic_cast<AudioClip*>(track.clips.getFirst())) {
+                        auto analysis = assistant.analyzeTrack(track.name, ac->audioData, ac->sampleRate);
+                        float linearGain = std::pow(10.0f, analysis.suggestedGain / 20.0f);
+                        engine.setTrackVolume(i, linearGain);
+                        
+                        // Sweetener logic based on EQ suggestion
+                        if (analysis.eqSuggestion.containsIgnoreCase("bass") || analysis.eqSuggestion.containsIgnoreCase("muddiness"))
+                            engine.setTrackSweetener(i, 0.7f); // Add brightness/presence
+                        else
+                            engine.setTrackSweetener(i, 0.3f);
+                    }
+                }
+            }
+        }
+    };
+    addAndMakeVisible(autoMixBtn);
 }
 
 MixerPanel::MasterStrip::~MasterStrip() {}
@@ -285,6 +311,9 @@ void MixerPanel::MasterStrip::resized()
     
     // Fader
     fader.setBounds(b.removeFromBottom(200));
+
+    b.removeFromBottom(8);
+    autoMixBtn.setBounds(b.removeFromBottom(24).reduced(4, 0));
 }
 
 void MixerPanel::MasterStrip::paint(juce::Graphics& g)

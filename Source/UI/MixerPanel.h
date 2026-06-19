@@ -105,6 +105,8 @@ private:
         juce::Label      nameLabel;
         float peakL = 0.0f, peakR = 0.0f;
 
+        juce::TextButton autoMixBtn { "AI Auto-Mix" };
+
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MasterStrip)
     };
 

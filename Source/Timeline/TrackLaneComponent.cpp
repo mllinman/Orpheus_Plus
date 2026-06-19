@@ -793,13 +793,28 @@ void TrackLaneComponent::mouseDown(const juce::MouseEvent& e)
                     menu.showMenuAsync(juce::PopupMenu::Options{}, [this, ac](int result) {
                         if (result == 1)
                         {
-                            audioEngine.getStemSeparator().separate(ac->sourceFile, appState, [this](StemSeparationResult res) {
-                                juce::MessageManager::callAsync([this, res] {
-                                    double t = draggingClip ? draggingClip->startTime : 0.0;
-                                    if (res.vocals.existsAsFile()) addAudioClip(res.vocals, t);
-                                    if (res.drums.existsAsFile())  addAudioClip(res.drums, t);
-                                    if (res.bass.existsAsFile())   addAudioClip(res.bass, t);
-                                    if (res.other.existsAsFile())  addAudioClip(res.other, t);
+                            double startT = ac->startTime;
+                            juce::String srcName = ac->sourceFile.getFileNameWithoutExtension();
+                            audioEngine.getStemSeparator().separate(ac->sourceFile, appState, [this, startT, srcName](StemSeparationResult res) {
+                                juce::MessageManager::callAsync([this, res, startT, srcName] {
+                                    auto addStemTrack = [&](const juce::String& name, const juce::File& f) {
+                                        if (f.existsAsFile()) {
+                                            appState.addAudioTrack(name);
+                                            int newIdx = audioEngine.addAudioTrack(name);
+                                            auto* newClip = new AudioClip(f, startT);
+                                            newClip->colour = juce::Colour(0xff00BCD4);
+                                            newClip->setThumbnailCache(thumbnailCache, audioEngine.getFormatManager());
+                                            newClip->loadAudioData(audioEngine.getFormatManager());
+                                            audioEngine.getTrackInfo(newIdx).clips.add(newClip);
+                                        }
+                                    };
+
+                                    addStemTrack("Vocals - " + srcName, res.vocals);
+                                    addStemTrack("Drums - " + srcName, res.drums);
+                                    addStemTrack("Bass - " + srcName, res.bass);
+                                    addStemTrack("Other - " + srcName, res.other);
+                                    
+                                    timeline.rebuildTracks();
                                 });
                             });
                         }

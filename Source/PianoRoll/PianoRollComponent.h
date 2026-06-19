@@ -44,6 +44,12 @@ public:
     void deleteSelected();
     void quantizeSelected();
 
+    // AI Generative Tools
+    void generateAIChords();
+    void generateAIMelody();
+    void arpeggiate();
+    void humanize();
+
 private:
     void timerCallback() override;
     void paintPianoKeys(juce::Graphics&, juce::Rectangle<int>);
@@ -103,6 +109,13 @@ private:
     std::array<bool, 128>  liveNoteState {};    // true = key held down
     std::array<uint8_t, 128> liveNoteVelocity {}; // velocity of held key
     juce::CriticalSection  midiStateLock;
+
+    // UI Tools Toolbar
+    juce::Component toolBar;
+    juce::TextButton btnAIChords { "AI Chords" };
+    juce::TextButton btnAIMelody { "AI Melody" };
+    juce::TextButton btnArpeggiate { "Arpeggiate" };
+    juce::TextButton btnHumanize { "Humanize" };
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PianoRollComponent)
 };

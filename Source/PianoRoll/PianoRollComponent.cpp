@@ -13,6 +13,25 @@ PianoRollComponent::PianoRollComponent(AppState& s, AudioEngine& e)
     // Enable MIDI input from all available devices
     enableMidiInput();
 
+    // Setup Toolbar
+    addAndMakeVisible(toolBar);
+    
+    toolBar.addAndMakeVisible(btnAIChords);
+    btnAIChords.setColour(juce::TextButton::buttonColourId, juce::Colour(0xff533483));
+    btnAIChords.onClick = [this] { generateAIChords(); };
+
+    toolBar.addAndMakeVisible(btnAIMelody);
+    btnAIMelody.setColour(juce::TextButton::buttonColourId, juce::Colour(0xff00BCD4));
+    btnAIMelody.onClick = [this] { generateAIMelody(); };
+
+    toolBar.addAndMakeVisible(btnArpeggiate);
+    btnArpeggiate.setColour(juce::TextButton::buttonColourId, juce::Colour(0xff2d2d44));
+    btnArpeggiate.onClick = [this] { arpeggiate(); };
+
+    toolBar.addAndMakeVisible(btnHumanize);
+    btnHumanize.setColour(juce::TextButton::buttonColourId, juce::Colour(0xff2d2d44));
+    btnHumanize.onClick = [this] { humanize(); };
+
     horizontalLayout.setItemLayout(0, 30, 200, keyboardWidth); // Keyboard keys (fixed area)
     horizontalLayout.setItemLayout(1, 8, 8, 8);               // Resizer (fixed 8px)
     horizontalLayout.setItemLayout(2, -0.1, -1.0, -0.7);      // Note Grid (flexible)
@@ -77,6 +96,14 @@ void PianoRollComponent::resized()
 {
     auto bounds = getLocalBounds();
     
+    toolBar.setBounds(bounds.removeFromTop(40));
+    
+    auto toolBarBounds = toolBar.getLocalBounds().reduced(4);
+    btnAIChords.setBounds(toolBarBounds.removeFromLeft(100).reduced(2));
+    btnAIMelody.setBounds(toolBarBounds.removeFromLeft(100).reduced(2));
+    btnArpeggiate.setBounds(toolBarBounds.removeFromLeft(100).reduced(2));
+    btnHumanize.setBounds(toolBarBounds.removeFromLeft(100).reduced(2));
+
     juce::Component dummyLeft, dummyRight;
     juce::Component* hComps[] = { &dummyLeft, resizerBar.get(), &dummyRight };
     
@@ -613,4 +640,117 @@ juce::MidiMessageSequence PianoRollComponent::getMidiSequence() const
     }
     seq.updateMatchedPairs();
     return seq;
+}
+
+//==============================================================================
+// AI Generative Tools
+//==============================================================================
+
+void PianoRollComponent::generateAIChords()
+{
+    notes.clear();
+    
+    // I-V-vi-IV in C Major (C, G, Am, F)
+    std::vector<std::vector<int>> chords = {
+        {60, 64, 67}, // C Major
+        {55, 59, 62}, // G Major
+        {57, 60, 64}, // A Minor
+        {53, 57, 60}  // F Major
+    };
+
+    double beat = 0.0;
+    for (int bar = 0; bar < 4; ++bar)
+    {
+        for (int pitch : chords[bar])
+        {
+            auto* n = notes.add(new MidiNote());
+            n->pitch = pitch;
+            n->startBeat = beat;
+            n->duration = 4.0; // 1 bar length
+            n->velocity = 90 + juce::Random::getSystemRandom().nextInt(20);
+        }
+        beat += 4.0;
+    }
+
+    syncToClip();
+    repaint();
+}
+
+void PianoRollComponent::generateAIMelody()
+{
+    notes.clear();
+
+    // C Major Pentatonic (C, D, E, G, A) -> +60 for C4
+    int scale[] = {60, 62, 64, 67, 69, 72, 74, 76};
+    
+    double beat = 0.0;
+    auto& rand = juce::Random::getSystemRandom();
+
+    for (int i = 0; i < 16; ++i)
+    {
+        if (rand.nextFloat() > 0.2f) // 80% chance of note
+        {
+            auto* n = notes.add(new MidiNote());
+            n->pitch = scale[rand.nextInt(8)];
+            n->startBeat = beat;
+            n->duration = (rand.nextFloat() > 0.5f) ? 0.5 : 1.0; // eighth or quarter
+            n->velocity = 80 + rand.nextInt(30);
+        }
+        beat += 0.5; // Eighth note grid
+    }
+
+    syncToClip();
+    repaint();
+}
+
+void PianoRollComponent::arpeggiate()
+{
+    if (notes.isEmpty()) return;
+
+    struct NoteSorter {
+        int compareElements(const MidiNote* a, const MidiNote* b) const {
+            if (std::abs(a->startBeat - b->startBeat) > 0.01)
+                return a->startBeat < b->startBeat ? -1 : 1;
+            return a->pitch < b->pitch ? -1 : 1;
+        }
+    };
+    NoteSorter sorter;
+    notes.sort(sorter);
+
+    double currentChordBeat = notes.getFirst()->startBeat;
+    double offset = 0.0;
+
+    for (auto* n : notes)
+    {
+        if (std::abs(n->startBeat - currentChordBeat) > 0.1) // New chord group
+        {
+            currentChordBeat = n->startBeat;
+            offset = 0.0;
+        }
+
+        n->startBeat += offset;
+        n->duration = 0.5; // Shorten to eighth note
+        offset += 0.5;
+    }
+
+    syncToClip();
+    repaint();
+}
+
+void PianoRollComponent::humanize()
+{
+    auto& rand = juce::Random::getSystemRandom();
+    for (auto* n : notes)
+    {
+        // Randomize timing +/- 0.05 beats
+        double shift = (rand.nextFloat() * 0.1) - 0.05;
+        n->startBeat = juce::jmax(0.0, n->startBeat + shift);
+
+        // Randomize velocity +/- 10
+        int velShift = rand.nextInt(21) - 10;
+        n->velocity = juce::jlimit(10, 127, n->velocity + velShift);
+    }
+
+    syncToClip();
+    repaint();
 }
