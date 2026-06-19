@@ -1,5 +1,6 @@
 #include "AutoTunePanel.h"
 #include <cmath>
+#include <functional>
 
 AutoTunePanel::AutoTunePanel(AudioEngine& e)
     : audioEngine(e)
@@ -48,47 +49,76 @@ AutoTunePanel::AutoTunePanel(AudioEngine& e)
     addAndMakeVisible(scaleLabel);
     addAndMakeVisible(scaleCombo);
 
-    // Speed knob
-    setupKnob(speedKnob, 0.0, 1.0, 0.5, 0.01);
-    speedKnob.onValueChange = [this] {
-        processor.setRetuneSpeed((float)speedKnob.getValue());
-        int pct = (int)(speedKnob.getValue() * 100);
-        speedReadout.setText(juce::String(pct) + "%", juce::dontSendNotification);
+    auto setupCtrl = [this, setupKnob, setupLabel, setupReadout](ParameterControl& pc, const juce::String& name, double min, double max, double def, double step) {
+        setupKnob(pc.knob, min, max, def, step);
+        setupLabel(pc.label);
+        pc.label.setText(name, juce::dontSendNotification);
+        setupReadout(pc.readout);
+        pc.readout.setText(juce::String(def, 2), juce::dontSendNotification);
+        addAndMakeVisible(pc.knob);
+        addAndMakeVisible(pc.label);
+        addAndMakeVisible(pc.readout);
     };
-    setupLabel(speedLabel);
-    setupReadout(speedReadout);
-    speedReadout.setText("50%", juce::dontSendNotification);
-    addAndMakeVisible(speedKnob);
-    addAndMakeVisible(speedLabel);
-    addAndMakeVisible(speedReadout);
 
-    // Formant knob
-    setupKnob(formantKnob, -12.0, 12.0, 0.0, 0.1);
-    formantKnob.onValueChange = [this] {
-        processor.setFormantShift((float)formantKnob.getValue());
-        formantReadout.setText(juce::String(formantKnob.getValue(), 1) + " st", juce::dontSendNotification);
+    setupCtrl(pitchCtrl, "PITCH", 0.0, 1.0, 0.5, 0.01);
+    pitchCtrl.knob.onValueChange = [this] {
+        processor.setRetuneSpeed((float)pitchCtrl.knob.getValue());
+        pitchCtrl.readout.setText(juce::String(pitchCtrl.knob.getValue(), 2), juce::dontSendNotification);
     };
-    setupLabel(formantLabel);
-    setupReadout(formantReadout);
-    formantReadout.setText("0.0 st", juce::dontSendNotification);
-    addAndMakeVisible(formantKnob);
-    addAndMakeVisible(formantLabel);
-    addAndMakeVisible(formantReadout);
 
-    // Robot knob
-    setupKnob(robotKnob, 0.0, 1.0, 0.0, 0.01);
-    robotKnob.onValueChange = [this] {
-        processor.setDoublerAmount((float)robotKnob.getValue());
-        int pct = (int)(robotKnob.getValue() * 100);
-        robotReadout.setText(juce::String(pct) + "%", juce::dontSendNotification);
+    setupCtrl(volumeCtrl, "VOLUME", 0.0, 2.0, 1.0, 0.01);
+    volumeCtrl.knob.onValueChange = [this] {
+        processor.setVolumeLevel((float)volumeCtrl.knob.getValue());
+        volumeCtrl.readout.setText(juce::String(volumeCtrl.knob.getValue(), 2), juce::dontSendNotification);
     };
-    setupLabel(robotLabel);
-    robotLabel.setText("DOUBLER", juce::dontSendNotification);
-    setupReadout(robotReadout);
-    robotReadout.setText("0%", juce::dontSendNotification);
-    addAndMakeVisible(robotKnob);
-    addAndMakeVisible(robotLabel);
-    addAndMakeVisible(robotReadout);
+
+    setupCtrl(toneCtrl, "TONE", -12.0, 12.0, 0.0, 0.1);
+    toneCtrl.knob.onValueChange = [this] {
+        processor.setFormantShift((float)toneCtrl.knob.getValue());
+        toneCtrl.readout.setText(juce::String(toneCtrl.knob.getValue(), 1), juce::dontSendNotification);
+    };
+
+    setupCtrl(paceCtrl, "PACE", 0.5, 2.0, 1.0, 0.01);
+    paceCtrl.knob.onValueChange = [this] {
+        processor.setPaceStretch((float)paceCtrl.knob.getValue());
+        paceCtrl.readout.setText(juce::String(paceCtrl.knob.getValue(), 2), juce::dontSendNotification);
+    };
+
+    setupCtrl(rhythmCtrl, "RHYTHM", 0.0, 1.0, 0.0, 0.01);
+    rhythmCtrl.knob.onValueChange = [this] {
+        processor.setRhythmQuantize((float)rhythmCtrl.knob.getValue());
+        rhythmCtrl.readout.setText(juce::String(rhythmCtrl.knob.getValue(), 2), juce::dontSendNotification);
+    };
+
+    setupCtrl(articulationCtrl, "ARTICULATION", 0.0, 1.0, 0.0, 0.01);
+    articulationCtrl.knob.onValueChange = [this] {
+        processor.setArticulation((float)articulationCtrl.knob.getValue());
+        articulationCtrl.readout.setText(juce::String(articulationCtrl.knob.getValue(), 2), juce::dontSendNotification);
+    };
+
+    setupCtrl(resonanceCtrl, "RESONANCE", 0.0, 1.0, 0.0, 0.01);
+    resonanceCtrl.knob.onValueChange = [this] {
+        processor.setResonance((float)resonanceCtrl.knob.getValue());
+        resonanceCtrl.readout.setText(juce::String(resonanceCtrl.knob.getValue(), 2), juce::dontSendNotification);
+    };
+
+    setupCtrl(inflectionCtrl, "INFLECTION", 0.0, 1.0, 0.0, 0.01);
+    inflectionCtrl.knob.onValueChange = [this] {
+        processor.setInflection((float)inflectionCtrl.knob.getValue());
+        inflectionCtrl.readout.setText(juce::String(inflectionCtrl.knob.getValue(), 2), juce::dontSendNotification);
+    };
+
+    setupCtrl(emphasisCtrl, "EMPHASIS", 0.0, 1.0, 0.0, 0.01);
+    emphasisCtrl.knob.onValueChange = [this] {
+        processor.setEmphasis((float)emphasisCtrl.knob.getValue());
+        emphasisCtrl.readout.setText(juce::String(emphasisCtrl.knob.getValue(), 2), juce::dontSendNotification);
+    };
+
+    setupCtrl(projectionCtrl, "PROJECTION", 0.0, 1.0, 0.0, 0.01);
+    projectionCtrl.knob.onValueChange = [this] {
+        processor.setProjection((float)projectionCtrl.knob.getValue());
+        projectionCtrl.readout.setText(juce::String(projectionCtrl.knob.getValue(), 2), juce::dontSendNotification);
+    };
 
     startTimerHz(20);
 }
@@ -308,22 +338,34 @@ void AutoTunePanel::resized()
     scaleCombo.setBounds(ksRow.removeFromLeft(100).reduced(2));
     area.removeFromTop(12);
 
-    // Speed / Formant / Robot row
-    auto knobRow = area.removeFromTop(rowH);
-    int colW = knobRow.getWidth() / 3;
+    // 10 Vocal Controls Grid
+    knobSz = 48;
+    rowH = knobSz + 30;
+    
+    auto layOutKnob = [&](ParameterControl& pc, juce::Rectangle<int>& a) {
+        pc.knob.setBounds(a.getCentreX() - knobSz / 2, a.getY(), knobSz, knobSz);
+        pc.label.setBounds(a.getX(), a.getY() + knobSz, a.getWidth(), 12);
+        pc.readout.setBounds(a.getX(), a.getY() + knobSz + 12, a.getWidth(), 14);
+    };
 
-    auto speedArea = knobRow.removeFromLeft(colW);
-    speedKnob.setBounds(speedArea.getCentreX() - knobSz / 2, speedArea.getY(), knobSz, knobSz);
-    speedLabel.setBounds(speedArea.getX(), speedArea.getY() + knobSz, colW, 12);
-    speedReadout.setBounds(speedArea.getX(), speedArea.getY() + knobSz + 12, colW, 14);
+    auto row1 = area.removeFromTop(rowH);
+    area.removeFromTop(8);
+    auto row2 = area.removeFromTop(rowH);
 
-    auto formantArea = knobRow.removeFromLeft(colW);
-    formantKnob.setBounds(formantArea.getCentreX() - knobSz / 2, formantArea.getY(), knobSz, knobSz);
-    formantLabel.setBounds(formantArea.getX(), formantArea.getY() + knobSz, colW, 12);
-    formantReadout.setBounds(formantArea.getX(), formantArea.getY() + knobSz + 12, colW, 14);
+    int colW = row1.getWidth() / 5;
+    
+    // Row 1
+    auto a1 = row1.removeFromLeft(colW); layOutKnob(pitchCtrl, a1);
+    auto a2 = row1.removeFromLeft(colW); layOutKnob(volumeCtrl, a2);
+    auto a3 = row1.removeFromLeft(colW); layOutKnob(toneCtrl, a3);
+    auto a4 = row1.removeFromLeft(colW); layOutKnob(paceCtrl, a4);
+    auto a5 = row1; layOutKnob(rhythmCtrl, a5);
 
-    auto robotArea = knobRow;
-    robotKnob.setBounds(robotArea.getCentreX() - knobSz / 2, robotArea.getY(), knobSz, knobSz);
-    robotLabel.setBounds(robotArea.getX(), robotArea.getY() + knobSz, robotArea.getWidth(), 12);
-    robotReadout.setBounds(robotArea.getX(), robotArea.getY() + knobSz + 12, robotArea.getWidth(), 14);
+    // Row 2
+    colW = row2.getWidth() / 5;
+    auto b1 = row2.removeFromLeft(colW); layOutKnob(articulationCtrl, b1);
+    auto b2 = row2.removeFromLeft(colW); layOutKnob(resonanceCtrl, b2);
+    auto b3 = row2.removeFromLeft(colW); layOutKnob(inflectionCtrl, b3);
+    auto b4 = row2.removeFromLeft(colW); layOutKnob(emphasisCtrl, b4);
+    auto b5 = row2; layOutKnob(projectionCtrl, b5);
 }

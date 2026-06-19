@@ -34,20 +34,22 @@ private:
     juce::Label    scaleLabel { {}, "SCALE" };
     juce::ComboBox scaleCombo;
 
-    // ── Speed (correction speed) ──
-    juce::Slider speedKnob;
-    juce::Label  speedLabel { {}, "SPEED" };
-    juce::Label  speedReadout;
+    struct ParameterControl {
+        juce::Slider knob;
+        juce::Label label;
+        juce::Label readout;
+    };
 
-    // ── Formant Shift ──
-    juce::Slider formantKnob;
-    juce::Label  formantLabel { {}, "FORMANT" };
-    juce::Label  formantReadout;
-
-    // ── Robot Voice ──
-    juce::Slider robotKnob;
-    juce::Label  robotLabel { {}, "ROBOT" };
-    juce::Label  robotReadout;
+    ParameterControl pitchCtrl;
+    ParameterControl volumeCtrl;
+    ParameterControl toneCtrl;
+    ParameterControl paceCtrl;
+    ParameterControl rhythmCtrl;
+    ParameterControl articulationCtrl;
+    ParameterControl resonanceCtrl;
+    ParameterControl inflectionCtrl;
+    ParameterControl emphasisCtrl;
+    ParameterControl projectionCtrl;
 
     // Real-time display state
     float detectedPitch  = 0.0f;

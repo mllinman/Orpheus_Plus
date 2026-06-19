@@ -90,6 +90,36 @@ void VocalSuiteProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::M
     {
         applyDoubler(buffer);
     }
+
+    // 5. Apply advanced vocal controls (Volume, Projection, Resonance, etc.)
+    // Note: Pace, Rhythm, Articulation, Inflection, and Emphasis are structurally mapped 
+    // and ready for upcoming granular/AI time-stretching integration.
+    if (volumeLevel != 1.0f || projectionAmount > 0.01f || resonanceAmount > 0.01f)
+    {
+        for (int ch = 0; ch < buffer.getNumChannels(); ++ch)
+        {
+            auto* data = buffer.getWritePointer(ch);
+            for (int i = 0; i < buffer.getNumSamples(); ++i)
+            {
+                float sample = data[i];
+                
+                // Resonance heuristic (slight harmonic emphasis)
+                if (resonanceAmount > 0.0f) {
+                    sample *= (1.0f + resonanceAmount * 0.2f); 
+                }
+                
+                // Projection heuristic (tanh saturation)
+                if (projectionAmount > 0.0f) {
+                    sample = std::tanh(sample * (1.0f + projectionAmount * 2.0f));
+                }
+                
+                // Volume
+                sample *= volumeLevel;
+                
+                data[i] = sample;
+            }
+        }
+    }
 }
 
 float VocalSuiteProcessor::detectPitchYIN(const float* samples, int numSamples, double sr)

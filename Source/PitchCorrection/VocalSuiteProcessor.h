@@ -44,6 +44,18 @@ public:
     void setDoublerAmount(float d)    { doublerAmount = juce::jlimit(0.0f, 1.0f, d); }
     void setHarmonyInterval(int h)    { harmonyInterval = h; } // e.g. +3, -5
 
+    //── New 10 Vocal Parameters ──────────────────────────────────────────────
+    void setPitchShift(float p)       { pitchShift = juce::jlimit(-12.0f, 12.0f, p); }
+    void setVolumeLevel(float v)      { volumeLevel = juce::jlimit(0.0f, 2.0f, v); }
+    // Tone = formantShift (already above)
+    void setPaceStretch(float p)      { paceStretch = juce::jlimit(0.5f, 2.0f, p); }
+    void setRhythmQuantize(float r)   { rhythmQuantize = juce::jlimit(0.0f, 1.0f, r); }
+    void setArticulation(float a)     { articulation = juce::jlimit(0.0f, 1.0f, a); }
+    void setResonance(float r)        { resonanceAmount = juce::jlimit(0.0f, 1.0f, r); }
+    void setInflection(float i)       { inflectionAmount = juce::jlimit(0.0f, 1.0f, i); }
+    void setEmphasis(float e)         { emphasisAmount = juce::jlimit(0.0f, 1.0f, e); }
+    void setProjection(float p)       { projectionAmount = juce::jlimit(0.0f, 1.0f, p); }
+
     float getDetectedPitch() const { return detectedPitch.load(); }
     float getCorrectedPitch() const { return correctedPitch.load(); }
 
@@ -68,6 +80,16 @@ private:
     float formantShift    = 0.0f;
     float doublerAmount   = 0.0f;
     int   harmonyInterval = 0;
+
+    float pitchShift       = 0.0f;
+    float volumeLevel      = 1.0f;
+    float paceStretch      = 1.0f;
+    float rhythmQuantize   = 0.0f;
+    float articulation     = 0.0f;
+    float resonanceAmount  = 0.0f;
+    float inflectionAmount = 0.0f;
+    float emphasisAmount   = 0.0f;
+    float projectionAmount = 0.0f;
 
     std::atomic<float> detectedPitch  { 0.0f };
     std::atomic<float> correctedPitch { 0.0f };
