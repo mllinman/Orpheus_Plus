@@ -52,7 +52,7 @@ struct AutomationCurve
 // Represents a single track in the engine
 struct OrpheusTrackInfo
 {
-    enum class Type { Audio, Midi, Bus, Folder, Arranger, Master };
+    enum class Type { Audio, Midi, Bus, Folder, Arranger, Master, Chord };
 
     juce::String name;
     juce::Colour colour;
@@ -136,6 +136,7 @@ public:
     void syncWithAppState(class AppState& state);
     int  addAudioTrack(const juce::String& name = "Audio Track");
     int  addMidiTrack(const juce::String& name = "MIDI Track");
+    int  addChordTrack(const juce::String& name = "Chord Track");
     int  addBusTrack(const juce::String& name = "Bus");
     int  addFolderTrack(const juce::String& name = "Folder");
     int  addArrangerTrack(const juce::String& name = "Arranger");
@@ -182,6 +183,14 @@ public:
     //── MIDI ─────────────────────────────────────────────────────────────────
     juce::MidiMessageCollector& getMidiCollector() { return midiCollector; }
     const juce::MidiBuffer& getCurrentMidiBuffer() const { return midiBuffer; }
+
+    enum class ScaleLock { Off, Major, Minor, Pentatonic, Blues };
+    void setScaleLock(ScaleLock scale, int rootNote) { 
+        scaleLock_ = scale; 
+        scaleRoot_ = rootNote; 
+    }
+    ScaleLock getScaleLock() const { return scaleLock_; }
+    int getScaleRoot() const { return scaleRoot_; }
 
     //── MIDI Capture (Retroactive Recording) ─────────────────────────────────
     void captureMidi(int trackIndex);
@@ -336,12 +345,8 @@ private:
 
     // ── Track Freeze ──
     std::vector<bool> frozenTracks_;
-    std::vector<juce::AudioBuffer<float>> frozenBuffers_;
-
-    // ── Delay Compensation ──
-    std::vector<int> trackLatencies_;
-    std::vector<juce::AudioBuffer<float>> delayCompBuffers_;
-
+    std::vector<juce::MidiMessage> capturedMidiBuffer_;
+    std::mutex capturedMidiMutex_;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(AudioEngine)
 };

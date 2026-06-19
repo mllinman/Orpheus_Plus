@@ -25,6 +25,16 @@ public:
     bool   isLoaded { false };
     bool   loopEnabled { true };
     
+    // Warping and Time-Stretching
+    enum class WarpMode { Complex, Beats, Texture, Repitch, Off };
+    WarpMode warpMode { WarpMode::Complex };
+
+    struct WarpMarker {
+        double sourceTime;   // Where in the original file this marker is
+        double timelineTime; // Where on the timeline this marker is pinned
+    };
+    std::vector<WarpMarker> warpMarkers;
+
     TimeStretcher stretcher;
     
     float getStretchFactor(double sessionBpm) const { 

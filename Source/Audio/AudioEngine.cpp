@@ -317,6 +317,36 @@ int AudioEngine::addMidiTrack(const juce::String& name)
     return tracks.size() - 1;
 }
 
+int AudioEngine::addChordTrack(const juce::String& name)
+{
+    auto* t = new OrpheusTrackInfo();
+    t->name = name;
+    t->type = OrpheusTrackInfo::Type::Chord;
+    t->colour = juce::Colours::mediumseagreen;
+
+    // 1. Create Generator
+    auto generator = std::make_unique<MidiGeneratorProcessor>(*t, *this);
+    auto genNode = processorGraph.addNode(std::move(generator));
+    t->generatorNodeID = (int)genNode->nodeID.uid;
+
+    // 2. Create Arpeggiator plugin in first slot
+    auto arp = std::make_unique<ArpeggiatorProcessor>();
+    auto arpNode = processorGraph.addNode(std::move(arp));
+    t->pluginSlots[0] = (int)arpNode->nodeID.uid;
+
+    // 3. Create Fader
+    auto faderProc = std::make_unique<TrackFaderProcessor>();
+    auto faderNode = processorGraph.addNode(std::move(faderProc));
+    t->faderNodeID = (int)faderNode->nodeID.uid;
+
+    // Connect them using the standard routing logic
+    tracks.add(t);
+    updateTrackGraphConnections(tracks.size() - 1);
+
+    juce::MessageManager::callAsync([this]{ listeners.call(&Listener::trackListChanged); });
+    return tracks.size() - 1;
+}
+
 int AudioEngine::addFolderTrack(const juce::String& name)
 {
     auto* t = new OrpheusTrackInfo();
@@ -603,6 +633,49 @@ void AudioEngine::processAudioBlock(juce::AudioBuffer<float>& buffer)
                 {
                     fader->setSweetener(value);
                     track->sweetener = value;
+                }
+            }
+        }
+    }
+    // Apply LFO Modulations
+    double sr = getDeviceManager().getAudioDeviceSetup().sampleRate;
+    if (sr <= 0) sr = 44100.0;
+    
+    // First, clear all mod offsets
+    for (auto* track : tracks) {
+        if (track->faderNodeID == -1) continue;
+        if (auto* node = processorGraph.getNodeForId(juce::AudioProcessorGraph::NodeID(track->faderNodeID))) {
+            if (auto* fader = dynamic_cast<TrackFaderProcessor*>(node->getProcessor())) {
+                fader->setVolumeModOffset(0.0f);
+                fader->setPanModOffset(0.0f);
+            }
+        }
+    }
+
+    // Advance LFOs
+    for (auto& lfo : lfoSources_) {
+        lfo.tick(buffer.getNumSamples(), sr);
+    }
+
+    // Apply Mappings
+    for (const auto& mapping : modMappings_) {
+        if (mapping.lfoIndex >= 0 && mapping.lfoIndex < lfoSources_.size() &&
+            mapping.trackIndex >= 0 && mapping.trackIndex < tracks.size()) {
+            
+            float lfoVal = lfoSources_[mapping.lfoIndex].getValue();
+            float offset = lfoVal * mapping.depth;
+            
+            auto* track = tracks[mapping.trackIndex];
+            if (track->faderNodeID != -1) {
+                if (auto* node = processorGraph.getNodeForId(juce::AudioProcessorGraph::NodeID(track->faderNodeID))) {
+                    if (auto* fader = dynamic_cast<TrackFaderProcessor*>(node->getProcessor())) {
+                        if (mapping.targetParam == "vol") {
+                            // accumulate so multiple LFOs can drive one parameter
+                            fader->setVolumeModOffset(fader->getVolumeModOffset() + offset);
+                        } else if (mapping.targetParam == "pan") {
+                            fader->setPanModOffset(fader->getPanModOffset() + offset);
+                        }
+                    }
                 }
             }
         }

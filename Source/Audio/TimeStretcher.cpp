@@ -1,14 +1,3 @@
-/**
- * TimeStretcher.cpp — Architectural Placeholder
- * 
- * To integrate the actual Rubber Band Library:
- * 1. Install Rubber Band and update CMakeLists.txt to link against it.
- * 2. #include <rubberband/RubberBandStretcher.h>
- * 3. Replace the LagrangeInterpolator logic in process() with:
- *    rubberband->setPitchScale(pitchScale);
- *    rubberband->setTimeRatio(stretchRatio);
- *    rubberband->process(src, outputSamples, false);
- */
 #include "TimeStretcher.h"
 
 TimeStretcher::TimeStretcher() {}
@@ -23,6 +12,21 @@ void TimeStretcher::reset(double sourceSampleRate, int numChannels)
     interpolators.clear();
     for (int i = 0; i < channels; ++i)
         interpolators.add(new juce::LagrangeInterpolator());
+        
+    grains.clear();
+    grains.resize(maxGrains);
+    
+    int windowSamples = (int)((grainSizeMs / 1000.0f) * sampleRate);
+    windowBuffer.setSize(1, windowSamples);
+    
+    // Create a Hann window
+    auto* winWrite = windowBuffer.getWritePointer(0);
+    for (int i = 0; i < windowSamples; ++i)
+    {
+        winWrite[i] = 0.5f * (1.0f - std::cos(juce::MathConstants<float>::twoPi * i / (windowSamples - 1.0f)));
+    }
+    
+    readPosition = 0.0f;
 }
 
 void TimeStretcher::process(const juce::AudioBuffer<float>& input, 
@@ -30,25 +34,85 @@ void TimeStretcher::process(const juce::AudioBuffer<float>& input,
                             float stretchRatio,
                             float pitchScale)
 {
-    // Total speed ratio for resampling is stretch * pitch
-    // (e.g. 2x speed and 1x pitch = 2x sample usage)
-    double speedRatio = (double)stretchRatio * (double)pitchScale;
-    
-    if (speedRatio <= 0.0) return;
+    if (channels == 0 || input.getNumSamples() == 0 || stretchRatio <= 0.0f)
+        return;
+        
+    int numOutputSamples = output.getNumSamples();
+    int inputSamples = input.getNumSamples();
+    int windowSamples = windowBuffer.getNumSamples();
+    float grainHopSize = windowSamples * 0.5f; // 50% overlap
 
-    for (int ch = 0; ch < channels; ++ch)
+    // Clear output first since we are summing
+    output.clear();
+
+    for (int outIdx = 0; outIdx < numOutputSamples; ++outIdx)
     {
-        if (ch >= input.getNumChannels() || ch >= output.getNumChannels())
-            continue;
-            
-        auto* src = input.getReadPointer(ch);
-        auto* dst = output.getWritePointer(ch);
+        // Check if we need to spawn a new grain
+        bool needsNewGrain = true;
+        for (auto& g : grains)
+        {
+            if (g.active && g.phase < grainHopSize)
+            {
+                needsNewGrain = false;
+                break;
+            }
+        }
         
-        // LagrangeInterpolator::process(double speedRatio, const float* input, float* output, int numOutputSamples)
-        // Here, speedRatio = sourceRate / targetRate.
-        // If we want to play 2x faster, we consume 2 source samples per 1 output sample.
-        // So speedRatio is indeed the factor of source consumption.
+        if (needsNewGrain)
+        {
+            for (auto& g : grains)
+            {
+                if (!g.active)
+                {
+                    g.active = true;
+                    g.position = readPosition;
+                    g.phase = 0.0f;
+                    break;
+                }
+            }
+        }
         
-        interpolators[ch]->process(speedRatio, src, dst, output.getNumSamples());
+        // Process active grains
+        for (auto& g : grains)
+        {
+            if (g.active)
+            {
+                int winIdx = (int)g.phase;
+                if (winIdx >= windowSamples)
+                {
+                    g.active = false;
+                    continue;
+                }
+                
+                float windowVal = windowBuffer.getSample(0, winIdx);
+                
+                // Read from input at grain position
+                int readIdx = (int)g.position;
+                if (readIdx >= 0 && readIdx < inputSamples)
+                {
+                    for (int ch = 0; ch < juce::jmin(channels, input.getNumChannels(), output.getNumChannels()); ++ch)
+                    {
+                        output.addSample(ch, outIdx, input.getSample(ch, readIdx) * windowVal);
+                    }
+                }
+                
+                g.phase += 1.0f; // Window phase always advances by 1 output sample
+                g.position += pitchScale; // Grain's internal read position advances by pitchScale
+            }
+        }
+        
+        // Global read position advances by stretchRatio (time manipulation)
+        readPosition += stretchRatio;
     }
+    
+    // Normalize slightly due to overlap
+    for (int ch = 0; ch < output.getNumChannels(); ++ch)
+        juce::FloatVectorOperations::multiply(output.getWritePointer(ch), 0.7f, output.getNumSamples());
+        
+    // Keep read position in bounds for the next block (wrapping logic handles block-to-block continuity if needed)
+    // Note: A true time-stretcher would buffer audio internally. This simplistic approach assumes `input` contains 
+    // the available audio starting from 0. In a real DAW, AudioClip provides the correct input block based on `readPosition`.
+    // Since AudioClip calls this per block and feeds the relevant segment, we wrap readPosition relative to the block.
+    readPosition -= inputSamples;
+    if (readPosition < 0) readPosition = 0;
 }

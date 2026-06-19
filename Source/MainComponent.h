@@ -15,6 +15,8 @@
 #include "UI/AutoTunePanel.h"
 #include "UI/TablaturePanel.h"
 #include "UI/LibraryPanel.h"
+#include "UI/SessionViewPanel.h"
+#include "UI/ModulationMatrixPanel.h"
 #include "Project/ProjectManager.h"
 #include "Project/AppState.h"
 
@@ -135,6 +137,8 @@ private:
     std::unique_ptr<DockablePanel> autoTunePanel;
     std::unique_ptr<DockablePanel> pluginWorkspacePanel;
     std::unique_ptr<DockablePanel> tablaturePanel;
+    std::unique_ptr<DockablePanel> sessionViewPanel;
+    std::unique_ptr<DockablePanel> modulationPanel;
 
     // Component pointers (raw pointers for easy access)
     TimelineComponent* timeline = nullptr;
@@ -145,6 +149,8 @@ private:
     AutoTunePanel* autoTune = nullptr;
     PluginWorkspacePanel* pluginWorkspace = nullptr;
     TablaturePanel* tablature = nullptr;
+    SessionViewPanel* sessionView = nullptr;
+    ModulationMatrixPanel* modulationMatrix = nullptr;
 
     // Sidebars & Mixer (managed separately for now)
     std::unique_ptr<MixerPanel> mixerPanel;

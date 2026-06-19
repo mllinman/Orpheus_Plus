@@ -35,44 +35,100 @@ void TrackFaderProcessor::releaseResources()
 {
 }
 
-void TrackFaderProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
+void TrackFaderProcessor::setVolume(float gain)
+{
+    currentVolume.store(gain);
+}
+
+void TrackFaderProcessor::setPan(float p)
+{
+    currentPan.store(juce::jlimit(-1.0f, 1.0f, p));
+}
+
+void TrackFaderProcessor::setVolumeModOffset(float offset)
+{
+    volumeModOffset.store(offset);
+}
+
+void TrackFaderProcessor::setPanModOffset(float offset)
+{
+    panModOffset.store(offset);
+}
+
+void TrackFaderProcessor::setMute(bool shouldMute)
+{
+    muted.store(shouldMute);
+}
+
+void TrackFaderProcessor::setSweetener(float amount)
+{
+    sweetenerAmount.store(juce::jlimit(0.0f, 1.0f, amount));
+    updateSweetener();
+}
+
+void TrackFaderProcessor::setDelaySamples(int samples)
+{
+    currentDelaySamples.store(samples);
+}
+
+void TrackFaderProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer&)
 {
     juce::ScopedNoDenormals noDenormals;
+    int numSamples = buffer.getNumSamples();
+    int numChannels = buffer.getNumChannels();
 
-    if (muted.load())
-    {
-        buffer.clear();
+    if (numChannels == 0 || numSamples == 0)
         return;
-    }
 
-    // 1. Process Channel Strip Sweetener
-    float sweetAmt = sweetenerAmount.load();
-    if (sweetAmt > 0.0f)
+    // Apply sweetener
+    if (sweetenerAmount.load() > 0.01f)
     {
         juce::dsp::AudioBlock<float> block(buffer);
         juce::dsp::ProcessContextReplacing<float> context(block);
         
+        highShelf.process(context);
         lowShelf.process(context);
         compressor.process(context);
-        highShelf.process(context);
     }
 
-    // 2. Volume & Pan
-    smoothVolume.setTargetValue(currentVolume.load());
-    smoothPan.setTargetValue(currentPan.load());
+    // Delay compensation
+    int delaySamples = currentDelaySamples.load();
+    if (delaySamples > 0)
+    {
+        for (int ch = 0; ch < juce::jmin(numChannels, (int)delayLine.getMaximumNumberOfChannels()); ++ch)
+        {
+            auto* channelData = buffer.getWritePointer(ch);
+            for (int i = 0; i < numSamples; ++i)
+            {
+                delayLine.pushSample(ch, channelData[i]);
+                channelData[i] = delayLine.popSample(ch, delaySamples);
+            }
+        }
+    }
 
+    // Volume & Pan with Modulation
+    float volMod = volumeModOffset.load();
+    float panMod = panModOffset.load();
+    
+    float targetVol = currentVolume.load() + volMod;
+    targetVol = juce::jlimit(0.0f, 2.0f, targetVol); // clamp
+    
+    float targetPan = currentPan.load() + panMod;
+    targetPan = juce::jlimit(-1.0f, 1.0f, targetPan);
+
+    smoothVolume.setTargetValue(muted.load() ? 0.0f : targetVol);
+    smoothPan.setTargetValue(targetPan);
+    
     if (smoothVolume.isSmoothing())
-        smoothVolume.applyGain(buffer, buffer.getNumSamples());
+        smoothVolume.applyGain(buffer, numSamples);
     else
         buffer.applyGain(smoothVolume.getTargetValue());
 
     float pan = smoothPan.getCurrentValue();
-    if (buffer.getNumChannels() == 2)
+    if (numChannels == 2)
     {
         float leftGain = (pan <= 0.0f) ? 1.0f : 1.0f - pan;
         float rightGain = (pan >= 0.0f) ? 1.0f : 1.0f + pan;
-        buffer.applyGain(0, 0, buffer.getNumSamples(), leftGain);
-        buffer.applyGain(1, 0, buffer.getNumSamples(), rightGain);
     }
 
     // 3. Peaks

@@ -1,7 +1,6 @@
 #pragma once
 #include <JuceHeader.h>
-#include <vector>
-#include <set>
+#include "Arpeggiator.h"
 
 class ArpeggiatorProcessor : public juce::AudioProcessor
 {
@@ -30,15 +29,10 @@ public:
     void getStateInformation(juce::MemoryBlock&) override {}
     void setStateInformation(const void*, int) override {}
 
+    Arpeggiator& getArpeggiator() { return arpeggiator; }
+
 private:
-    std::set<int> activeNotes;
-    int currentNoteIndex = 0;
-    double timeSinceLastNote = 0.0;
-    int lastNotePlayed = -1;
-    
-    // Simple parameters
-    double rateDivision = 0.25; // 1/16th note default
-    float gateLength = 0.8f;    // 80% of step size
+    Arpeggiator arpeggiator;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ArpeggiatorProcessor)
 };

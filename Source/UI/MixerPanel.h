@@ -55,6 +55,7 @@ private:
 
         void resized() override;
         void paint(juce::Graphics&) override;
+        void paintOverChildren(juce::Graphics&) override;
 
         int trackIndex;
         AudioEngine& engine;

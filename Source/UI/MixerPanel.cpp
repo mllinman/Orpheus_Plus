@@ -251,6 +251,59 @@ void MixerPanel::ChannelStrip::paint(juce::Graphics& g)
     drawMeter(juce::Rectangle<float>(meterX + meterW + 2, meterY, meterW, meterH), peakR);
 }
 
+void MixerPanel::ChannelStrip::paintOverChildren(juce::Graphics& g)
+{
+    // Draw modulation indicators over the fader and knobs
+    auto* trackInfo = engine.getAllTracks()[trackIndex];
+    if (!trackInfo) return;
+
+    if (auto* node = engine.getGraph().getNodeForId(juce::AudioProcessorGraph::NodeID(trackInfo->faderNodeID)))
+    {
+        if (auto* faderProc = dynamic_cast<TrackFaderProcessor*>(node->getProcessor()))
+        {
+            float volMod = faderProc->getVolumeModOffset();
+            float panMod = faderProc->getPanModOffset();
+
+            if (std::abs(volMod) > 0.001f)
+            {
+                // Fader bounds relative to this strip
+                auto bounds = fader.getBounds();
+                
+                // Map the modulated value
+                float currentVol = fader.getValue();
+                float modVol = juce::jlimit(0.0001f, 2.0f, currentVol + volMod);
+                
+                // Convert modVol to Y coordinate
+                // fader is log mapped via skew 0.25, so we use valueToProportionOfLength
+                double prop = fader.valueToProportionOfLength(modVol);
+                float y = bounds.getBottom() - prop * bounds.getHeight();
+                
+                g.setColour(juce::Colours::cyan.withAlpha(0.8f));
+                g.fillRect(bounds.getX() + 2, (int)y - 2, bounds.getWidth() - 4, 4);
+                
+                // Draw a faint trail to show range
+                double baseProp = fader.valueToProportionOfLength(currentVol);
+                float baseY = bounds.getBottom() - baseProp * bounds.getHeight();
+                g.setColour(juce::Colours::cyan.withAlpha(0.2f));
+                g.fillRect(bounds.getX() + bounds.getWidth()/2 - 2, (int)std::min(y, baseY), 4, (int)std::abs(y - baseY));
+            }
+
+            if (std::abs(panMod) > 0.001f)
+            {
+                auto bounds = panKnob.getBounds();
+                float currentPan = panKnob.getValue();
+                float modPan = juce::jlimit(-1.0f, 1.0f, currentPan + panMod);
+                
+                double prop = panKnob.valueToProportionOfLength(modPan);
+                float angle = juce::MathConstants<float>::twoPi * prop; // Rough visual approximation
+                
+                g.setColour(juce::Colours::cyan);
+                g.drawEllipse(bounds.toFloat().reduced(2), 2.0f);
+            }
+        }
+    }
+}
+
 //==============================================================================
 // MasterStrip
 //==============================================================================

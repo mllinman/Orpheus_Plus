@@ -129,6 +129,24 @@ void AudioClip::paint(juce::Graphics& g, juce::Rectangle<float> clipBounds, juce
         }
     }
 
+    // Warp Markers
+    if (warpMode != WarpMode::Off && !warpMarkers.empty())
+    {
+        g.setColour(juce::Colours::yellow.withAlpha(0.8f));
+        for (const auto& marker : warpMarkers)
+        {
+            float markerX = clipBounds.getX() + (float)((marker.timelineTime / duration) * clipBounds.getWidth());
+            g.drawVerticalLine((int)markerX, clipBounds.getY(), clipBounds.getBottom());
+            
+            // Draw a tiny triangle at the top
+            juce::Path p;
+            p.addTriangle(markerX - 4.0f, clipBounds.getY(), 
+                          markerX + 4.0f, clipBounds.getY(), 
+                          markerX, clipBounds.getY() + 6.0f);
+            g.fillPath(p);
+        }
+    }
+
     // Border
     g.setColour(selected ? juce::Colours::white : colour.brighter(0.2f));
     g.drawRoundedRectangle(clipBounds, 3.0f, 1.0f);

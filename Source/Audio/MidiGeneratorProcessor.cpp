@@ -67,6 +67,14 @@ void MidiGeneratorProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce
     // Output the MIDI to the graph
     midiMessages.addEvents(trackMidi, 0, numSamples, 0);
 
-    // Render the fallback synth (if no plugin is added, this audio will be heard)
-    synth.renderNextBlock(buffer, trackMidi, 0, numSamples);
+    // Render the fallback synth ONLY if there are no plugins on this track
+    bool hasPlugins = false;
+    for (int slot : trackInfo.pluginSlots) {
+        if (slot != -1) { hasPlugins = true; break; }
+    }
+    
+    if (!hasPlugins)
+    {
+        synth.renderNextBlock(buffer, trackMidi, 0, numSamples);
+    }
 }

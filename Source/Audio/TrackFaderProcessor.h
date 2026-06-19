@@ -42,6 +42,11 @@ public:
     float getPan() const    { return currentPan.load(); }
     float getSweetener() const { return sweetenerAmount.load(); }
 
+    void setVolumeModOffset(float offset) { volumeModOffset.store(offset); }
+    void setPanModOffset(float offset)    { panModOffset.store(offset); }
+    float getVolumeModOffset() const      { return volumeModOffset.load(); }
+    float getPanModOffset() const         { return panModOffset.load(); }
+
     void setDelaySamples(int samples);
 
     float getPeakL() const { return peakL.load(); }
@@ -54,6 +59,9 @@ private:
     std::atomic<float> currentPan    { 0.0f };
     std::atomic<bool>  muted        { false };
     std::atomic<float> sweetenerAmount { 0.0f };
+
+    std::atomic<float> volumeModOffset { 0.0f };
+    std::atomic<float> panModOffset { 0.0f };
 
     juce::LinearSmoothedValue<float> smoothVolume { 1.0f };
     juce::LinearSmoothedValue<float> smoothPan    { 0.0f };

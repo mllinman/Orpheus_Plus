@@ -1,5 +1,7 @@
 #pragma once
 #include <JuceHeader.h>
+#include <vector>
+#include <cmath>
 
 /**
  * A wrapper class for high-quality time-stretching and pitch-shifting.
@@ -12,18 +14,8 @@ public:
     TimeStretcher();
     ~TimeStretcher();
 
-    /** 
-     * Initialise/Reset the stretcher for a new audio stream.
-     */
     void reset(double sourceSampleRate, int numChannels);
 
-    /**
-     * Process a block of audio. 
-     * @param input        The source audio buffer.
-     * @param output       The target audio buffer to write into.
-     * @param stretchRatio The speed ratio (1.0 = normal, 2.0 = double speed/half duration).
-     * @param pitchScale   The frequency multiplier (1.0 = normal, 2.0 = octave up).
-     */
     void process(const juce::AudioBuffer<float>& input, 
                  juce::AudioBuffer<float>& output,
                  float stretchRatio,
@@ -33,8 +25,20 @@ private:
     double sampleRate { 44100.0 };
     int channels { 0 };
     
-    // Placeholder using JUCE interpolators (one per channel)
+    // Granular State
+    struct Grain {
+        float position = 0.0f;
+        float phase = 0.0f;
+        bool active = false;
+    };
+    
+    std::vector<Grain> grains;
+    int maxGrains = 4;
+    float grainSizeMs = 60.0f;
+    float readPosition = 0.0f;
+    
     juce::OwnedArray<juce::LagrangeInterpolator> interpolators;
+    juce::AudioBuffer<float> windowBuffer;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(TimeStretcher)
 };

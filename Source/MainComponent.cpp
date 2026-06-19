@@ -55,6 +55,8 @@ MainComponent::MainComponent()
     autoTune        = dynamic_cast<AutoTunePanel*>(addPanel(autoTunePanel,      "AutoTune",   std::make_unique<AutoTunePanel>(*audioEngine)));
     pluginWorkspace = dynamic_cast<PluginWorkspacePanel*>(addPanel(pluginWorkspacePanel, "VST Plugins", std::make_unique<PluginWorkspacePanel>(*audioEngine, appState)));
     tablature       = dynamic_cast<TablaturePanel*>(addPanel(tablaturePanel, "Tablature", std::make_unique<TablaturePanel>(*audioEngine)));
+    sessionView     = dynamic_cast<SessionViewPanel*>(addPanel(sessionViewPanel, "Session View", std::make_unique<SessionViewPanel>(*audioEngine)));
+    modulationMatrix = dynamic_cast<ModulationMatrixPanel*>(addPanel(modulationPanel, "Modulation", std::make_unique<ModulationMatrixPanel>(*audioEngine)));
 
     // Initialize Sidebar / Mixer components (not tabbed)
     mixerPanel = std::make_unique<MixerPanel>(*audioEngine, appState);
