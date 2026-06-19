@@ -927,7 +927,7 @@ void MainComponent::showAudioToMidiDialog()
 
             auto* dialog = opts.launchAsync();
 
-            audioEngine->getAudioToMidiConverter().convert(result, appState,
+            audioEngine->getAudioToMidiConverter().convert(result,
                 [this, dialog](AudioToMidiResult midiResult)
                 {
                     if (dialog) dialog->exitModalState(0);

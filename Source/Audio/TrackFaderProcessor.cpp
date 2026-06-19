@@ -45,15 +45,6 @@ void TrackFaderProcessor::setPan(float p)
     currentPan.store(juce::jlimit(-1.0f, 1.0f, p));
 }
 
-void TrackFaderProcessor::setVolumeModOffset(float offset)
-{
-    volumeModOffset.store(offset);
-}
-
-void TrackFaderProcessor::setPanModOffset(float offset)
-{
-    panModOffset.store(offset);
-}
 
 void TrackFaderProcessor::setMute(bool shouldMute)
 {
@@ -91,20 +82,6 @@ void TrackFaderProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::M
         compressor.process(context);
     }
 
-    // Delay compensation
-    int delaySamples = currentDelaySamples.load();
-    if (delaySamples > 0)
-    {
-        for (int ch = 0; ch < juce::jmin(numChannels, (int)delayLine.getMaximumNumberOfChannels()); ++ch)
-        {
-            auto* channelData = buffer.getWritePointer(ch);
-            for (int i = 0; i < numSamples; ++i)
-            {
-                delayLine.pushSample(ch, channelData[i]);
-                channelData[i] = delayLine.popSample(ch, delaySamples);
-            }
-        }
-    }
 
     // Volume & Pan with Modulation
     float volMod = volumeModOffset.load();
@@ -172,20 +149,6 @@ void TrackFaderProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::M
     peakR.store(currentPeakR);
 }
 
-void TrackFaderProcessor::setDelaySamples(int samples)
-{
-    currentDelaySamples.store(samples);
-}
-
-void TrackFaderProcessor::setVolume(float vol) { currentVolume.store(vol); }
-void TrackFaderProcessor::setPan(float pan)    { currentPan.store(pan); }
-void TrackFaderProcessor::setMute(bool m)      { muted.store(m); }
-
-void TrackFaderProcessor::setSweetener(float amount)
-{
-    sweetenerAmount.store(amount);
-    updateSweetener();
-}
 
 void TrackFaderProcessor::updateSweetener()
 {

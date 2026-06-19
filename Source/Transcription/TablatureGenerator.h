@@ -18,11 +18,21 @@ struct TabNote {
     float durationBeats;
 };
 
+enum class Tuning {
+    Standard,
+    DropD,
+    HalfStepDown,
+    OpenG
+};
+
 class TablatureGenerator {
 public:
     TablatureGenerator();
     
     void setInstrument(InstrumentType type);
+    void setTuning(Tuning t);
+    void setMaxStretch(int frets) { maxStretch = frets; }
+    void setPreferredPosition(int fret) { preferredPosition = fret; }
     
     // Generates a simple tab from a sequence of midi notes
     // midiNotes: pair of {midiNoteNumber, startBeat}
@@ -33,9 +43,12 @@ public:
 
 private:
     InstrumentType currentInstrument = InstrumentType::AcousticGuitar;
+    Tuning currentTuning = Tuning::Standard;
     
     std::vector<int> stringTunings; 
-    int maxFret = 22;
+    int maxFret = 24;
+    int maxStretch = 4;
+    int preferredPosition = 0;
 
     void updateTunings();
 };

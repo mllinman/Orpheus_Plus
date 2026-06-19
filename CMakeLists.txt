@@ -49,6 +49,7 @@ target_sources(OrpheusPlus PRIVATE
     Source/Audio/ConvolutionReverbProcessor.cpp
     Source/Audio/OrpheusSynth.cpp
     Source/Audio/MidiGeneratorProcessor.cpp
+    Source/Audio/Arpeggiator.cpp
     Source/Audio/ArpeggiatorProcessor.cpp
     Source/Audio/SimpleDelayProcessor.cpp
     Source/Audio/TransientDetector.cpp

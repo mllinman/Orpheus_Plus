@@ -27,38 +27,43 @@ public:
     float getDepth() const { return depth_; }
 
     /** Returns modulation value in [-depth, +depth] and advances phase. */
-    float tick()
+    float getValue() const { return currentValue_; }
+
+    /** Advances phase for numSamples at the given sample rate. */
+    void tick(int numSamples, double sr)
     {
-        float value = 0.0f;
-        switch (waveform_)
+        for (int i = 0; i < numSamples; ++i)
         {
-            case Waveform::Sine:
-                value = std::sin(phase_ * juce::MathConstants<float>::twoPi);
-                break;
-            case Waveform::Square:
-                value = phase_ < 0.5f ? 1.0f : -1.0f;
-                break;
-            case Waveform::Triangle:
-                value = 4.0f * std::abs(phase_ - 0.5f) - 1.0f;
-                break;
-            case Waveform::Saw:
-                value = 2.0f * phase_ - 1.0f;
-                break;
+            switch (waveform_)
+            {
+                case Waveform::Sine:
+                    currentValue_ = std::sin(phase_ * juce::MathConstants<float>::twoPi);
+                    break;
+                case Waveform::Square:
+                    currentValue_ = phase_ < 0.5f ? 1.0f : -1.0f;
+                    break;
+                case Waveform::Triangle:
+                    currentValue_ = 4.0f * std::abs(phase_ - 0.5f) - 1.0f;
+                    break;
+                case Waveform::Saw:
+                    currentValue_ = 2.0f * phase_ - 1.0f;
+                    break;
+            }
+
+            phase_ += rate_ / (float)sr;
+            if (phase_ >= 1.0f) phase_ -= 1.0f;
         }
-
-        phase_ += rate_ / (float)sampleRate_;
-        if (phase_ >= 1.0f) phase_ -= 1.0f;
-
-        return value * depth_;
+        currentValue_ *= depth_;
     }
 
-    void reset() { phase_ = 0.0f; }
+    void reset() { phase_ = 0.0f; currentValue_ = 0.0f; }
 
 private:
     double sampleRate_ = 44100.0;
     float  rate_       = 1.0f;   // Hz
     float  depth_      = 0.5f;   // 0..1
     float  phase_      = 0.0f;
+    float  currentValue_ = 0.0f;
     Waveform waveform_ = Waveform::Sine;
 };
 

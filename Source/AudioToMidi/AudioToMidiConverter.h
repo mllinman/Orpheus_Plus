@@ -35,7 +35,6 @@ public:
     void setVelocityFromLoudness(bool v) { velFromLoud = v; }
 
     void convert(const juce::File& audioFile,
-                 AppState& appState,
                  std::function<void(AudioToMidiResult)> onComplete = {});
 
     void cancel();

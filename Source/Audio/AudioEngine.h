@@ -348,5 +348,12 @@ private:
     std::vector<juce::MidiMessage> capturedMidiBuffer_;
     std::mutex capturedMidiMutex_;
 
+    ScaleLock scaleLock_ { ScaleLock::Off };
+    int scaleRoot_ { 0 };
+    std::vector<int> trackLatencies_;
+
+    std::vector<juce::AudioBuffer<float>> frozenBuffers_;
+    std::vector<juce::AudioBuffer<float>> delayCompBuffers_;
+
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(AudioEngine)
 };

@@ -104,7 +104,7 @@ void Arpeggiator::handleNoteOn(int noteNumber, juce::uint8 velocity)
 {
     // Remove if exists to re-add at end (AsPlayed order)
     handleNoteOff(noteNumber);
-    heldNotes.push_back({noteNumber, velocity, juce::Time::getMillisecondCounter()});
+    heldNotes.push_back({noteNumber, velocity, (int)juce::Time::getMillisecondCounter()});
     updateSequence();
 }
 

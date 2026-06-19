@@ -4,6 +4,7 @@
 #include "ClipGeneratorProcessor.h"
 #include "MidiGeneratorProcessor.h"
 #include "TrackFaderProcessor.h"
+#include "ArpeggiatorProcessor.h"
 #include "MixerProcessor.h"
 #include "MidiLearnManager.h"
 #include "../Project/AppState.h"
@@ -659,10 +660,10 @@ void AudioEngine::processAudioBlock(juce::AudioBuffer<float>& buffer)
 
     // Apply Mappings
     for (const auto& mapping : modMappings_) {
-        if (mapping.lfoIndex >= 0 && mapping.lfoIndex < lfoSources_.size() &&
+        if (mapping.sourceId >= 0 && mapping.sourceId < lfoSources_.size() &&
             mapping.trackIndex >= 0 && mapping.trackIndex < tracks.size()) {
             
-            float lfoVal = lfoSources_[mapping.lfoIndex].getValue();
+            float lfoVal = lfoSources_[mapping.sourceId].getValue();
             float offset = lfoVal * mapping.depth;
             
             auto* track = tracks[mapping.trackIndex];

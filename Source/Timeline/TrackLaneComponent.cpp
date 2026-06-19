@@ -820,7 +820,7 @@ void TrackLaneComponent::mouseDown(const juce::MouseEvent& e)
                         }
                         else if (result == 2)
                         {
-                            audioEngine.getAudioToMidiConverter().convert(ac->sourceFile, appState, [this](AudioToMidiResult res) {
+                            audioEngine.getAudioToMidiConverter().convert(ac->sourceFile, [this](AudioToMidiResult res) {
                                 juce::MessageManager::callAsync([this, res] {
                                     double t = draggingClip ? draggingClip->startTime : 0.0;
                                     if (res.midiFileOnDisk.existsAsFile())

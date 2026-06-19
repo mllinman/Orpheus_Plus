@@ -4,7 +4,7 @@
 AudioToMidiConverter::AudioToMidiConverter() {}
 AudioToMidiConverter::~AudioToMidiConverter() { cancel(); }
 
-void AudioToMidiConverter::convert(const juce::File& audioFile, AppState& appState,
+void AudioToMidiConverter::convert(const juce::File& audioFile,
                                     std::function<void(AudioToMidiResult)> onComplete)
 {
     if (running.load()) return;
@@ -62,18 +62,18 @@ void AudioToMidiConverter::cancel()
 
 bool AudioToMidiConverter::runBasicPitch(const juce::File& audio, const juce::File& outMidi)
 {
-    //─────────────────────────────────────────────────────────────────────────
-    // Spotify Basic Pitch (https://github.com/spotify/basic-pitch)
-    // Install: pip install basic-pitch
-    // Command: basic-pitch <output_dir> <audio_file> [--save-midi]
-    //─────────────────────────────────────────────────────────────────────────
+    juce::File currentDir = juce::File::getCurrentWorkingDirectory();
+    juce::File venvPython = currentDir.getChildFile(".venv/Scripts/python.exe");
+    juce::File scriptFile = currentDir.getChildFile("Source/AudioToMidi/audio_to_midi.py");
+    
+    // Fallback if .venv not found or running in some weird directory structure
+    juce::String pythonCmd = venvPython.existsAsFile() ? venvPython.getFullPathName() : "python";
+
     juce::StringArray args;
-    args.add("python3");
-    args.add("-m");
-    args.add("basic_pitch");
-    args.add(outMidi.getParentDirectory().getFullPathName());
+    args.add(pythonCmd);
+    args.add(scriptFile.getFullPathName());
     args.add(audio.getFullPathName());
-    args.add("--save-midi");
+    args.add(outMidi.getFullPathName());
 
     juce::ChildProcess proc;
     if (!proc.start(args)) return false;
@@ -81,12 +81,18 @@ bool AudioToMidiConverter::runBasicPitch(const juce::File& audio, const juce::Fi
     while (proc.isRunning())
     {
         if (!running.load()) { proc.kill(); return false; }
-        juce::Thread::sleep(300);
-        float p = juce::jmin(0.95f, progress.load() + 0.03f);
-        progress.store(p);
-        juce::MessageManager::callAsync([this, p] {
-            listeners.call(&Listener::conversionProgress, p);
-        });
+        
+        juce::String output = proc.readAllProcessOutput();
+        if (output.contains("Progress:")) {
+            // Very naive parse for demo
+            float p = juce::jmin(0.95f, progress.load() + 0.05f);
+            progress.store(p);
+            juce::MessageManager::callAsync([this, p] {
+                listeners.call(&Listener::conversionProgress, p);
+            });
+        }
+
+        juce::Thread::sleep(200);
     }
 
     return proc.getExitCode() == 0;
