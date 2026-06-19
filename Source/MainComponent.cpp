@@ -53,6 +53,7 @@ MainComponent::MainComponent()
     stemSeparator   = dynamic_cast<StemSeparatorPanel*>(addPanel(stemSeparatorPanel, "Stem Sep",   std::make_unique<StemSeparatorPanel>(*audioEngine, appState)));
     audioCleanup    = dynamic_cast<AudioCleanupPanel*>(addPanel(audioCleanupPanel,  "Cleanup",    std::make_unique<AudioCleanupPanel>(*audioEngine)));
     autoTune        = dynamic_cast<AutoTunePanel*>(addPanel(autoTunePanel,      "AutoTune",   std::make_unique<AutoTunePanel>(*audioEngine)));
+    pluginWorkspace = dynamic_cast<PluginWorkspacePanel*>(addPanel(pluginWorkspacePanel, "VST Plugins", std::make_unique<PluginWorkspacePanel>(*audioEngine, appState)));
 
     // Initialize Sidebar / Mixer components (not tabbed)
     mixerPanel = std::make_unique<MixerPanel>(*audioEngine, appState);
@@ -60,9 +61,6 @@ MainComponent::MainComponent()
 
     spectrumAnalyzer = std::make_unique<SpectrumAnalyzer>(*audioEngine);
     addChildComponent(spectrumAnalyzer.get());
-
-    pluginBrowser = std::make_unique<PluginBrowser>(*audioEngine, appState);
-    addChildComponent(pluginBrowser.get());
 
     trackSettingsPanel = std::make_unique<TrackSettingsPanel>(*audioEngine, appState);
     addChildComponent(trackSettingsPanel.get());
@@ -159,20 +157,13 @@ void MainComponent::resized()
         verticalResizerBar->setVisible(false);
     }
 
-    if (showPluginBrowser || showTrackSettings || showLibraryPanel)
+    if (showTrackSettings || showLibraryPanel)
     {
         juce::Component dummyLeft, dummyRight;
         juce::Component* hComps[] = { &dummyLeft, horizontalResizerBar.get(), &dummyRight };
         horizontalLayout.layOutComponents(hComps, 3, area.getX(), area.getY(), area.getWidth(), area.getHeight(), false, true);
         
         auto sideArea = dummyRight.getBounds();
-        
-        if (showPluginBrowser && pluginBrowser)
-        {
-            pluginBrowser->setVisible(true);
-            pluginBrowser->setBounds(sideArea);
-        }
-        else if (pluginBrowser) pluginBrowser->setVisible(false);
 
         if (showTrackSettings && trackSettingsPanel)
         {
@@ -193,7 +184,6 @@ void MainComponent::resized()
     }
     else
     {
-        if (pluginBrowser) pluginBrowser->setVisible(false);
         if (trackSettingsPanel) trackSettingsPanel->setVisible(false);
         if (libraryPanel) libraryPanel->setVisible(false);
         horizontalResizerBar->setVisible(false);
@@ -392,9 +382,9 @@ void MainComponent::getCommandInfo(juce::CommandID commandID, juce::ApplicationC
             result.setTicked(showMixer);
             break;
         case cmdOpenPluginBrowser:
-            result.setInfo("Plugin Browser", "Show or hide the plugin browser", "View", 0);
+            result.setInfo("Plugin Browser", "Show VST Plugins", "View", 0);
             result.addDefaultKeypress('b', juce::ModifierKeys::commandModifier);
-            result.setTicked(showPluginBrowser);
+            result.setTicked(currentView == 6);
             break;
         case cmdOpenStemSeparation:
             result.setInfo("Stem Separation...", "Separate audio into stems", "AI", 0);
@@ -784,13 +774,8 @@ bool MainComponent::perform(const InvocationInfo& info)
             return true;
 
         case cmdOpenPluginBrowser:
-            showPluginBrowser = !showPluginBrowser;
-            if (showPluginBrowser)
-            {
-                showTrackSettings = false;
-                showLibraryPanel = false;
-            }
-            resized();
+            currentView = 6;
+            switchToView(currentView);
             return true;
 
         // ── AI ──────────────────────────────────────────────────────────
@@ -814,7 +799,6 @@ bool MainComponent::perform(const InvocationInfo& info)
             showTrackSettings = !showTrackSettings;
             if (showTrackSettings)
             {
-                showPluginBrowser = false;
                 showLibraryPanel = false;
                 if (trackSettingsPanel) trackSettingsPanel->setTrackIndex(appState.getSelectedTrackIndex());
             }
@@ -825,7 +809,6 @@ bool MainComponent::perform(const InvocationInfo& info)
             showLibraryPanel = !showLibraryPanel;
             if (showLibraryPanel)
             {
-                showPluginBrowser = false;
                 showTrackSettings = false;
             }
             resized();

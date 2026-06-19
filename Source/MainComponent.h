@@ -8,7 +8,7 @@
 #include "UI/TransportBar.h"
 #include "UI/MixerPanel.h"
 #include "UI/SpectrumAnalyzer.h"
-#include "UI/PluginBrowser.h"
+#include "UI/PluginWorkspacePanel.h"
 #include "UI/TrackSettingsPanel.h"
 #include "UI/StemSeparatorPanel.h"
 #include "UI/AudioCleanupPanel.h"
@@ -133,6 +133,8 @@ private:
     std::unique_ptr<DockablePanel> audioCleanupPanel;
     std::unique_ptr<DockablePanel> autoTunePanel;
 
+    std::unique_ptr<DockablePanel> pluginWorkspacePanel;
+
     // Component pointers (raw pointers for easy access)
     TimelineComponent* timeline = nullptr;
     PianoRollComponent* pianoRoll = nullptr;
@@ -140,11 +142,11 @@ private:
     StemSeparatorPanel* stemSeparator = nullptr;
     AudioCleanupPanel* audioCleanup = nullptr;
     AutoTunePanel* autoTune = nullptr;
+    PluginWorkspacePanel* pluginWorkspace = nullptr;
 
     // Sidebars & Mixer (managed separately for now)
     std::unique_ptr<MixerPanel> mixerPanel;
     std::unique_ptr<SpectrumAnalyzer> spectrumAnalyzer;
-    std::unique_ptr<PluginBrowser> pluginBrowser;
     std::unique_ptr<TrackSettingsPanel> trackSettingsPanel;
     std::unique_ptr<LibraryPanel> libraryPanel;
 
@@ -152,7 +154,6 @@ private:
     bool showMixer          = true;
     bool showMastering      = false;
     bool showPianoRoll      = false;
-    bool showPluginBrowser  = false;
     bool showTrackSettings  = false;
     bool showLibraryPanel   = false;
     int  currentView        = 0; // 0=Timeline, 1=PianoRoll, 2=Mastering, 3=StemSep, 4=Cleanup, 5=AutoTune

@@ -87,6 +87,8 @@ target_sources(OrpheusPlus PRIVATE
     Source/UI/MixerPanel.cpp
     Source/UI/SpectrumAnalyzer.cpp
     Source/UI/PluginBrowser.cpp
+    Source/UI/ActivePluginsView.cpp
+    Source/UI/PluginWorkspacePanel.cpp
     Source/UI/TrackSettingsPanel.cpp
     Source/UI/StemSeparatorPanel.cpp
     Source/UI/AudioCleanupPanel.cpp
