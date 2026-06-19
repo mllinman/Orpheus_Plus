@@ -132,8 +132,9 @@ private:
     
     // Projection State
     juce::dsp::Compressor<float> projectionCompressor;
-    juce::dsp::IIR::Filter<float> projectionEQHigh;
-    juce::dsp::IIR::Filter<float> projectionEQLow;
+    using IIRFilter = juce::dsp::ProcessorDuplicator<juce::dsp::IIR::Filter<float>, juce::dsp::IIR::Coefficients<float>>;
+    IIRFilter projectionEQHigh;
+    IIRFilter projectionEQLow;
 
     // Pace State
     int currentHopOut = 512;

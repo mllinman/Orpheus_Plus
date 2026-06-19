@@ -17,6 +17,7 @@
 #include "UI/LibraryPanel.h"
 #include "UI/SessionViewPanel.h"
 #include "UI/ModulationMatrixPanel.h"
+#include "UI/VocalAutomationPanel.h"
 #include "Project/ProjectManager.h"
 #include "Project/AppState.h"
 
@@ -139,6 +140,7 @@ private:
     std::unique_ptr<DockablePanel> tablaturePanel;
     std::unique_ptr<DockablePanel> sessionViewPanel;
     std::unique_ptr<DockablePanel> modulationPanel;
+    std::unique_ptr<DockablePanel> vocalAutomationPanel;
 
     // Component pointers (raw pointers for easy access)
     TimelineComponent* timeline = nullptr;
@@ -151,6 +153,7 @@ private:
     TablaturePanel* tablature = nullptr;
     SessionViewPanel* sessionView = nullptr;
     ModulationMatrixPanel* modulationMatrix = nullptr;
+    VocalAutomationPanel* vocalAutomation = nullptr;
 
     // Sidebars & Mixer (managed separately for now)
     std::unique_ptr<MixerPanel> mixerPanel;

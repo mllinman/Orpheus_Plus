@@ -97,6 +97,7 @@ target_sources(OrpheusPlus PRIVATE
     Source/UI/TablaturePanel.cpp
     Source/UI/SessionViewPanel.cpp
     Source/UI/ModulationMatrixPanel.cpp
+    Source/UI/VocalAutomationPanel.cpp
     Source/UI/AudioMidiSettingsPanel.cpp
     Source/UI/DockablePanel.cpp
     Source/UI/LibraryPanel.cpp
