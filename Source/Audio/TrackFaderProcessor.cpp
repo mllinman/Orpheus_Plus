@@ -21,6 +21,7 @@ void TrackFaderProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
     compressor.prepare(spec);
     highShelf.prepare(spec);
     lowShelf.prepare(spec);
+    delayLine.prepare(spec);
 
     updateSweetener();
 
@@ -100,8 +101,24 @@ void TrackFaderProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::M
             else                      currentPeakR *= releaseCoef;
         }
     }
+    
+    // 4. Delay Compensation
+    int targetDelay = currentDelaySamples.load();
+    if (targetDelay > 0)
+    {
+        delayLine.setDelay((float)targetDelay);
+        juce::dsp::AudioBlock<float> block(buffer);
+        juce::dsp::ProcessContextReplacing<float> context(block);
+        delayLine.process(context);
+    }
+
     peakL.store(currentPeakL);
     peakR.store(currentPeakR);
+}
+
+void TrackFaderProcessor::setDelaySamples(int samples)
+{
+    currentDelaySamples.store(samples);
 }
 
 void TrackFaderProcessor::setVolume(float vol) { currentVolume.store(vol); }

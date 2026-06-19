@@ -42,6 +42,8 @@ public:
     float getPan() const    { return currentPan.load(); }
     float getSweetener() const { return sweetenerAmount.load(); }
 
+    void setDelaySamples(int samples);
+
     float getPeakL() const { return peakL.load(); }
     float getPeakR() const { return peakR.load(); }
 
@@ -61,6 +63,10 @@ private:
     using Filter = juce::dsp::ProcessorDuplicator<juce::dsp::IIR::Filter<float>, juce::dsp::IIR::Coefficients<float>>;
     Filter highShelf;
     Filter lowShelf;
+
+    // Delay Compensation
+    juce::dsp::DelayLine<float> delayLine { 192000 }; // Up to ~4 seconds at 48kHz
+    std::atomic<int> currentDelaySamples { 0 };
 
     // Metering
     std::atomic<float> peakL { 0.0f };

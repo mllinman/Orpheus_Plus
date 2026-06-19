@@ -249,6 +249,9 @@ OrpheusPlus_IS_TOP_LEVEL:STATIC=ON
 //Value Computed by CMake
 OrpheusPlus_SOURCE_DIR:STATIC=C:/Users/mllin/OneDrive/Documents/GitHub/Orpheus_Plus
 
+//The directory containing a CMake configuration file for onnxruntime.
+onnxruntime_DIR:PATH=onnxruntime_DIR-NOTFOUND
+
 
 ########################
 # INTERNAL cache entries

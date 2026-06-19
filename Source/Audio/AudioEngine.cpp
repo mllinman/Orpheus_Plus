@@ -728,6 +728,15 @@ void AudioEngine::exportStems(const juce::File& outputDirectory)
     }
 }
 
+void AudioEngine::setSidechainSource(int targetTrack, int slot, int sourceTrack)
+{
+    if (targetTrack >= 0 && targetTrack < (int)tracks.size() && slot >= 0 && slot < OrpheusTrackInfo::MAX_PLUGINS)
+    {
+        tracks[targetTrack]->sidechainSources[slot] = sourceTrack;
+        updateTrackGraphConnections(targetTrack);
+    }
+}
+
 void AudioEngine::updateTrackGraphConnections(int trackIndex)
 {
     if (!juce::isPositiveAndBelow(trackIndex, (int)tracks.size())) return;
@@ -750,13 +759,15 @@ void AudioEngine::updateTrackGraphConnections(int trackIndex)
         chain.push_back(juce::AudioProcessorGraph::NodeID(track->faderNodeID));
 
     // 2. Disconnect all nodes in this specific chain from each other
-    // We iterate through all nodes and remove any connections that start AND end within this chain.
     for (const auto& conn : processorGraph.getConnections())
     {
         bool sourceInChain = std::find(chain.begin(), chain.end(), conn.source.nodeID) != chain.end();
         bool destInChain = std::find(chain.begin(), chain.end(), conn.destination.nodeID) != chain.end();
 
+        // Also disconnect if source is Fader (so we can re-route bus/master)
         if (sourceInChain && destInChain)
+            processorGraph.removeConnection(conn);
+        if (conn.source.nodeID.uid == track->faderNodeID)
             processorGraph.removeConnection(conn);
     }
 
@@ -790,13 +801,66 @@ void AudioEngine::updateTrackGraphConnections(int trackIndex)
         }
     }
 
-    // 4. Ensure Fader -> Master connection exists
-    if (track->faderNodeID != -1 && masterNode)
+    // 4. Connect Fader to Output (Master or Bus)
+    if (track->faderNodeID != -1)
     {
-        juce::AudioProcessorGraph::NodeID faderID(track->faderNodeID);
-        for (int ch = 0; ch < 2; ++ch)
+        juce::AudioProcessorGraph::Node::Ptr destNode = masterNode;
+        
+        if (track->outputBus.isNotEmpty())
         {
-            processorGraph.addConnection({ { faderID, ch }, { masterNode->nodeID, ch } });
+            // Find bus track
+            for (auto* t : tracks)
+            {
+                if (t->type == OrpheusTrackInfo::Type::Bus && t->name == track->outputBus)
+                {
+                    // Find first available node in the bus track's chain
+                    bool found = false;
+                    for (int pluginSlot : t->pluginSlots)
+                    {
+                        if (pluginSlot != -1)
+                        {
+                            destNode = processorGraph.getNodeForId(juce::AudioProcessorGraph::NodeID(pluginSlot));
+                            found = true;
+                            break;
+                        }
+                    }
+                    if (!found && t->faderNodeID != -1)
+                        destNode = processorGraph.getNodeForId(juce::AudioProcessorGraph::NodeID(t->faderNodeID));
+                    break;
+                }
+            }
+        }
+        
+        if (destNode)
+        {
+            juce::AudioProcessorGraph::NodeID faderID(track->faderNodeID);
+            for (int ch = 0; ch < 2; ++ch)
+            {
+                processorGraph.addConnection({ { faderID, ch }, { destNode->nodeID, ch } });
+            }
+        }
+    }
+
+    // 5. Connect Sidechains
+    for (int i = 0; i < OrpheusTrackInfo::MAX_PLUGINS; ++i)
+    {
+        int scSourceIdx = track->sidechainSources[(size_t)i];
+        if (scSourceIdx != -1 && track->pluginSlots[(size_t)i] != -1 && scSourceIdx < (int)tracks.size())
+        {
+            auto* srcTrack = tracks[scSourceIdx];
+            if (srcTrack->faderNodeID != -1)
+            {
+                juce::AudioProcessorGraph::NodeID scSrcID(srcTrack->faderNodeID);
+                juce::AudioProcessorGraph::NodeID destPluginID(track->pluginSlots[(size_t)i]);
+                
+                // Typically sidechain connects to channels 2,3 (assuming 0,1 are main)
+                auto destNode = processorGraph.getNodeForId(destPluginID);
+                if (destNode && destNode->getProcessor()->getTotalNumInputChannels() >= 4)
+                {
+                    processorGraph.addConnection({ { scSrcID, 0 }, { destPluginID, 2 } });
+                    processorGraph.addConnection({ { scSrcID, 1 }, { destPluginID, 3 } });
+                }
+            }
         }
     }
 }
@@ -905,10 +969,16 @@ void AudioEngine::recalculateDelayCompensation()
     for (int i = 0; i < numTracks; ++i)
     {
         int compensationDelay = maxLatency - trackLatencies_[(size_t)i];
-        if (compensationDelay > 0)
+        if (tracks[i]->faderNodeID != -1)
         {
-            delayCompBuffers_[(size_t)i].setSize(2, compensationDelay);
-            delayCompBuffers_[(size_t)i].clear();
+            auto node = processorGraph.getNodeForId(juce::AudioProcessorGraph::NodeID(tracks[i]->faderNodeID));
+            if (node)
+            {
+                if (auto* fader = dynamic_cast<TrackFaderProcessor*>(node->getProcessor()))
+                {
+                    fader->setDelaySamples(compensationDelay);
+                }
+            }
         }
     }
 }

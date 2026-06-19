@@ -74,14 +74,23 @@ bool StemSeparator::runDemucs(const juce::File& inputFile, const juce::File& out
     // Demucs v4 integration
     //
     // Option 1: System Python with demucs installed
-    //   python3 -m demucs --two-stems=vocals -o <outputDir> <inputFile>
-    //
     // Option 2: Bundled Python environment
-    //   <AppBundle>/Resources/python/bin/python3 -m demucs ...
-    //
-    // Option 3: ONNX Runtime (convert Demucs to ONNX first)
-    //   Load model via onnxruntime C++ API, run inference on audio chunks
+    // Option 3: ONNX Runtime native C++ inference
     //─────────────────────────────────────────────────────────────────────────
+
+    // For future-proofing, we will prefer ONNX if available.
+    bool useOnnx = false; // Toggle when ONNX binaries are linked
+    if (useOnnx)
+    {
+        // 1. Load onnxruntime::OrtEnv
+        // 2. Load model from getModelPath(currentModel)
+        // 3. Setup Ort::Session
+        // 4. Chunk input audio, run inference, overlap-add
+        // 5. Write to outputDir/vocals.wav, etc.
+        juce::Logger::writeToLog("Running Demucs via Native C++ ONNX...");
+        juce::Thread::sleep(2000); // simulate inference
+        return true;
+    }
 
     juce::String modelFlag;
 
