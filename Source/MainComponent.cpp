@@ -22,6 +22,8 @@ MainComponent::MainComponent()
     projectManager = std::make_unique<ProjectManager>(appState, *audioEngine);
 
     // Register commands
+    commandManager.registerCommand({cmdAbout, "About...", "Help", 0, ""});
+    commandManager.registerCommand({cmdShowUserManual, "User Manual...", "Help", 0, ""});
     commandManager.registerAllCommandsForTarget(this);
 
     // Initialize MenuBar
@@ -60,6 +62,7 @@ MainComponent::MainComponent()
     modulationMatrix = dynamic_cast<ModulationMatrixPanel*>(addPanel(modulationPanel, "Modulation", std::make_unique<ModulationMatrixPanel>(*audioEngine)));
     vocalAutomation  = dynamic_cast<VocalAutomationPanel*>(addPanel(vocalAutomationPanel, "Vocal Auto", std::make_unique<VocalAutomationPanel>(*audioEngine, this)));
     voiceCloning     = dynamic_cast<VoiceCloningPanel*>(addPanel(voiceCloningPanel, "Voice Clone", std::make_unique<VoiceCloningPanel>(*audioEngine, this)));
+    userManual       = dynamic_cast<UserManualPanel*>(addPanel(userManualDockablePanel, "User Manual", std::make_unique<UserManualPanel>()));
 
     // Initialize Sidebar / Mixer components (not tabbed)
     mixerPanel = std::make_unique<MixerPanel>(*audioEngine, appState);
@@ -286,6 +289,7 @@ juce::PopupMenu MainComponent::getMenuForIndex(int menuIndex, const juce::String
 
         case 5: // Help
             menu.addCommandItem(&commandManager, cmdAbout);
+            menu.addCommandItem(&commandManager, cmdShowUserManual);
             break;
     }
 
@@ -313,7 +317,7 @@ void MainComponent::getAllCommands(juce::Array<juce::CommandID>& commands)
         cmdOpenAutoTune, cmdToggleTrackSettings, cmdToggleLibraryPanel,
         cmdAddVocalTrack, cmdAddInstrumentTrack,
         cmdAddFolderTrack, cmdAddArrangerTrack,
-        cmdImportAudio
+        cmdImportAudio, cmdShowUserManual
     });
 }
 
@@ -414,6 +418,9 @@ void MainComponent::getCommandInfo(juce::CommandID commandID, juce::ApplicationC
             break;
         case cmdAbout:
             result.setInfo("About Orpheus Plus", "About this application", "Help", 0);
+            break;
+        case cmdShowUserManual:
+            result.setInfo("User Manual", "Open the user manual", "Help", 0);
             break;
         case cmdQuit:
             result.setInfo("Quit", "Exit the application", "File", 0);
@@ -823,6 +830,9 @@ bool MainComponent::perform(const InvocationInfo& info)
         // ── Help ────────────────────────────────────────────────────────
         case cmdAbout:
             showAboutDialog();
+            return true;
+        case cmdShowUserManual:
+            switchToView(mainTabbedView.getNumTabs() - 1); // User Manual is the last tab
             return true;
 
         default:

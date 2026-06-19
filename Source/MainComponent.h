@@ -18,6 +18,7 @@
 #include "UI/SessionViewPanel.h"
 #include "UI/ModulationMatrixPanel.h"
 #include "UI/VocalAutomationPanel.h"
+#include "UI/UserManualPanel.h"
 #include "Project/ProjectManager.h"
 #include "Project/AppState.h"
 
@@ -104,6 +105,7 @@ public:
         cmdScratchPadSave,
         cmdScratchPadLoad,
         cmdImportAudio,
+        cmdShowUserManual
     };
 
 private:
@@ -148,6 +150,7 @@ private:
     std::unique_ptr<DockablePanel> modulationPanel;
     std::unique_ptr<DockablePanel> vocalAutomationPanel;
     std::unique_ptr<DockablePanel> voiceCloningPanel;
+    std::unique_ptr<DockablePanel> userManualDockablePanel;
 
     // Component pointers (raw pointers for easy access)
     TimelineComponent* timeline = nullptr;
@@ -162,6 +165,7 @@ private:
     ModulationMatrixPanel* modulationMatrix = nullptr;
     VocalAutomationPanel* vocalAutomation = nullptr;
     class VoiceCloningPanel* voiceCloning = nullptr;
+    UserManualPanel* userManual = nullptr;
 
     // Sidebars & Mixer (managed separately for now)
     std::unique_ptr<MixerPanel> mixerPanel;

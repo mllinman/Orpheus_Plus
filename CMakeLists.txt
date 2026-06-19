@@ -113,6 +113,7 @@ target_sources(OrpheusPlus PRIVATE
     Source/UI/AudioMidiSettingsPanel.cpp
     Source/UI/DockablePanel.cpp
     Source/UI/LibraryPanel.cpp
+    Source/UI/UserManualPanel.cpp
 
     # Transcription
     Source/Transcription/TablatureGenerator.cpp
