@@ -13,6 +13,7 @@
 #include "UI/StemSeparatorPanel.h"
 #include "UI/AudioCleanupPanel.h"
 #include "UI/AutoTunePanel.h"
+#include "UI/TablaturePanel.h"
 #include "UI/LibraryPanel.h"
 #include "Project/ProjectManager.h"
 #include "Project/AppState.h"
@@ -132,8 +133,8 @@ private:
     std::unique_ptr<DockablePanel> stemSeparatorPanel;
     std::unique_ptr<DockablePanel> audioCleanupPanel;
     std::unique_ptr<DockablePanel> autoTunePanel;
-
     std::unique_ptr<DockablePanel> pluginWorkspacePanel;
+    std::unique_ptr<DockablePanel> tablaturePanel;
 
     // Component pointers (raw pointers for easy access)
     TimelineComponent* timeline = nullptr;
@@ -143,6 +144,7 @@ private:
     AudioCleanupPanel* audioCleanup = nullptr;
     AutoTunePanel* autoTune = nullptr;
     PluginWorkspacePanel* pluginWorkspace = nullptr;
+    TablaturePanel* tablature = nullptr;
 
     // Sidebars & Mixer (managed separately for now)
     std::unique_ptr<MixerPanel> mixerPanel;

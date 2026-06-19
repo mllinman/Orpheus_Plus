@@ -93,9 +93,13 @@ target_sources(OrpheusPlus PRIVATE
     Source/UI/StemSeparatorPanel.cpp
     Source/UI/AudioCleanupPanel.cpp
     Source/UI/AutoTunePanel.cpp
+    Source/UI/TablaturePanel.cpp
     Source/UI/AudioMidiSettingsPanel.cpp
     Source/UI/DockablePanel.cpp
     Source/UI/LibraryPanel.cpp
+
+    # Transcription
+    Source/Transcription/TablatureGenerator.cpp
 
     # Utility
     Source/Util/OrpheusLogger.cpp
