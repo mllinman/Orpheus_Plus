@@ -1,5 +1,6 @@
 #pragma once
 #include <JuceHeader.h>
+#include "SurroundPanner.h"
 
 /**
     Handles volume, pan, sweetener (EQ/Comp strip), and metering for a track.
@@ -37,6 +38,9 @@ public:
     void setPan(float pan);
     void setMute(bool shouldMute);
     void setSweetener(float amount);
+    
+    void setSpatialEnabled(bool enabled);
+    void setSpatialPosition(float azimuth, float elevation, float distance);
 
     float getVolume() const { return currentVolume.load(); }
     float getPan() const    { return currentPan.load(); }
@@ -71,6 +75,11 @@ private:
     using Filter = juce::dsp::ProcessorDuplicator<juce::dsp::IIR::Filter<float>, juce::dsp::IIR::Coefficients<float>>;
     Filter highShelf;
     Filter lowShelf;
+
+    // Spatial Audio
+    std::atomic<bool> spatialEnabled { false };
+    SurroundPanner panner3D;
+    std::mutex pannerMutex;
 
     // Delay Compensation
     juce::dsp::DelayLine<float> delayLine { 192000 }; // Up to ~4 seconds at 48kHz

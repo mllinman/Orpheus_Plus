@@ -177,6 +177,14 @@ TrackSettingsPanel::TrackSettingsPanel(AudioEngine& e, AppState& s)
     contentArea.addAndMakeVisible(autoTuneToggle);
     contentArea.addAndMakeVisible(cleanupToggle);
 
+    // ── Spatial Audio ──
+    spatialLabel.setFont(juce::Font(9.0f).boldened());
+    spatialLabel.setColour(juce::Label::textColourId, OrpheusLookAndFeel::textMuted());
+    contentArea.addAndMakeVisible(spatialLabel);
+    
+    spatialPanner = std::make_unique<SpatialPannerUI>(audioEngine, currentTrack);
+    contentArea.addAndMakeVisible(spatialPanner.get());
+
     startTimerHz(10);
 }
 
@@ -190,6 +198,9 @@ void TrackSettingsPanel::setTrackIndex(int index)
 
 void TrackSettingsPanel::refreshFromTrack()
 {
+    if (spatialPanner)
+        spatialPanner = std::make_unique<SpatialPannerUI>(audioEngine, currentTrack);
+
     if (currentTrack < 0 || currentTrack >= (int)appState.getTracks().size()) {
         trackNameLabel.setText("No Track Selected", juce::dontSendNotification);
         trackTypeLabel.setText("", juce::dontSendNotification);
@@ -322,10 +333,17 @@ void TrackSettingsPanel::resized()
     }
     y += 12 + smallKnob * 3 + 8;
 
-    // ── Quick Access ──
     autoTuneToggle.setBounds(8, y, w / 2 - 4, 28);
     cleanupToggle.setBounds(8 + w / 2, y, w / 2 - 4, 28);
     y += 36;
+    
+    // ── Spatial Audio ──
+    spatialLabel.setBounds(8, y, w, 14); y += 16;
+    if (spatialPanner)
+    {
+        spatialPanner->setBounds(8, y, w, 160);
+        y += 168;
+    }
 
     contentArea.setSize(w + 12, y + 20);
 }

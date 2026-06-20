@@ -50,6 +50,11 @@ target_sources(OrpheusPlus PRIVATE
     Source/Util/OrpheusLogger.cpp
     Source/UI/ExportDialog.cpp
     Source/UI/WorkspaceManager.cpp
+    Source/UI/WorkspaceManager.h
+    Source/UI/SpatialPannerUI.cpp
+    Source/UI/SpatialPannerUI.h
+    Source/Audio/SpatialReverbProcessor.cpp
+    Source/Audio/SpatialReverbProcessor.h
     Source/Mastering/PhaseAlignmentAI.cpp
     Source/Control/MacroController.cpp
 

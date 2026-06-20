@@ -471,6 +471,11 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
     <ClCompile Include="C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Util\OrpheusLogger.cpp" />
     <ClCompile Include="C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\UI\ExportDialog.cpp" />
     <ClCompile Include="C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\UI\WorkspaceManager.cpp" />
+    <ClInclude Include="C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\UI\WorkspaceManager.h" />
+    <ClCompile Include="C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\UI\SpatialPannerUI.cpp" />
+    <ClInclude Include="C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\UI\SpatialPannerUI.h" />
+    <ClCompile Include="C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Audio\SpatialReverbProcessor.cpp" />
+    <ClInclude Include="C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Audio\SpatialReverbProcessor.h" />
     <ClCompile Include="C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Mastering\PhaseAlignmentAI.cpp" />
     <ClCompile Include="C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Control\MacroController.cpp" />
     <ClCompile Include="C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Audio\AudioEngine.cpp" />

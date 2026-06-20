@@ -16,6 +16,12 @@
     <ClCompile Include="C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\UI\WorkspaceManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\UI\SpatialPannerUI.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Audio\SpatialReverbProcessor.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Mastering\PhaseAlignmentAI.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -304,6 +310,15 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\OrpheusPlus_artefacts\JuceLibraryCode\JuceHeader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\UI\WorkspaceManager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\UI\SpatialPannerUI.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Source\Audio\SpatialReverbProcessor.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

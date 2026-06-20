@@ -3,6 +3,7 @@
 #include "../Audio/AudioEngine.h"
 #include "../Project/AppState.h"
 #include "OrpheusLookAndFeel.h"
+#include "SpatialPannerUI.h"
 
 //==============================================================================
 class TrackSettingsPanel : public juce::Component,
@@ -75,6 +76,10 @@ private:
     // ── Quick Access Toggles ──
     juce::ToggleButton autoTuneToggle  { "Vocal Suite" };
     juce::ToggleButton cleanupToggle   { "Cleanup" };
+
+    // ── Spatial Audio ──
+    juce::Label spatialLabel { {}, "SPATIAL" };
+    std::unique_ptr<SpatialPannerUI> spatialPanner;
 
     // ── Mute / Solo / Arm ──
     juce::ToggleButton muteBtn  { "M" };

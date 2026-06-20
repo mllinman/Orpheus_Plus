@@ -284,7 +284,7 @@ int AudioEngine::addAudioTrack(const juce::String& name)
     // 4. Connect Fader -> Master
     if (faderNode && masterNode)
     {
-        for (int ch = 0; ch < 2; ++ch)
+        for (int ch = 0; ch < 12; ++ch)
             processorGraph.addConnection({ { faderNode->nodeID, ch }, { masterNode->nodeID, ch } });
     }
     
@@ -321,7 +321,7 @@ int AudioEngine::addMidiTrack(const juce::String& name)
     // 4. Connect Fader -> Master
     if (faderNode && masterNode)
     {
-        for (int ch = 0; ch < 2; ++ch)
+        for (int ch = 0; ch < 12; ++ch)
             processorGraph.addConnection({ { faderNode->nodeID, ch }, { masterNode->nodeID, ch } });
     }
     
@@ -456,6 +456,24 @@ void AudioEngine::setTrackPan(int i, float pan) {
     if (auto* node = processorGraph.getNodeForId(juce::AudioProcessorGraph::NodeID(tracks[i]->faderNodeID)))
         if (auto* fader = dynamic_cast<TrackFaderProcessor*>(node->getProcessor()))
             fader->setPan(pan);
+}
+
+void AudioEngine::setTrackSpatialMode(int trackIndex, bool enabled)
+{
+    tracks[trackIndex]->spatialEnabled = enabled;
+    if (auto* node = processorGraph.getNodeForId(juce::AudioProcessorGraph::NodeID(tracks[trackIndex]->faderNodeID)))
+        if (auto* fader = dynamic_cast<TrackFaderProcessor*>(node->getProcessor()))
+            fader->setSpatialEnabled(enabled);
+}
+
+void AudioEngine::setTrackSpatialPosition(int trackIndex, float azimuth, float elevation, float distance)
+{
+    tracks[trackIndex]->panAzimuth = azimuth;
+    tracks[trackIndex]->panElevation = elevation;
+    tracks[trackIndex]->panDistance = distance;
+    if (auto* node = processorGraph.getNodeForId(juce::AudioProcessorGraph::NodeID(tracks[trackIndex]->faderNodeID)))
+        if (auto* fader = dynamic_cast<TrackFaderProcessor*>(node->getProcessor()))
+            fader->setSpatialPosition(azimuth, elevation, distance);
 }
 
 void AudioEngine::setTrackSweetener(int i, float amount)

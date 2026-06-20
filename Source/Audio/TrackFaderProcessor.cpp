@@ -3,7 +3,7 @@
 TrackFaderProcessor::TrackFaderProcessor()
     : AudioProcessor(BusesProperties()
                      .withInput("Input", juce::AudioChannelSet::stereo(), true)
-                     .withOutput("Output", juce::AudioChannelSet::stereo(), true))
+                     .withOutput("Output", juce::AudioChannelSet::discreteChannels(12), true))
 {
 }
 
@@ -62,6 +62,17 @@ void TrackFaderProcessor::setDelaySamples(int samples)
     currentDelaySamples.store(samples);
 }
 
+void TrackFaderProcessor::setSpatialEnabled(bool enabled)
+{
+    spatialEnabled.store(enabled);
+}
+
+void TrackFaderProcessor::setSpatialPosition(float azimuth, float elevation, float distance)
+{
+    std::lock_guard<std::mutex> lock(pannerMutex);
+    panner3D.setPosition({azimuth, elevation, distance});
+}
+
 void TrackFaderProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer&)
 {
     juce::ScopedNoDenormals noDenormals;
@@ -102,10 +113,45 @@ void TrackFaderProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::M
         buffer.applyGain(smoothVolume.getTargetValue());
 
     float pan = smoothPan.getCurrentValue();
-    if (numChannels == 2)
+    if (numChannels >= 2 && !spatialEnabled.load())
     {
         float leftGain = (pan <= 0.0f) ? 1.0f : 1.0f - pan;
         float rightGain = (pan >= 0.0f) ? 1.0f : 1.0f + pan;
+        
+        auto* outL = buffer.getWritePointer(0);
+        auto* outR = buffer.getWritePointer(1);
+        for (int i = 0; i < numSamples; ++i)
+        {
+            outL[i] *= leftGain;
+            outR[i] *= rightGain;
+        }
+        
+        // Silence channels 2-11
+        for (int ch = 2; ch < numChannels; ++ch)
+            buffer.clear(ch, 0, numSamples);
+    }
+    else if (spatialEnabled.load() && numChannels == 12)
+    {
+        std::array<float, 12> gains;
+        {
+            std::lock_guard<std::mutex> lock(pannerMutex);
+            gains = panner3D.calculateGains();
+        }
+        
+        // Calculate mono sum of the first two input channels (assuming stereo source)
+        juce::AudioBuffer<float> monoSource(1, numSamples);
+        monoSource.copyFrom(0, 0, buffer, 0, 0, numSamples);
+        if (buffer.getNumChannels() > 1) {
+            monoSource.addFrom(0, 0, buffer, 1, 0, numSamples);
+            monoSource.applyGain(0.5f); // average
+        }
+        
+        // Output to 12 channels
+        for (int ch = 0; ch < 12; ++ch)
+        {
+            buffer.copyFrom(ch, 0, monoSource, 0, 0, numSamples);
+            buffer.applyGain(ch, 0, numSamples, gains[ch]);
+        }
     }
 
     // 3. Peaks

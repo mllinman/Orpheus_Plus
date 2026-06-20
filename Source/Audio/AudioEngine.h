@@ -104,6 +104,10 @@ struct OrpheusTrackInfo
     float volume = 1.0f;
     float pan    = 0.0f;
     float sweetener = 0.0f;
+    bool  spatialEnabled = false;
+    float panAzimuth = 0.0f;
+    float panElevation = 0.0f;
+    float panDistance = 1.0f;
     bool mute    = false;
     bool solo    = false;
     bool isMutedBySolo = false;
@@ -190,6 +194,8 @@ public:
 
     void setTrackVolume(int trackIndex, float vol);
     void setTrackPan(int trackIndex, float pan);
+    void setTrackSpatialMode(int trackIndex, bool enabled);
+    void setTrackSpatialPosition(int trackIndex, float azimuth, float elevation, float distance);
     void setTrackSweetener(int trackIndex, float amount);
     void setSidechainSource(int targetTrack, int slot, int sourceTrack);
     void setTrackMute(int trackIndex, bool mute);
