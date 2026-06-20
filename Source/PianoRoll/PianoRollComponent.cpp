@@ -267,23 +267,55 @@ void PianoRollComponent::paintGrid(juce::Graphics& g, juce::Rectangle<int> area)
 
 void PianoRollComponent::paintNotes(juce::Graphics& g, juce::Rectangle<int> area)
 {
-    for (auto* note : notes)
+    // Define an array of distinct colors for multi-track rendering
+    const juce::Colour trackColours[] = {
+        juce::Colour(0xff6c5ce7), // Legacy accent purple
+        juce::Colour(0xff00b894), // Green
+        juce::Colour(0xff0984e3), // Blue
+        juce::Colour(0xfffdcb6e), // Yellow/Orange
+        juce::Colour(0xffe17055), // Red/Orange
+        juce::Colour(0xffd63031)  // Red
+    };
+
+    auto drawNotes = [&](const std::vector<MidiNote*>& notesList, juce::Colour baseColour) {
+        for (auto* note : notesList)
+        {
+            auto bounds = getNoteBounds(*note);
+            bounds.translate((float)area.getX(), (float)area.getY());
+            bounds.translate(0.0f, -(float)verticalOffset);
+            bounds.translate(-(float)horizontalOffset, 0.0f);
+
+            if (bounds.getRight() < area.getX() || bounds.getX() > area.getRight()) continue;
+
+            juce::Colour col = note->selected ? baseColour.brighter(0.4f) : baseColour;
+            g.setColour(col.withAlpha(0.85f));
+            g.fillRoundedRectangle(bounds, 2.0f);
+
+            g.setColour(juce::Colours::black.withAlpha(0.4f));
+            g.drawRoundedRectangle(bounds, 2.0f, 1.0f);
+        }
+    };
+
+    if (!activeClips.empty())
     {
-        auto bounds = getNoteBounds(*note);
-        bounds.translate((float)area.getX(), (float)area.getY());
-        bounds.translate(0.0f, -(float)verticalOffset);
-        bounds.translate(-(float)horizontalOffset, 0.0f);
-
-        if (bounds.getRight() < area.getX() || bounds.getX() > area.getRight()) continue;
-
-        juce::Colour col = note->selected ? noteColour.brighter(0.4f) : noteColour;
-        g.setColour(col.withAlpha(0.85f));
-        g.fillRoundedRectangle(bounds, 2.0f);
-
-        g.setColour(juce::Colours::black.withAlpha(0.4f));
-        g.drawRoundedRectangle(bounds, 2.0f, 1.0f);
-
-        // Remove velocity indicator from note bounds, it's drawn in the velocity lane now
+        // Render unified key editor (multiple clips)
+        for (size_t i = 0; i < activeClips.size(); ++i)
+        {
+            auto* clip = activeClips[i];
+            juce::Colour col = trackColours[i % 6];
+            
+            std::vector<MidiNote*> clipNotes;
+            for (auto* n : clip->notes) clipNotes.push_back(n);
+            
+            drawNotes(clipNotes, col);
+        }
+    }
+    else
+    {
+        // Fallback to local notes array
+        std::vector<MidiNote*> localNotes;
+        for (auto* n : notes) localNotes.push_back(n);
+        drawNotes(localNotes, noteColour);
     }
     
     // Create clip bounds to prevent notes drawing outside grid
