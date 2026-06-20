@@ -281,6 +281,10 @@ public:
     void recalculateDelayCompensation();
     int  getTrackLatencySamples(int trackIndex) const;
 
+    //── Zero-Latency Engine ──────────────────────────────────────────────────
+    void setPredictiveBuffering(bool enabled) { usePredictiveBuffering.store(enabled); }
+    bool isPredictiveBuffering() const { return usePredictiveBuffering.load(); }
+
     //── Pro-Level Metering ───────────────────────────────────────────────────
     LoudnessMeter& getMasterMeter() { return masterMeter_; }
 
@@ -396,6 +400,11 @@ private:
 
     // ── Surround Panners ──
     std::vector<SurroundPanner>     trackPanners_;
+
+    // ── Zero-Latency Engine ──
+    std::atomic<bool> usePredictiveBuffering { true };
+    juce::AudioBuffer<float> predictiveBuffer;
+    bool predictiveBufferReady { false };
 
     // ── Pro Meter ──
     LoudnessMeter masterMeter_;

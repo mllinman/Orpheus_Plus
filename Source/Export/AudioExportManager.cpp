@@ -36,10 +36,10 @@ void AudioExportManager::performExport(const juce::File& outputFileOrDir, const 
 {
     MasteringModule* mastering = audioEngine.getMasteringModule();
 
-    if (settings.spotifyPreset)
+    if (settings.enforceStandard)
     {
-        if (mastering) mastering->forceSpotifyPreset(true);
-        OrpheusLogger::logInfo("AudioExportManager: Spotify Preset active. Forcing target loudness.");
+        if (mastering) mastering->forceLufsTarget(settings.targetLUFS, settings.targetTruePeak);
+        OrpheusLogger::logInfo("AudioExportManager: Standards enforced. Target LUFS: " + juce::String(settings.targetLUFS) + " TP: " + juce::String(settings.targetTruePeak));
     }
 
     switch (settings.mode)
@@ -58,9 +58,9 @@ void AudioExportManager::performExport(const juce::File& outputFileOrDir, const 
             break;
     }
 
-    if (settings.spotifyPreset)
+    if (settings.enforceStandard)
     {
-        if (mastering) mastering->forceSpotifyPreset(false);
+        if (mastering) mastering->disableForceLufsTarget();
     }
 }
 

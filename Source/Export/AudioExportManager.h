@@ -23,7 +23,9 @@ public:
         int bitDepth { 24 };
         int quality { 192 }; // For mp3/ogg kbps
         ExportMode mode { ExportMode::MasterMix };
-        bool spotifyPreset { false };
+        bool enforceStandard { false };
+        float targetLUFS { -14.0f };
+        float targetTruePeak { -1.0f };
         std::vector<int> selectedTracks;
     };
 

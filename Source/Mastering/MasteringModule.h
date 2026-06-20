@@ -65,7 +65,8 @@ public:
     void setLimiterCeiling(float ceilingDB) { limiterCeiling = ceilingDB; }
     void setLimiterRelease(float ms)        { limiterRelease = ms; }
 
-    void forceSpotifyPreset(bool force);
+    void forceLufsTarget(float targetLufs, float targetTruePeak);
+    void disableForceLufsTarget();
 
     // Metering
     float getLUFS()       const { return currentLUFS.load(); }

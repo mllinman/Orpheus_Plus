@@ -81,11 +81,15 @@ MainComponent::MainComponent()
 
     // Initialize Sidebar / Mixer components (not tabbed)
     mixerPanel = std::make_unique<MixerPanel>(*audioEngine, appState);
-    addAndMakeVisible(mixerPanel.get());
+    addAndMakeVisible(projectSettingsBtn);
+    projectSettingsBtn.setColour(juce::TextButton::buttonColourId, juce::Colours::transparentBlack);
+    projectSettingsBtn.onClick = [this]() { toggleProjectSettings(); };
 
-    spectrumAnalyzer = std::make_unique<SpectrumAnalyzer>(*audioEngine);
-    addChildComponent(spectrumAnalyzer.get());
+    addAndMakeVisible(exportBtn);
+    exportBtn.setColour(juce::TextButton::buttonColourId, OrpheusLookAndFeel::accentPrimary());
+    exportBtn.onClick = [this]() { showExportDialog(); };
 
+    setupCallbacks();
     trackSettingsPanel = std::make_unique<TrackSettingsPanel>(*audioEngine, appState);
     addChildComponent(trackSettingsPanel.get());
     
@@ -140,6 +144,20 @@ void MainComponent::paint(juce::Graphics& g)
     g.fillAll(OrpheusLookAndFeel::bgDarkest());
 }
 
+void MainComponent::showExportDialog()
+{
+    if (exportDialog == nullptr) {
+        exportDialog = std::make_unique<ExportDialog>(appState.exportManager);
+        addChildComponent(exportDialog.get());
+        exportDialog->onCancel = [this]() { exportDialog->setVisible(false); };
+        exportDialog->onExportStarted = [this]() { exportDialog->setVisible(false); };
+    }
+    
+    exportDialog->setBounds(getLocalBounds().withSizeKeepingCentre(500, 560));
+    exportDialog->setVisible(true);
+    exportDialog->toFront(true);
+}
+
 void MainComponent::resized()
 {
     auto area = getLocalBounds();
@@ -151,6 +169,11 @@ void MainComponent::resized()
     // ── Bottom: Transport Bar (56px) ───────────────────────────────────
     if (transportBar)
         transportBar->setBounds(area.removeFromBottom(56));
+
+    auto topBar = area.removeFromTop(40);
+    auto settingsArea = topBar.removeFromRight(150);
+    projectSettingsBtn.setBounds(settingsArea.removeFromLeft(100).reduced(0, 10));
+    exportBtn.setBounds(settingsArea.removeFromRight(80).reduced(4, 10));
 
     // ── Layout Managers ────────────────────────────────────────────────
     if (showMixer)

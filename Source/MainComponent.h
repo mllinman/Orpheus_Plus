@@ -20,6 +20,9 @@
 #include "UI/ModulationMatrixPanel.h"
 #include "UI/VocalAutomationPanel.h"
 #include "UI/UserManualPanel.h"
+#include "UI/VoiceCloningPanel.h"
+#include "UI/ExportDialog.h"
+#include "Hardware/MackieControlSurface.h"
 #include "UI/PitchGamePanel.h"
 #include "UI/MacroControlPanel.h"
 #include "UI/ShortcutsSettingsPanel.h"
@@ -124,8 +127,10 @@ private:
     void showSettingsDialog();
     void showAudioCleanupDialog();
     void showAIHumanizerDialog();
-    void showProjectSettingsDialog();
-    void showAboutDialog();
+    void toggleProjectSettings();
+    void showExportDialog();
+    
+    // UI layout methodswAboutDialog();
     void updateLayout();
     void switchToView(int viewIndex);
 
@@ -205,8 +210,11 @@ private:
     juce::StretchableLayoutManager verticalLayout;
     juce::StretchableLayoutManager horizontalLayout;
     
-    std::unique_ptr<juce::StretchableLayoutResizerBar> verticalResizerBar;
-    std::unique_ptr<juce::StretchableLayoutResizerBar> horizontalResizerBar;
-
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MainComponent)
+    std::unique_ptr<    juce::TextButton projectSettingsBtn { "Project Settings" };
+    juce::TextButton exportBtn { "Export" };
+    
+    std::unique_ptr<ProjectSettingsPanel> projectSettingsPanel;
+    std::unique_ptr<ExportDialog> exportDialog;
+    
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MainComponent)
 };

@@ -588,10 +588,19 @@ void AudioEngine::alignTrackPhase(int trackIndex, int referenceTrackIndex)
 //──────────────────────────────────────────────────────────────────────────────
 void AudioEngine::audioDeviceAboutToStart(juce::AudioIODevice* device)
 {
+    // Realtime Audio Thread Priority Boosting
+    juce::Thread::setCurrentThreadPriority(10); 
+    
     currentSampleRate = device->getCurrentSampleRate();
     currentBlockSize  = device->getCurrentBufferSizeSamples();
     midiCollector.reset(currentSampleRate);
     processorGraph.prepareToPlay(currentSampleRate, currentBlockSize);
+    
+    if (usePredictiveBuffering.load()) {
+        predictiveBuffer.setSize(2, currentBlockSize);
+        predictiveBuffer.clear();
+        predictiveBufferReady = false;
+    }
 }
 
 void AudioEngine::audioDeviceStopped()
@@ -627,7 +636,32 @@ void AudioEngine::audioDeviceIOCallbackWithContext(
         }
     }
 
-    processAudioBlock(buffer);
+    if (usePredictiveBuffering.load())
+    {
+        if (predictiveBufferReady)
+        {
+            // Copy pre-computed buffer to output
+            for (int ch = 0; ch < numOutputChannels; ++ch)
+            {
+                if (ch < predictiveBuffer.getNumChannels())
+                    buffer.copyFrom(ch, 0, predictiveBuffer, ch, 0, numSamples);
+            }
+            predictiveBufferReady = false;
+        }
+        else
+        {
+            processAudioBlock(buffer);
+        }
+        
+        // Compute next block predictively
+        predictiveBuffer.setSize(numOutputChannels, numSamples, true);
+        processAudioBlock(predictiveBuffer);
+        predictiveBufferReady = true;
+    }
+    else
+    {
+        processAudioBlock(buffer);
+    }
 
     // Apply master volume
     buffer.applyGain(masterVolume.load());
