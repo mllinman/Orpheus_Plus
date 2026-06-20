@@ -905,14 +905,6 @@ void MainComponent::showProjectSettingsDialog()
 
     options.launchAsync();
 }
-    options.content.setOwned(panel);
-    options.dialogTitle = "Audio & MIDI Settings";
-    options.dialogBackgroundColour = getLookAndFeel().findColour(juce::ResizableWindow::backgroundColourId);
-    options.escapeKeyTriggersCloseButton = true;
-    options.useNativeTitleBar = false;
-    options.resizable = false;
-
-    options.launchAsync();
 }
 
 void MainComponent::showStemSeparationDialog()
