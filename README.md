@@ -66,6 +66,11 @@ With the foundational AI processing and dynamic UI ecosystem completed, the new 
 - **Lock-Free Architecture**: A complete audit and refactor of the audio graph using lock-free rings and atomic structures to achieve absolute zero-latency monitoring.
 - **Plugin Sandboxing**: Isolating VST3/AU plugins in separate processes to prevent external crashes from bringing down the DAW.
 
+### Phase 19 — Generative Sound Design & Advanced Spectral Processing
+- **Text-to-Sample Generation**: A dedicated panel for localized, ONNX-driven text-to-audio generation, allowing users to type "vintage 808 kick with tape saturation" and instantly drop it into the timeline.
+- **AI Spectral Carving**: Intelligent unmasking that analyzes multiple tracks and dynamically sculpts out conflicting frequencies in real-time.
+- **Advanced Macro Modulation Matrix**: A global LFO and Envelope routing matrix capable of targeting any parameter in the DAW for complex, generative sound design.
+
 ---
 
 ## Building & Installation
