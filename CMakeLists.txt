@@ -87,6 +87,7 @@ target_sources(OrpheusPlus PRIVATE
     Source/AudioToMidi/AudioToMidiConverter.cpp
     Source/PitchCorrection/VocalSuiteProcessor.cpp
     Source/AudioCleanup/AudioCleanupProcessor.cpp
+    Source/AudioCleanup/AIHumanizerProcessor.cpp
     Source/VoiceCloning/VoiceConversionProcessor.cpp
     Source/VoiceCloning/SpeakerEmbeddingExtractor.cpp
 
@@ -105,6 +106,7 @@ target_sources(OrpheusPlus PRIVATE
     Source/UI/TrackSettingsPanel.cpp
     Source/UI/StemSeparatorPanel.cpp
     Source/UI/AudioCleanupPanel.cpp
+    Source/UI/AIHumanizerPanel.cpp
     Source/UI/AutoTunePanel.cpp
     Source/UI/TablaturePanel.cpp
     Source/UI/SessionViewPanel.cpp
@@ -112,6 +114,7 @@ target_sources(OrpheusPlus PRIVATE
     Source/UI/VocalAutomationPanel.cpp
     Source/UI/VoiceCloningPanel.cpp
     Source/UI/AudioMidiSettingsPanel.cpp
+    Source/UI/ProjectSettingsPanel.cpp
     Source/UI/DockablePanel.cpp
     Source/UI/LibraryPanel.cpp
     Source/UI/UserManualPanel.cpp

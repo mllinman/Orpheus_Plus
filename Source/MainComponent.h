@@ -13,6 +13,7 @@
 #include "UI/StemSeparatorPanel.h"
 #include "UI/AudioCleanupPanel.h"
 #include "UI/AutoTunePanel.h"
+#include "UI/AIHumanizerPanel.h"
 #include "UI/TablaturePanel.h"
 #include "UI/LibraryPanel.h"
 #include "UI/SessionViewPanel.h"
@@ -110,7 +111,8 @@ public:
         cmdScratchPadSave,
         cmdScratchPadLoad,
         cmdImportAudio,
-        cmdShowUserManual
+        cmdShowUserManual,
+        cmdOpenAIHumanizer
     };
 
 private:
@@ -120,6 +122,7 @@ private:
     void showExportDialog();
     void showSettingsDialog();
     void showAudioCleanupDialog();
+    void showAIHumanizerDialog();
     void showAboutDialog();
     void updateLayout();
     void switchToView(int viewIndex);
@@ -160,6 +163,7 @@ private:
     std::unique_ptr<DockablePanel> pitchGameDockablePanel;
     std::unique_ptr<DockablePanel> macroControlPanel;
     std::unique_ptr<DockablePanel> shortcutsPanel;
+    std::unique_ptr<DockablePanel> aiHumanizerDockablePanel;
 
     // Component pointers (raw pointers for easy access)
     TimelineComponent* timeline = nullptr;
@@ -178,6 +182,7 @@ private:
     PitchGamePanel* pitchGame = nullptr;
     MacroControlPanel* macroControls = nullptr;
     ShortcutsSettingsPanel* shortcutsSettings = nullptr;
+    AIHumanizerPanel* aiHumanizer = nullptr;
 
     // Sidebars & Mixer (managed separately for now)
     std::unique_ptr<MixerPanel> mixerPanel;

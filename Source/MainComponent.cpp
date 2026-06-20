@@ -56,6 +56,7 @@ MainComponent::MainComponent()
     if (masteringModule) audioEngine->setMasteringModule(masteringModule);
     stemSeparator   = dynamic_cast<StemSeparatorPanel*>(addPanel(stemSeparatorPanel, "Stem Sep",   std::make_unique<StemSeparatorPanel>(*audioEngine, appState)));
     audioCleanup    = dynamic_cast<AudioCleanupPanel*>(addPanel(audioCleanupPanel,  "Cleanup",    std::make_unique<AudioCleanupPanel>(*audioEngine)));
+    aiHumanizer     = dynamic_cast<AIHumanizerPanel*>(addPanel(aiHumanizerDockablePanel, "AI Humanizer", std::make_unique<AIHumanizerPanel>(*audioEngine, appState, this)));
     autoTune        = dynamic_cast<AutoTunePanel*>(addPanel(autoTunePanel,      "AutoTune",   std::make_unique<AutoTunePanel>(*audioEngine)));
     pluginWorkspace = dynamic_cast<PluginWorkspacePanel*>(addPanel(pluginWorkspacePanel, "VST Plugins", std::make_unique<PluginWorkspacePanel>(*audioEngine, appState)));
     tablature       = dynamic_cast<TablaturePanel*>(addPanel(tablaturePanel, "Tablature", std::make_unique<TablaturePanel>(*audioEngine)));
@@ -273,6 +274,7 @@ juce::PopupMenu MainComponent::getMenuForIndex(int menuIndex, const juce::String
             menu.addSeparator();
             menu.addCommandItem(&commandManager, cmdOpenStemSeparation);
             menu.addCommandItem(&commandManager, cmdAudioCleanup);
+            menu.addCommandItem(&commandManager, cmdOpenAIHumanizer);
             menu.addCommandItem(&commandManager, cmdOpenAutoTune);
             menu.addSeparator();
             menu.addCommandItem(&commandManager, cmdToggleMixer);
@@ -292,6 +294,7 @@ juce::PopupMenu MainComponent::getMenuForIndex(int menuIndex, const juce::String
             menu.addCommandItem(&commandManager, cmdOpenStemSeparation);
             menu.addCommandItem(&commandManager, cmdAudioToMidi);
             menu.addCommandItem(&commandManager, cmdAudioCleanup);
+            menu.addCommandItem(&commandManager, cmdOpenAIHumanizer);
             menu.addCommandItem(&commandManager, cmdOpenAutoTune);
             break;
 
@@ -322,7 +325,7 @@ void MainComponent::getAllCommands(juce::Array<juce::CommandID>& commands)
         cmdExportMix, cmdExportStems,
         cmdOpenPluginBrowser, cmdOpenSettings,
         cmdToggleMixer, cmdAudioCleanup, cmdAbout, cmdQuit,
-        cmdOpenAutoTune, cmdToggleTrackSettings, cmdToggleLibraryPanel,
+        cmdOpenAutoTune, cmdOpenAIHumanizer, cmdToggleTrackSettings, cmdToggleLibraryPanel,
         cmdAddVocalTrack, cmdAddInstrumentTrack,
         cmdAddFolderTrack, cmdAddArrangerTrack,
         cmdImportAudio, cmdShowUserManual
@@ -437,6 +440,9 @@ void MainComponent::getCommandInfo(juce::CommandID commandID, juce::ApplicationC
         case cmdOpenAutoTune:
             result.setInfo("Auto-Tune", "Show the auto-tune panel", "AI", 0);
             result.setTicked(currentView == 5);
+            break;
+        case cmdOpenAIHumanizer:
+            result.setInfo("SUNO Humanizer", "Humanize AI generated tracks", "AI", 0);
             break;
         case cmdToggleTrackSettings:
             result.setInfo("Track Settings", "Show or hide the track settings panel", "View", 0);
@@ -816,6 +822,10 @@ bool MainComponent::perform(const InvocationInfo& info)
             switchToView(5);
             return true;
 
+        case cmdOpenAIHumanizer:
+            showAIHumanizerDialog();
+            return true;
+
         case cmdToggleTrackSettings:
             showTrackSettings = !showTrackSettings;
             if (showTrackSettings)
@@ -989,6 +999,16 @@ void MainComponent::showAudioCleanupDialog()
                     "Select an audio clip and the cleanup will be applied in real-time.");
             }
         }), true);
+}
+
+void MainComponent::showAIHumanizerDialog()
+{
+    // The panel is a dockable tab, but if they click the menu item, we can just switch to it.
+    // Assuming AI Humanizer is added as a panel. Wait, we added it to `addPanel`.
+    // Let's find its tab index. `mainTabbedView.getTabNames().indexOf("AI Humanizer")`
+    int idx = mainTabbedView.getTabNames().indexOf("AI Humanizer");
+    if (idx >= 0)
+        switchToView(idx);
 }
 
 void MainComponent::showExportDialog()
