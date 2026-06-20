@@ -26,6 +26,7 @@
 #include "UI/MacroControlPanel.h"
 #include "UI/ShortcutsSettingsPanel.h"
 #include "UI/ProjectSettingsPanel.h"
+#include "UI/ADRPanel.h"
 #include "UI/ExportDialog.h"
 #include "UI/WorkspaceManager.h"
 #include "UI/AICoPilotPanel.h"
@@ -84,6 +85,7 @@ private:
     ShortcutsSettingsPanel* shortcutsSettings;
     AIHumanizerPanel* aiHumanizer;
     AICoPilotPanel* aiCoPilot;
+    ADRPanel* adrPanel;
 
     std::unique_ptr<MixerPanel> mixerPanel;
     std::unique_ptr<SpectrumAnalyzer> spectrumAnalyzer;

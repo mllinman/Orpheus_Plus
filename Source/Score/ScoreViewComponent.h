@@ -15,8 +15,11 @@ public:
 private:
     void drawStaff(juce::Graphics& g, int yCenter);
     void drawNote(juce::Graphics& g, int pitch, int staffY, int xPos);
+    void exportToMusicXML();
 
+    juce::TextButton exportXmlBtn{"Export MusicXML"};
     MidiClip* activeClip = nullptr;
+    std::unique_ptr<juce::FileChooser> fileChooser;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ScoreViewComponent)
 };

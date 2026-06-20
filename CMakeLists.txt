@@ -158,6 +158,10 @@ target_sources(OrpheusPlus PRIVATE
 
     # Export Architecture
     Source/Export/AudioExportManager.cpp
+
+    # ADR
+    Source/AudioCleanup/ADRProcessor.cpp
+    Source/UI/ADRPanel.cpp
 )
 
 target_include_directories(OrpheusPlus PRIVATE

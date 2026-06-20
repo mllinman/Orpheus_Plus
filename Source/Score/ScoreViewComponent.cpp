@@ -3,6 +3,8 @@
 
 ScoreViewComponent::ScoreViewComponent()
 {
+    addAndMakeVisible(exportXmlBtn);
+    exportXmlBtn.onClick = [this] { exportToMusicXML(); };
 }
 
 ScoreViewComponent::~ScoreViewComponent()
@@ -41,6 +43,7 @@ void ScoreViewComponent::paint(juce::Graphics& g)
 
 void ScoreViewComponent::resized()
 {
+    exportXmlBtn.setBounds(10, 10, 120, 30);
 }
 
 void ScoreViewComponent::drawStaff(juce::Graphics& g, int yCenter)
@@ -65,4 +68,62 @@ void ScoreViewComponent::drawNote(juce::Graphics& g, int pitch, int staffY, int 
     
     // Draw stem
     g.drawLine((float)(xPos + 11), (float)(staffY + pitchOffset + 5), (float)(xPos + 11), (float)(staffY + pitchOffset - 30), 1.5f);
+}
+
+void ScoreViewComponent::exportToMusicXML()
+{
+    if (!activeClip || activeClip->midiData.getNumEvents() == 0)
+        return;
+
+    fileChooser = std::make_unique<juce::FileChooser>("Export MusicXML",
+                                                      juce::File::getSpecialLocation(juce::File::userDocumentsDirectory),
+                                                      "*.xml");
+
+    auto chooserFlags = juce::FileBrowserComponent::saveMode | juce::FileBrowserComponent::canSelectFiles;
+
+    fileChooser->launchAsync(chooserFlags, [this] (const juce::FileChooser& fc)
+    {
+        juce::File file = fc.getResult();
+        if (file != juce::File{})
+        {
+            juce::String xmlHeader = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n";
+            xmlHeader += "<!DOCTYPE score-partwise PUBLIC \"-//Recordare//DTD MusicXML 3.1 Partwise//EN\" \"http://www.musicxml.org/dtds/partwise.dtd\">\n";
+            xmlHeader += "<score-partwise version=\"3.1\">\n";
+            xmlHeader += "  <part-list>\n    <score-part id=\"P1\">\n      <part-name>Piano</part-name>\n    </score-part>\n  </part-list>\n";
+            xmlHeader += "  <part id=\"P1\">\n";
+            xmlHeader += "    <measure number=\"1\">\n";
+            
+            // Mocking note entries
+            for (auto* event : activeClip->midiData)
+            {
+                if (event->message.isNoteOn())
+                {
+                    xmlHeader += "      <note>\n";
+                    xmlHeader += "        <pitch>\n";
+                    // Super naive conversion
+                    int p = event->message.getNoteNumber();
+                    juce::String step = "C"; 
+                    if (p % 12 == 2) step = "D";
+                    else if (p % 12 == 4) step = "E";
+                    else if (p % 12 == 5) step = "F";
+                    else if (p % 12 == 7) step = "G";
+                    else if (p % 12 == 9) step = "A";
+                    else if (p % 12 == 11) step = "B";
+                    
+                    xmlHeader += "          <step>" + step + "</step>\n";
+                    xmlHeader += "          <octave>" + juce::String((p / 12) - 1) + "</octave>\n";
+                    xmlHeader += "        </pitch>\n";
+                    xmlHeader += "        <duration>1</duration>\n";
+                    xmlHeader += "        <type>quarter</type>\n";
+                    xmlHeader += "      </note>\n";
+                }
+            }
+            
+            xmlHeader += "    </measure>\n";
+            xmlHeader += "  </part>\n";
+            xmlHeader += "</score-partwise>\n";
+
+            file.replaceWithText(xmlHeader);
+        }
+    });
 }
