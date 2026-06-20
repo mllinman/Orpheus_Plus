@@ -35,7 +35,7 @@ AudioEngine::~AudioEngine()
 
 void AudioEngine::initialise()
 {
-    deviceManager.initialiseWithDefaultDevices(2, 2);
+    deviceManager.initialiseWithDefaultDevices(2, 12); // Request up to 12 channels for 7.1.4 routing
     deviceManager.addAudioCallback(this);
 
     // Enable all MIDI inputs
