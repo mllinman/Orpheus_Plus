@@ -139,6 +139,7 @@ target_sources(OrpheusPlus PRIVATE
     Source/UI/ShortcutsSettingsPanel.cpp
     Source/UI/MacroControlPanel.cpp
     Source/UI/TextToSamplePanel.cpp
+    Source/UI/AutoMixPanel.cpp
 
     # Transcription
     Source/Transcription/TablatureGenerator.cpp
@@ -154,6 +155,7 @@ target_sources(OrpheusPlus PRIVATE
     Source/AI/AIPluginHost.cpp
     Source/AI/ArrangementCoPilot.cpp
     Source/AI/TextToSampleGenerator.cpp
+    Source/AI/AutoMixer.cpp
     Source/Audio/MelodyCompleter.cpp
     Source/Mastering/LatentMatchEQ.cpp
     Source/Mastering/SpectralCarver.cpp
