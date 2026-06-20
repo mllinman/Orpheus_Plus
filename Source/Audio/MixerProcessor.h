@@ -38,6 +38,7 @@ public:
     float getRMSRight() const { return rmsRight.load(); }
 
     void setMasteringModule(MasteringModule* module) { masteringModule = module; }
+    MasteringModule* getMasteringModule() const { return masteringModule; }
 
 private:
     MasteringModule* masteringModule = nullptr;

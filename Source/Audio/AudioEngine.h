@@ -219,6 +219,7 @@ public:
     AudioToMidiConverter& getAudioToMidiConverter() { return *audioToMidi; }
 
     void setMasteringModule(MasteringModule* m);
+    MasteringModule* getMasteringModule() const;
 
     //── Export ───────────────────────────────────────────────────────────────
     void exportMix(const juce::File& outputFile,
@@ -228,7 +229,7 @@ public:
 
     // Track Getters
     int getTrackCount() const { return tracks.size(); }
-    AudioTrack* getTrack(int index) const 
+    OrpheusTrackInfo* getTrack(int index) const 
     { 
         if (index >= 0 && index < tracks.size()) return tracks[index]; 
         return nullptr; 

@@ -1,5 +1,6 @@
 #include "AudioExportManager.h"
 #include "../Util/OrpheusLogger.h"
+#include "../Mastering/MasteringModule.h"
 
 AudioExportManager::AudioExportManager(AudioEngine& engine)
     : audioEngine(engine)
@@ -31,9 +32,11 @@ void AudioExportManager::registerFormats()
 
 void AudioExportManager::performExport(const juce::File& outputFileOrDir, const ExportSettings& settings)
 {
+    MasteringModule* mastering = audioEngine.getMasteringModule();
+
     if (settings.spotifyPreset)
     {
-        // TODO: Signal MasteringModule to force -14 LUFS, -1 dB TP
+        if (mastering) mastering->forceSpotifyPreset(true);
         OrpheusLogger::logInfo("AudioExportManager: Spotify Preset active. Forcing target loudness.");
     }
 
@@ -51,6 +54,11 @@ void AudioExportManager::performExport(const juce::File& outputFileOrDir, const 
         case ExportMode::AISeparation:
             exportAISeparation(outputFileOrDir, settings);
             break;
+    }
+
+    if (settings.spotifyPreset)
+    {
+        if (mastering) mastering->forceSpotifyPreset(false);
     }
 }
 
@@ -84,9 +92,41 @@ void AudioExportManager::exportMasterMix(const juce::File& outputFile, const Exp
 
 void AudioExportManager::exportSelectedTracks(const juce::File& outputFile, const ExportSettings& settings)
 {
-    // TODO: Mute non-selected tracks, bounce, then restore states
     OrpheusLogger::logInfo("Exporting Selected Tracks to " + outputFile.getFullPathName());
+
+    auto numTracks = audioEngine.getTrackCount();
+    struct TrackState { bool mute; bool solo; };
+    std::vector<TrackState> originalStates(numTracks);
+
+    // Save states and mute non-selected
+    for (int i = 0; i < numTracks; ++i)
+    {
+        auto* track = audioEngine.getTrack(i);
+        if (track)
+        {
+            originalStates[i] = { track->mute, track->solo };
+            
+            bool isSelected = std::find(settings.selectedTracks.begin(), settings.selectedTracks.end(), i) != settings.selectedTracks.end();
+            if (!isSelected)
+            {
+                audioEngine.setTrackMute(i, true);
+            }
+        }
+    }
+
+    // Export
     exportMasterMix(outputFile, settings);
+
+    // Restore states
+    for (int i = 0; i < numTracks; ++i)
+    {
+        auto* track = audioEngine.getTrack(i);
+        if (track)
+        {
+            audioEngine.setTrackMute(i, originalStates[i].mute);
+            audioEngine.setTrackSolo(i, originalStates[i].solo);
+        }
+    }
 }
 
 void AudioExportManager::exportAutoStems(const juce::File& outputDirectory, const ExportSettings& settings)
@@ -94,25 +134,58 @@ void AudioExportManager::exportAutoStems(const juce::File& outputDirectory, cons
     OrpheusLogger::logInfo("Exporting Auto-Stems to " + outputDirectory.getFullPathName());
     outputDirectory.createDirectory();
 
-    // Save states
     auto numTracks = audioEngine.getTrackCount();
+    struct TrackState { bool mute; bool solo; };
+    std::vector<TrackState> originalStates(numTracks);
+
+    // Save states
+    for (int i = 0; i < numTracks; ++i)
+    {
+        auto* track = audioEngine.getTrack(i);
+        if (track)
+        {
+            originalStates[i] = { track->mute, track->solo };
+        }
+    }
 
     // Iterate and bounce
     for (int i = 0; i < numTracks; ++i)
     {
-        // Solo track i
-        // ... (requires adding `setSolo` or similar to AudioEngine)
-
         auto* track = audioEngine.getTrack(i);
         if (!track) continue;
 
-        juce::String fileName = juce::File::createLegalFileName(track->name) + settings.formatExtension;
+        // Isolate this track by muting all others
+        for (int j = 0; j < numTracks; ++j)
+        {
+            if (j == i)
+            {
+                audioEngine.setTrackMute(j, false);
+                audioEngine.setTrackSolo(j, true);
+            }
+            else
+            {
+                audioEngine.setTrackMute(j, true);
+                audioEngine.setTrackSolo(j, false);
+            }
+        }
+
+        juce::String trackName = track->name.isEmpty() ? "Track_" + juce::String(i + 1) : track->name;
+        juce::String fileName = juce::File::createLegalFileName(trackName) + settings.formatExtension;
         auto stemFile = outputDirectory.getChildFile(fileName);
         
         exportMasterMix(stemFile, settings);
     }
 
     // Restore states
+    for (int i = 0; i < numTracks; ++i)
+    {
+        auto* track = audioEngine.getTrack(i);
+        if (track)
+        {
+            audioEngine.setTrackMute(i, originalStates[i].mute);
+            audioEngine.setTrackSolo(i, originalStates[i].solo);
+        }
+    }
 }
 
 void AudioExportManager::exportAISeparation(const juce::File& outputDirectory, const ExportSettings& settings)

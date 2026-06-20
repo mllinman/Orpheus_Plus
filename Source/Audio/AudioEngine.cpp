@@ -85,6 +85,18 @@ void AudioEngine::setMasteringModule(MasteringModule* m)
     }
 }
 
+MasteringModule* AudioEngine::getMasteringModule() const
+{
+    if (masterNode)
+    {
+        if (auto* mixer = dynamic_cast<MixerProcessor*>(masterNode->getProcessor()))
+        {
+            return mixer->getMasteringModule();
+        }
+    }
+    return nullptr;
+}
+
 //──────────────────────────────────────────────────────────────────────────────
 // Transport
 //──────────────────────────────────────────────────────────────────────────────

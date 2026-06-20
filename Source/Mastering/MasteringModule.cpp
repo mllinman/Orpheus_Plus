@@ -505,3 +505,19 @@ void MasteringModule::setMBThreshold(int band, float thresh) { multibandComp.set
 void MasteringModule::setMBRatio(int band, float ratio) { multibandComp.setRatio(band, ratio); }
 void MasteringModule::setMBAttack(int band, float ms) { multibandComp.setAttack(band, ms); }
 void MasteringModule::setMBRelease(int band, float ms) { multibandComp.setRelease(band, ms); }
+
+void MasteringModule::forceSpotifyPreset(bool force)
+{
+    if (force)
+    {
+        setAutoLUFSEnabled(true);
+        setTargetLUFS(-14.0f);
+        setLimiterEnabled(true);
+        setLimiterCeiling(-1.0f);
+    }
+    else
+    {
+        setAutoLUFSEnabled(false);
+        setLimiterCeiling(-0.1f);
+    }
+}

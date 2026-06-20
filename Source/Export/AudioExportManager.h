@@ -24,6 +24,7 @@ public:
         int quality { 192 }; // For mp3/ogg kbps
         ExportMode mode { ExportMode::MasterMix };
         bool spotifyPreset { false };
+        std::vector<int> selectedTracks;
     };
 
     // Registers all format writers (WAV, FLAC, OGG, AIFF, and native MP3/AAC)

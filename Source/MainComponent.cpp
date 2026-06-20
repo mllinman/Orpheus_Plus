@@ -1043,6 +1043,13 @@ void MainComponent::showExportDialog()
 
             settings.mode = static_cast<AudioExportManager::ExportMode>(modeIdx);
 
+            if (settings.mode == AudioExportManager::ExportMode::SelectedTracks)
+            {
+                int selIdx = appState.getSelectedTrackIndex();
+                if (selIdx >= 0)
+                    settings.selectedTracks.push_back(selIdx);
+            }
+
             bool isDir = (settings.mode == AudioExportManager::ExportMode::AutoStems || 
                           settings.mode == AudioExportManager::ExportMode::AISeparation);
 
