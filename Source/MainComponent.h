@@ -30,6 +30,10 @@
 #include "UI/ExportDialog.h"
 #include "UI/WorkspaceManager.h"
 #include "UI/AICoPilotPanel.h"
+#include "UI/ToolbarComponent.h"
+#include "UI/StatusBar.h"
+#include "UI/TextToSamplePanel.h"
+#include "UI/AutoMixPanel.h"
 
 class MainComponent : public juce::Component
 {
@@ -56,6 +60,8 @@ public:
     void setupCallbacks();
 
 private:
+    void wireToolbarCallbacks();
+
     OrpheusLookAndFeel orpheusLookAndFeel;
     AppState appState;
     std::unique_ptr<AudioEngine> audioEngine;
@@ -63,30 +69,34 @@ private:
     std::unique_ptr<ProjectManager> projectManager;
     juce::ApplicationCommandManager commandManager;
 
-    std::unique_ptr<WorkspaceManager> workspace;
-    
+    // Layout components (top to bottom)
+    std::unique_ptr<ToolbarComponent> toolbar;
     std::unique_ptr<TransportBar> transportBar;
+    std::unique_ptr<WorkspaceManager> workspace;
+    std::unique_ptr<StatusBar> statusBar;
 
-    TimelineComponent* timeline;
-    PianoRollComponent* pianoRoll;
-    MasteringModule* masteringModule;
-    StemSeparatorPanel* stemSeparator;
-    AudioCleanupPanel* audioCleanup;
-    AutoTunePanel* autoTune;
-    PluginWorkspacePanel* pluginWorkspace;
-    TablaturePanel* tablature;
-    SessionViewPanel* sessionView;
-    ModulationMatrixPanel* modulationMatrix;
-    VocalAutomationPanel* vocalAutomation;
-    VoiceCloningPanel* voiceCloning;
-    UserManualPanel* userManual;
-    PitchGamePanel* pitchGame;
-    MacroControlPanel* macroControls;
-    ShortcutsSettingsPanel* shortcutsSettings;
-    AIHumanizerPanel* aiHumanizer;
-    AICoPilotPanel* aiCoPilot;
-    ADRPanel* adrPanel;
+    // Panel raw pointers (owned by workspace zones)
+    TimelineComponent* timeline = nullptr;
+    PianoRollComponent* pianoRoll = nullptr;
+    MasteringModule* masteringModule = nullptr;
+    StemSeparatorPanel* stemSeparator = nullptr;
+    AudioCleanupPanel* audioCleanup = nullptr;
+    AutoTunePanel* autoTune = nullptr;
+    PluginWorkspacePanel* pluginWorkspace = nullptr;
+    TablaturePanel* tablature = nullptr;
+    SessionViewPanel* sessionView = nullptr;
+    ModulationMatrixPanel* modulationMatrix = nullptr;
+    VocalAutomationPanel* vocalAutomation = nullptr;
+    VoiceCloningPanel* voiceCloning = nullptr;
+    UserManualPanel* userManual = nullptr;
+    PitchGamePanel* pitchGame = nullptr;
+    MacroControlPanel* macroControls = nullptr;
+    ShortcutsSettingsPanel* shortcutsSettings = nullptr;
+    AIHumanizerPanel* aiHumanizer = nullptr;
+    AICoPilotPanel* aiCoPilot = nullptr;
+    ADRPanel* adrPanel = nullptr;
 
+    // Owned panels (for bottom tabs / sidebars)
     std::unique_ptr<MixerPanel> mixerPanel;
     std::unique_ptr<SpectrumAnalyzer> spectrumAnalyzer;
     std::unique_ptr<TrackSettingsPanel> trackSettingsPanel;
@@ -94,11 +104,6 @@ private:
 
     std::unique_ptr<ProjectSettingsPanel> projectSettingsPanel;
     std::unique_ptr<ExportDialog> exportDialog;
-
-    juce::TextButton projectSettingsBtn { "Project Settings" };
-    juce::TextButton exportBtn { "Export" };
-
-    juce::OwnedArray<DockablePanel> dockablePanels;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MainComponent)
 };

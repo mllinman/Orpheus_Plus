@@ -140,6 +140,9 @@ target_sources(OrpheusPlus PRIVATE
     Source/UI/MacroControlPanel.cpp
     Source/UI/TextToSamplePanel.cpp
     Source/UI/AutoMixPanel.cpp
+    Source/UI/ToolbarComponent.cpp
+    Source/UI/CollapsiblePanel.cpp
+    Source/UI/StatusBar.cpp
 
     # Transcription
     Source/Transcription/TablatureGenerator.cpp

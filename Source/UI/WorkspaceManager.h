@@ -1,7 +1,13 @@
 #pragma once
 #include <JuceHeader.h>
-#include "DockablePanel.h"
+#include "CollapsiblePanel.h"
 
+//==============================================================================
+// WorkspaceManager — 5-zone DAW layout (Reaper/Cubase-inspired).
+//
+// Layout:  [LeftSidebar | Timeline + BottomTabs | RightSidebar]
+//          All zones separated by draggable resizer bars.
+//==============================================================================
 class WorkspaceManager : public juce::Component
 {
 public:
@@ -11,30 +17,58 @@ public:
     void resized() override;
     void paint(juce::Graphics& g) override;
 
-    // Registers a panel in the workspace (top, bottom, left, right, or center)
-    enum class Zone { Left, Right, Top, Bottom, Center };
-    void addPanel(DockablePanel* panel, Zone zone);
-    void removePanel(DockablePanel* panel);
+    // Zone assignment for panels
+    enum class Zone { Timeline, BottomTabs, LeftSidebar, RightSidebar };
 
-    // Save and load workspace layouts
+    // Add a component to a zone
+    void addToTimeline(juce::Component* timeline);
+    void addToBottomTab(const juce::String& name, juce::Component* content);
+    void addToLeftSidebar(const juce::String& name, std::unique_ptr<juce::Component> content);
+    void addToRightSidebar(const juce::String& name, std::unique_ptr<juce::Component> content);
+
+    // Show a specific bottom tab by name
+    void showBottomTab(const juce::String& name);
+
+    // Toggle sidebar visibility
+    void setLeftSidebarVisible(bool visible);
+    void setRightSidebarVisible(bool visible);
+    bool isLeftSidebarVisible() const { return leftSidebarVisible; }
+    bool isRightSidebarVisible() const { return rightSidebarVisible; }
+
+    // Layout persistence
     juce::ValueTree saveLayout();
     void loadLayout(const juce::ValueTree& state);
 
-    // Expose tab switching for center panels
-    void showCenterPanel(const juce::String& panelName);
-
 private:
-    struct PanelInfo {
-        DockablePanel* panel;
-        Zone zone;
+    // Timeline (top, permanent)
+    juce::Component* timelineComponent = nullptr;
+
+    // Bottom tabbed zone
+    std::unique_ptr<juce::TabbedComponent> bottomTabs;
+
+    // Sidebars — stacked CollapsiblePanels inside a viewport
+    struct SidebarContainer : public juce::Component
+    {
+        juce::OwnedArray<CollapsiblePanel> panels;
+        void resized() override;
+        void addPanel(const juce::String& name, std::unique_ptr<juce::Component> content);
     };
-    std::vector<PanelInfo> panels;
 
-    // Tabbed container for center zone panels
-    std::unique_ptr<juce::TabbedComponent> centerTabs;
+    juce::Viewport leftViewport, rightViewport;
+    SidebarContainer leftContainer, rightContainer;
 
-    juce::StretchableLayoutManager horizontalLayout;
-    juce::StretchableLayoutManager verticalLayout;
+    bool leftSidebarVisible = true;
+    bool rightSidebarVisible = true;
+
+    int leftSidebarWidth = 240;
+    int rightSidebarWidth = 280;
+
+    // Resizer bars
+    juce::StretchableLayoutManager verticalLayout;   // Timeline vs BottomTabs
+    std::unique_ptr<juce::StretchableLayoutResizerBar> timelineBottomResizer;
+
+    // Static sizes
+    static constexpr int resizerBarSize = 5;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(WorkspaceManager)
 };
