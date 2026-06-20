@@ -93,6 +93,25 @@ With the major AI and composition paradigms successfully established, the future
 - **Custom Scripting Environment**: Exposing internal DAW states and actions to a Lua or Python scripting engine so power users can create macro scripts or custom generative sequences.
 - **Third-Party AI Plugins API**: Allowing third-party developers to plug custom ONNX/TensorFlow Lite models directly into Orpheus Plus's generic inference handlers.
 
+### Phase 10 — The Ultimate Co-Producer (Generative AI)
+- **Arrangement Co-Pilot**: An AI agent that analyzes your song's energy curve and automatically suggests/generates risers, drops, and transition fills.
+- **Text-to-Sample Generation**: Integrated text prompt bar to generate missing samples on the fly (e.g., "Give me a distorted 808 kick drum").
+- **Generative MIDI & Melody Completion**: Highlight a MIDI region and have the DAW auto-complete the melody in the style of the current project.
+
+### Phase 11 — The Holographic Studio (Spatial & WebXR)
+- **3D Spatial Panning**: Binaural audio rendering utilizing webcam head-tracking to simulate mixing in a physical 3D acoustic room.
+- **WebXR / VR Integration**: A bridge to cast the DAW interface and timeline into virtual reality for immersive spatial mixing.
+- **Visual Dolby Atmos Renderer**: Real-time 3D spherical visualization of audio objects moving through the Atmos 7.1.4 soundstage.
+
+### Phase 12 — Neural Acoustics & Mastering
+- **Latent Space Match-EQ**: Upload a reference track, and the AI learns its exact compression, saturation, and EQ characteristics via latent embeddings, dynamically applying them to your master bus.
+- **Intelligent Track Spacing**: Automatic spectral carving (e.g., dipping the exact frequencies of the guitar only when the vocal is singing) without the need for manual sidechain routing.
+- **Perfect Neural Vocal Restorer**: Synthesizing perfectly tuned human vocals from bad recordings, while dynamically re-injecting unvoiced stochastic analog noise to sound 100% human and bypass AI detectors.
+
+### Phase 13 — Distributed Processing Architecture
+- **Peer-to-Peer DSP Offloading**: Native capability to offload heavy VSTs and ONNX inferences to secondary computers on the local network (similar to Vienna Ensemble Pro but auto-configuring).
+- **WASM (WebAssembly) Engine**: Ability to compile and export the entire project state and engine to run natively inside a web browser, bridging the gap back to cloud distribution.
+
 ---
 
 ## Migrating from Orpheus (Web)
