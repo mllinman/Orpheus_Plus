@@ -123,7 +123,7 @@ target_sources(OrpheusPlus PRIVATE
     Source/Transcription/TablatureGenerator.cpp
 
     # Utility
-    # Phase 8 & 9 Expansion Modules
+    # Phase 8, 9, 10, 12 Expansion Modules
     Source/Hardware/MackieControlSurface.cpp
     Source/Cloud/CloudSyncManager.cpp
     Source/Video/VideoTrackComponent.cpp
@@ -131,6 +131,11 @@ target_sources(OrpheusPlus PRIVATE
     Source/Mastering/AdvancedConvolutionReverb.cpp
     Source/Scripting/ScriptingEngine.cpp
     Source/AI/AIPluginHost.cpp
+    Source/AI/ArrangementCoPilot.cpp
+    Source/AI/TextToSampleGenerator.cpp
+    Source/Audio/MelodyCompleter.cpp
+    Source/Mastering/LatentMatchEQ.cpp
+    Source/Mastering/SpectralCarver.cpp
 
 )
 
