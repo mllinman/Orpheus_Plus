@@ -536,7 +536,7 @@ bool MainComponent::perform(const InvocationInfo& info)
         {
             auto chooser = std::make_shared<juce::FileChooser>("Import Audio",
                 juce::File::getSpecialLocation(juce::File::userMusicDirectory),
-                "*.wav;*.mp3;*.aiff;*.flac");
+                "*.wav;*.mp3;*.aiff;*.flac;*.aac;*.alac;*.m4a;*.ogg");
             chooser->launchAsync(juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectFiles,
                 [this, chooser](const juce::FileChooser& c) {
                     if (c.getResult().existsAsFile())
@@ -1043,7 +1043,7 @@ void MainComponent::showExportDialog()
     auto* alert = new juce::AlertWindow("Export Engine", "Configure export settings:", juce::MessageBoxIconType::NoIcon);
 
     alert->addComboBox("mode", {"Master Mix", "Selected Tracks", "Auto-Stems (Bounce)", "AI Stem Separation"}, "Mode:");
-    alert->addComboBox("format", {"WAV", "FLAC", "OGG", "AIFF", "MP3", "AAC"}, "Format:");
+    alert->addComboBox("format", {"WAV", "FLAC", "OGG", "AIFF", "MP3", "AAC", "ALAC"}, "Format:");
     alert->addComboBox("sampleRate", {"44100 Hz", "48000 Hz", "88200 Hz", "96000 Hz"}, "Sample Rate:");
     alert->addComboBox("bitDepth", {"16-bit", "24-bit", "32-bit float"}, "Bit Depth:");
     
@@ -1079,7 +1079,7 @@ void MainComponent::showExportDialog()
             }
             else
             {
-                juce::String exts[] = { ".wav", ".flac", ".ogg", ".aiff", ".mp3", ".aac" };
+                juce::String exts[] = { ".wav", ".flac", ".ogg", ".aiff", ".mp3", ".aac", ".m4a" };
                 int sampleRates[] = { 44100, 48000, 88200, 96000 };
                 int bitDepths[]   = { 16, 24, 32 };
                 

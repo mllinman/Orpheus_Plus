@@ -278,9 +278,9 @@ void AudioExportManager::exportAISeparation(const juce::File& outputDirectory, c
         copyOrEncode(result.vocals, "Vocals");
         copyOrEncode(result.drums, "Drums");
         copyOrEncode(result.bass, "Bass");
-        copyOrEncode(result.guitar, "Guitar");
-        copyOrEncode(result.piano, "Piano");
-        copyOrEncode(result.other, "Other");
+        copyOrEncode(result.guitar, "Electric Guitar");
+        copyOrEncode(result.piano, "Synth");
+        copyOrEncode(result.other, "Percussion");
         
         // Cleanup temp file
         tempFile.deleteFile();
