@@ -73,6 +73,7 @@ MainComponent::MainComponent()
     pitchGame        = dynamic_cast<PitchGamePanel*>(addPanel("Pitch Game", std::make_unique<PitchGamePanel>(*audioEngine), WorkspaceManager::Zone::Center));
     macroControls    = dynamic_cast<MacroControlPanel*>(addPanel("Macro Controls", std::make_unique<MacroControlPanel>(), WorkspaceManager::Zone::Bottom));
     shortcutsSettings = dynamic_cast<ShortcutsSettingsPanel*>(addPanel("Shortcuts", std::make_unique<ShortcutsSettingsPanel>(commandManager), WorkspaceManager::Zone::Center));
+    aiCoPilot        = dynamic_cast<AICoPilotPanel*>(addPanel("AI Co-Pilot", std::make_unique<AICoPilotPanel>(*audioEngine), WorkspaceManager::Zone::Right));
 
     // Wire the Pitch Game to the AutoTune processor for live pitch data
     if (pitchGame != nullptr && autoTune != nullptr)

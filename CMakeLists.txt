@@ -53,6 +53,10 @@ target_sources(OrpheusPlus PRIVATE
     Source/UI/WorkspaceManager.h
     Source/UI/SpatialPannerUI.cpp
     Source/UI/SpatialPannerUI.h
+    Source/AI/CompositionCoPilot.cpp
+    Source/AI/CompositionCoPilot.h
+    Source/UI/AICoPilotPanel.cpp
+    Source/UI/AICoPilotPanel.h
     Source/Audio/SpatialReverbProcessor.cpp
     Source/Audio/SpatialReverbProcessor.h
     Source/Mastering/PhaseAlignmentAI.cpp
