@@ -37,6 +37,9 @@ TrackLaneComponent::TrackLaneComponent(int idx, AudioEngine& e, AppState& s,
     volumeSlider.setTextBoxStyle(juce::Slider::NoTextBox, false, 0, 0);
     volumeSlider.onValueChange = [this] {
         audioEngine.setTrackVolume(trackIndex, (float)volumeSlider.getValue());
+        if (audioEngine.isPlaying()) {
+            audioEngine.recordAutomationPoint(trackIndex, "vol", audioEngine.getPlayheadPosition(), (float)volumeSlider.getValue());
+        }
     };
     addAndMakeVisible(volumeSlider);
 
@@ -47,6 +50,9 @@ TrackLaneComponent::TrackLaneComponent(int idx, AudioEngine& e, AppState& s,
     panSlider.setTextBoxStyle(juce::Slider::NoTextBox, false, 0, 0);
     panSlider.onValueChange = [this] {
         audioEngine.setTrackPan(trackIndex, (float)panSlider.getValue());
+        if (audioEngine.isPlaying()) {
+            audioEngine.recordAutomationPoint(trackIndex, "pan", audioEngine.getPlayheadPosition(), (float)panSlider.getValue());
+        }
     };
     addAndMakeVisible(panSlider);
 
@@ -254,6 +260,18 @@ void TrackLaneComponent::paint(juce::Graphics& g)
         auto laneArea = bounds.withTop(currentY).withHeight(TimelineComponent::AUTOMATION_LANE_H);
         paintAutomationLane(g, laneArea, paramID);
         currentY += TimelineComponent::AUTOMATION_LANE_H;
+    }
+
+    if (currentDragMode == DragMode::SwipeComp && draggingTakeIndex >= 0)
+    {
+        int minX = juce::jmin(dragStartPos.x, dragCurrentPos.x);
+        int maxX = juce::jmax(dragStartPos.x, dragCurrentPos.x);
+        int takeY = TimelineComponent::DEFAULT_TRACK_H + draggingTakeIndex * TimelineComponent::TAKE_LANE_H;
+        juce::Rectangle<int> swipeArea(minX, takeY, maxX - minX, TimelineComponent::TAKE_LANE_H);
+        g.setColour(juce::Colours::yellow.withAlpha(0.3f));
+        g.fillRect(swipeArea);
+        g.setColour(juce::Colours::yellow);
+        g.drawRect(swipeArea, 2);
     }
 }
 
@@ -713,6 +731,36 @@ void TrackLaneComponent::mouseDown(const juce::MouseEvent& e)
                 targetCurve = &trackInfo.automationCurves.back();
             }
 
+            if (e.mods.isRightButtonDown())
+            {
+                juce::PopupMenu m;
+                m.addItem(1, "Smooth Curve");
+                m.addItem(2, "Delete All Points");
+                
+                juce::Component::SafePointer<TrackLaneComponent> safeThis(this);
+                juce::String paramName = currentAutomationParam;
+                
+                m.showMenuAsync(juce::PopupMenu::Options{}, [safeThis, paramName](int res) {
+                    if (safeThis != nullptr) {
+                        auto& trackInfo = safeThis->audioEngine.getTrackInfo(safeThis->trackIndex);
+                        AutomationCurve* curve = nullptr;
+                        for (auto& c : trackInfo.automationCurves) {
+                            if (c.parameterID == paramName) { curve = &c; break; }
+                        }
+                        if (curve) {
+                            if (res == 1) {
+                                curve->smoothPointsInRange(0.0, 99999.0, 5);
+                                safeThis->repaint();
+                            } else if (res == 2) {
+                                curve->points.clear();
+                                safeThis->repaint();
+                            }
+                        }
+                    }
+                });
+                return;
+            }
+
             int hitIndex = -1;
             for (int j = 0; j < (int)targetCurve->points.size(); ++j)
             {
@@ -1139,9 +1187,6 @@ void TrackLaneComponent::mouseDrag(const juce::MouseEvent& e)
         }
         
         // ── Crossfade Logic (existing) ──────────────────────────────
-        // ... (I'll re-apply this in the full block below)
-
-        // ── Crossfade Logic ──────────────────────────────────────────
         // Check for overlaps with neighbors
         auto& clips = trackInfo.clips;
         Clip* nextClip = nullptr;

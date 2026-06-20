@@ -1,5 +1,5 @@
 #pragma once
-#include <JuceHeader.h>
+namespace juce { template <typename Type> class AudioBuffer; }
 #include <vector>
 
 class TransientDetector

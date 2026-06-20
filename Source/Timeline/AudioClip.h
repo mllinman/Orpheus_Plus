@@ -25,6 +25,15 @@ public:
     bool   isLoaded { false };
     bool   loopEnabled { true };
     
+    // Quick fades (seconds)
+    double fadeInLength { 0.01 };
+    double fadeOutLength { 0.01 };
+    
+    // Transients
+    std::vector<double> transientHitpoints;
+    void detectTransients();
+
+    
     // Warping and Time-Stretching
     enum class WarpMode { Complex, Beats, Texture, Repitch, Off };
     WarpMode warpMode { WarpMode::Complex };

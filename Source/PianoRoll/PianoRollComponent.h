@@ -35,9 +35,9 @@ public:
     void handleIncomingMidiMessage(juce::MidiInput* source, const juce::MidiMessage& message) override;
 
     void loadMidiSequence(const juce::MidiMessageSequence& seq);
+    void setActiveClips(const std::vector<MidiClip*>& clips);
+    void syncToClips();
     juce::MidiMessageSequence getMidiSequence() const;
-    void setActiveClip(class MidiClip* clip);
-    void syncToClip();
 
     void setQuantization(double beatDivision) { quantizeDivision = beatDivision; }
     void selectAll();
@@ -78,6 +78,7 @@ private:
 
     juce::OwnedArray<MidiNote> notes;
     class MidiClip* activeClip = nullptr;
+    std::vector<MidiClip*> activeClips;
     MidiNote* draggingNote    = nullptr;
     MidiNote* resizingNote    = nullptr;
     bool      isDrawingMode   = true;

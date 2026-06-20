@@ -1,4 +1,5 @@
 #include "AudioClip.h"
+#include "../Audio/TransientDetector.h"
 
 AudioClip::AudioClip(const juce::File& f, double start)
     : Clip(Type::Audio), sourceFile(f)
@@ -61,6 +62,9 @@ void AudioClip::loadAudioData(juce::AudioFormatManager& formatManager)
         duration = lengthInSamples / sampleRate;
         isLoaded = true;
         stretcher.reset(sampleRate, reader->numChannels);
+
+        detectTransients();
+
 
         // Try to detect BPM from filename (e.g. "loop_120bpm.wav")
         auto filename = sourceFile.getFileNameWithoutExtension().toLowerCase();
@@ -147,7 +151,20 @@ void AudioClip::paint(juce::Graphics& g, juce::Rectangle<float> clipBounds, juce
         }
     }
 
+    // Transients
+    if (!transientHitpoints.empty())
+    {
+        g.setColour(juce::Colours::cyan.withAlpha(0.3f));
+        for (double t : transientHitpoints)
+        {
+            if (t > duration) break;
+            float px = clipBounds.getX() + (float)(t / duration * clipBounds.getWidth());
+            g.drawVerticalLine((int)px, clipBounds.getY(), clipBounds.getBottom());
+        }
+    }
+
     // Border
+
     g.setColour(selected ? juce::Colours::white : colour.brighter(0.2f));
     g.drawRoundedRectangle(clipBounds, 3.0f, 1.0f);
     
@@ -181,4 +198,10 @@ void AudioClip::paint(juce::Graphics& g, juce::Rectangle<float> clipBounds, juce
             g.fillPath(p);
         }
     }
+}
+
+void AudioClip::detectTransients()
+{
+    if (!isLoaded || sampleRate <= 0.0) return;
+    transientHitpoints = TransientDetector::detectTransients(audioData, sampleRate, 0.4f, 0.05f);
 }

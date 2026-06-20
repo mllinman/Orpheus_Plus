@@ -4,16 +4,17 @@
 /**
  * A simple polyphonic synthesizer voice for Orpheus Plus.
  */
-class OrpheusVoice : public juce::SynthesiserVoice
+class OrpheusVoice : public juce::MPESynthesiserVoice
 {
 public:
     OrpheusVoice();
     
-    bool canPlaySound(juce::SynthesiserSound* sound) override;
-    void startNote(int midiNoteNumber, float velocity, juce::SynthesiserSound* sound, int currentPitchWheelPosition) override;
-    void stopNote(float velocity, bool allowTailOff) override;
-    void pitchWheelMoved(int newPitchWheelValue) override;
-    void controllerMoved(int controllerNumber, int newControllerValue) override;
+    void noteStarted() override;
+    void noteStopped(bool allowTailOff) override;
+    void notePitchbendChanged() override;
+    void notePressureChanged() override;
+    void noteTimbreChanged() override;
+    void noteKeyStateChanged() override;
     void renderNextBlock(juce::AudioBuffer<float>& outputBuffer, int startSample, int numSamples) override;
 
 private:
@@ -41,9 +42,9 @@ public:
 };
 
 /**
- * The main synthesizer class.
+ * The main synthesizer class supporting MPE.
  */
-class OrpheusSynth : public juce::Synthesiser
+class OrpheusSynth : public juce::MPESynthesiser
 {
 public:
     OrpheusSynth();

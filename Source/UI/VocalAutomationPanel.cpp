@@ -228,8 +228,9 @@ void VocalAutomationPanel::timerCallback()
     }
 
     // Update waveform ring buffer with current pitch as visualization
-    waveformBuffer[waveformWritePos % 128] = detectedPitch > 0.0f
-        ? std::sin(detectedPitch * 0.02f + (float)waveformWritePos * 0.15f) * 0.5f
+    float currentPitch = detectedPitch.getCurrentValue();
+    waveformBuffer[waveformWritePos % 128] = currentPitch > 0.0f
+        ? std::sin(currentPitch * 0.02f + (float)waveformWritePos * 0.15f) * 0.5f
         : 0.0f;
     waveformWritePos++;
 
@@ -294,12 +295,13 @@ void VocalAutomationPanel::paintVocalWaveform(juce::Graphics& g, juce::Rectangle
     // Pitch readout
     g.setColour(OrpheusLookAndFeel::textPrimary());
     g.setFont(juce::Font(14.0f).boldened());
-    if (detectedPitch > 20.0f)
+    float currentPitch = detectedPitch.getCurrentValue();
+    if (currentPitch > 20.0f)
     {
-        int midiNote = (int)std::round(69.0 + 12.0 * std::log2(detectedPitch / 440.0));
+        int midiNote = (int)std::round(69.0 + 12.0 * std::log2(currentPitch / 440.0));
         const char* noteNames[] = { "C","C#","D","D#","E","F","F#","G","G#","A","A#","B" };
         juce::String noteName = juce::String(noteNames[midiNote % 12]) + juce::String(midiNote / 12 - 1);
-        g.drawText(noteName + "  " + juce::String(detectedPitch, 1) + " Hz",
+        g.drawText(noteName + "  " + juce::String(currentPitch, 1) + " Hz",
                    waveArea.removeFromRight(160).withTrimmedTop(4),
                    juce::Justification::centredRight);
     }

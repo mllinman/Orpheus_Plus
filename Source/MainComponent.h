@@ -20,6 +20,8 @@
 #include "UI/VocalAutomationPanel.h"
 #include "UI/UserManualPanel.h"
 #include "UI/PitchGamePanel.h"
+#include "UI/MacroControlPanel.h"
+#include "UI/ShortcutsSettingsPanel.h"
 #include "Project/ProjectManager.h"
 #include "Project/AppState.h"
 
@@ -153,6 +155,8 @@ private:
     std::unique_ptr<DockablePanel> voiceCloningPanel;
     std::unique_ptr<DockablePanel> userManualDockablePanel;
     std::unique_ptr<DockablePanel> pitchGameDockablePanel;
+    std::unique_ptr<DockablePanel> macroControlPanel;
+    std::unique_ptr<DockablePanel> shortcutsPanel;
 
     // Component pointers (raw pointers for easy access)
     TimelineComponent* timeline = nullptr;
@@ -169,6 +173,8 @@ private:
     class VoiceCloningPanel* voiceCloning = nullptr;
     UserManualPanel* userManual = nullptr;
     PitchGamePanel* pitchGame = nullptr;
+    MacroControlPanel* macroControls = nullptr;
+    ShortcutsSettingsPanel* shortcutsSettings = nullptr;
 
     // Sidebars & Mixer (managed separately for now)
     std::unique_ptr<MixerPanel> mixerPanel;

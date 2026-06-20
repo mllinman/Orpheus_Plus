@@ -1,5 +1,6 @@
 #include "PianoRollComponent.h"
 #include "../UI/OrpheusLookAndFeel.h"
+#include "../Audio/ChordGeneratorProcessor.h"
 
 PianoRollComponent::PianoRollComponent(AppState& s, AudioEngine& e)
     : appState(s), audioEngine(e)
@@ -481,7 +482,7 @@ void PianoRollComponent::mouseDrag(const juce::MouseEvent& e)
 void PianoRollComponent::mouseUp(const juce::MouseEvent&)
 {
     if (!draggingNotes.empty() || resizingNote || isEditingVelocity)
-        syncToClip();
+        syncToClips();
 
     draggingNotes.clear();
     resizingNote = nullptr;
@@ -494,7 +495,7 @@ bool PianoRollComponent::keyPressed(const juce::KeyPress& key)
     if (key == juce::KeyPress::deleteKey || key == juce::KeyPress::backspaceKey)
     {
         deleteSelected();
-        syncToClip();
+        syncToClips();
         return true;
     }
     if (key == juce::KeyPress('a', juce::ModifierKeys::commandModifier, 0))
@@ -505,7 +506,7 @@ bool PianoRollComponent::keyPressed(const juce::KeyPress& key)
     if (key == juce::KeyPress('q', juce::ModifierKeys::commandModifier, 0))
     {
         quantizeSelected();
-        syncToClip();
+        syncToClips();
         return true;
     }
 
@@ -610,19 +611,23 @@ void PianoRollComponent::loadMidiSequence(const juce::MidiMessageSequence& seq)
     repaint();
 }
 
-void PianoRollComponent::setActiveClip(MidiClip* clip)
+void PianoRollComponent::setActiveClips(const std::vector<MidiClip*>& clips)
 {
-    activeClip = clip;
-    if (activeClip)
-        loadMidiSequence(activeClip->midiData);
-    else
-        notes.clear();
+    activeClips = clips;
+    notes.clear();
+    
+    if (!activeClips.empty())
+    {
+        // For simplicity, just load the first clip's data for editing
+        // A true unified editor would load all, differentiated by color
+        loadMidiSequence(activeClips[0]->midiData);
+    }
 }
 
-void PianoRollComponent::syncToClip()
+void PianoRollComponent::syncToClips()
 {
-    if (activeClip)
-        activeClip->midiData = getMidiSequence();
+    if (!activeClips.empty())
+        activeClips[0]->midiData = getMidiSequence();
 }
 
 juce::MidiMessageSequence PianoRollComponent::getMidiSequence() const
@@ -650,29 +655,19 @@ void PianoRollComponent::generateAIChords()
 {
     notes.clear();
     
-    // I-V-vi-IV in C Major (C, G, Am, F)
-    std::vector<std::vector<int>> chords = {
-        {60, 64, 67}, // C Major
-        {55, 59, 62}, // G Major
-        {57, 60, 64}, // A Minor
-        {53, 57, 60}  // F Major
-    };
-
-    double beat = 0.0;
-    for (int bar = 0; bar < 4; ++bar)
+    // Generate I-VI-IV-V progression in C Major
+    auto generated = ChordGeneratorProcessor::generateChords(60, ChordGeneratorProcessor::ScaleType::Major, 4, 0.0, 4.0);
+    
+    for (const auto& gn : generated)
     {
-        for (int pitch : chords[bar])
-        {
-            auto* n = notes.add(new MidiNote());
-            n->pitch = pitch;
-            n->startBeat = beat;
-            n->duration = 4.0; // 1 bar length
-            n->velocity = 90 + juce::Random::getSystemRandom().nextInt(20);
-        }
-        beat += 4.0;
+        auto* n = notes.add(new MidiNote());
+        n->pitch = gn.pitch;
+        n->velocity = gn.velocity;
+        n->startBeat = gn.beat;
+        n->duration = gn.duration;
     }
 
-    syncToClip();
+    syncToClips();
     repaint();
 }
 
@@ -680,26 +675,19 @@ void PianoRollComponent::generateAIMelody()
 {
     notes.clear();
 
-    // C Major Pentatonic (C, D, E, G, A) -> +60 for C4
-    int scale[] = {60, 62, 64, 67, 69, 72, 74, 76};
+    // Generate 4 bars of melody in C Major
+    auto generated = ChordGeneratorProcessor::generateMelody(60, ChordGeneratorProcessor::ScaleType::Major, 0.0, 16.0);
     
-    double beat = 0.0;
-    auto& rand = juce::Random::getSystemRandom();
-
-    for (int i = 0; i < 16; ++i)
+    for (const auto& gn : generated)
     {
-        if (rand.nextFloat() > 0.2f) // 80% chance of note
-        {
-            auto* n = notes.add(new MidiNote());
-            n->pitch = scale[rand.nextInt(8)];
-            n->startBeat = beat;
-            n->duration = (rand.nextFloat() > 0.5f) ? 0.5 : 1.0; // eighth or quarter
-            n->velocity = 80 + rand.nextInt(30);
-        }
-        beat += 0.5; // Eighth note grid
+        auto* n = notes.add(new MidiNote());
+        n->pitch = gn.pitch;
+        n->velocity = gn.velocity;
+        n->startBeat = gn.beat;
+        n->duration = gn.duration;
     }
 
-    syncToClip();
+    syncToClips();
     repaint();
 }
 
@@ -733,7 +721,7 @@ void PianoRollComponent::arpeggiate()
         offset += 0.5;
     }
 
-    syncToClip();
+    syncToClips();
     repaint();
 }
 
@@ -751,6 +739,6 @@ void PianoRollComponent::humanize()
         n->velocity = juce::jlimit(10, 127, n->velocity + velShift);
     }
 
-    syncToClip();
+    syncToClips();
     repaint();
 }

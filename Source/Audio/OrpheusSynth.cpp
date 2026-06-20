@@ -9,22 +9,18 @@ OrpheusVoice::OrpheusVoice()
     adsr.setParameters(adsrParams);
 }
 
-bool OrpheusVoice::canPlaySound(juce::SynthesiserSound* sound)
+void OrpheusVoice::noteStarted()
 {
-    return dynamic_cast<OrpheusSound*>(sound) != nullptr;
-}
-
-void OrpheusVoice::startNote(int midiNoteNumber, float velocity, juce::SynthesiserSound* sound, int /*currentPitchWheelPosition*/)
-{
-    level = velocity * 0.25;
-    frequency = juce::MidiMessage::getMidiNoteInHertz(midiNoteNumber);
+    // currentlyPlayingNote holds the MPENote information
+    level = currentlyPlayingNote.noteOnVelocity.asUnsignedFloat() * 0.25;
+    frequency = juce::MidiMessage::getMidiNoteInHertz(currentlyPlayingNote.initialNote);
     phase = 0.0;
     phaseIncrement = (frequency * 2.0 * juce::MathConstants<double>::pi) / getSampleRate();
     
     adsr.noteOn();
 }
 
-void OrpheusVoice::stopNote(float /*velocity*/, bool allowTailOff)
+void OrpheusVoice::noteStopped(bool allowTailOff)
 {
     if (allowTailOff)
     {
@@ -37,8 +33,15 @@ void OrpheusVoice::stopNote(float /*velocity*/, bool allowTailOff)
     }
 }
 
-void OrpheusVoice::pitchWheelMoved(int) {}
-void OrpheusVoice::controllerMoved(int, int) {}
+void OrpheusVoice::notePitchbendChanged()
+{
+    frequency = juce::MidiMessage::getMidiNoteInHertz(currentlyPlayingNote.initialNote + currentlyPlayingNote.totalPitchbendInSemitones);
+    phaseIncrement = (frequency * 2.0 * juce::MathConstants<double>::pi) / getSampleRate();
+}
+
+void OrpheusVoice::notePressureChanged() {}
+void OrpheusVoice::noteTimbreChanged() {}
+void OrpheusVoice::noteKeyStateChanged() {}
 
 void OrpheusVoice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer, int startSample, int numSamples)
 {
@@ -85,7 +88,7 @@ OrpheusSynth::OrpheusSynth()
     for (int i = 0; i < 16; ++i)
         addVoice(new OrpheusVoice());
         
-    addSound(new OrpheusSound());
+    // In MPESynthesiser, we don't need addSound
 }
 
 void OrpheusSynth::setup(double sampleRate)

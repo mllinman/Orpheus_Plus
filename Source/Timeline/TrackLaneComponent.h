@@ -67,6 +67,7 @@ private:
 
     // Drag start state
     juce::Point<int> dragStartPos;
+    juce::Point<int> dragCurrentPos;
     double dragStartTime     = 0.0;
     double dragStartDuration = 0.0;
     double dragStartOffset   = 0.0;
@@ -74,6 +75,7 @@ private:
     double dragStartFadeIn   = 0.0;
     double dragStartFadeOut  = 0.0;
     double dragStartVal      = 0.0; // Automation value
+
 
     DragMode getZoneAt(int x, int y, Clip* clip);
     void updateCursor(int x, int y);

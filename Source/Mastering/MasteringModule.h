@@ -43,6 +43,9 @@ public:
     void setDynamicEQEnabled(bool e)     { dynamicEqEnabled = e; updateChain(); }
     void setTargetLUFS(float target)     { targetLUFS = target; }
 
+    void analyzeTrack();
+    void finishAnalysis();
+
     // EQ
     void setEQBand(int band, double freq, double gainDB, double q, EQBand::Type type);
 
@@ -116,6 +119,11 @@ private:
 
     double currentSampleRate = 44100.0;
 
+    // Analysis
+    std::atomic<bool> isAnalyzing { false };
+    int framesAnalyzed = 0;
+    float peakAccumulator = 0.0f;
+
     // UI Controls
     juce::ToggleButton eqToggle      { "EQ" };
     juce::ToggleButton compToggle    { "COMP" };
@@ -125,6 +133,7 @@ private:
     juce::ToggleButton limiterToggle { "LIMIT" };
     juce::ToggleButton autoLufsToggle { "AUTO-LUFS" };
     juce::ToggleButton dynEqToggle    { "DYN-EQ" };
+    juce::TextButton   analyzeButton  { "Analyze Track" };
 
     juce::Slider lufsSlider;  // display only
     juce::Label  lufsLabel;

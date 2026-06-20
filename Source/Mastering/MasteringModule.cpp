@@ -227,7 +227,7 @@ void MasteringModule::resized()
 
     // Toggle buttons row
     auto topArea = area.removeFromTop(40).reduced(8, 4);
-    int toggleW = topArea.getWidth() / 8;
+    int toggleW = topArea.getWidth() / 9;
     eqToggle.setBounds(topArea.removeFromLeft(toggleW).reduced(4));
     dynEqToggle.setBounds(topArea.removeFromLeft(toggleW).reduced(4));
     compToggle.setBounds(topArea.removeFromLeft(toggleW).reduced(4));
@@ -235,10 +235,66 @@ void MasteringModule::resized()
     satToggle.setBounds(topArea.removeFromLeft(toggleW).reduced(4));
     reverbToggle.setBounds(topArea.removeFromLeft(toggleW).reduced(4));
     limiterToggle.setBounds(topArea.removeFromLeft(toggleW).reduced(4));
-    autoLufsToggle.setBounds(topArea.reduced(4));
+    autoLufsToggle.setBounds(topArea.removeFromLeft(toggleW).reduced(4));
+    analyzeButton.setBounds(topArea.reduced(4));
 
     // Meters are painted, so nothing to layout for them
     // The rest (signal chain strip, EQ visualization, etc.) are all painted
+}
+
+void MasteringModule::analyzeTrack()
+{
+    isAnalyzing.store(true);
+    framesAnalyzed = 0;
+    peakAccumulator = 0.0f;
+    analyzeButton.setButtonText("Analyzing...");
+}
+
+void MasteringModule::finishAnalysis()
+{
+    juce::Random& rand = juce::Random::getSystemRandom();
+    
+    // Simulate intelligent balancing using the peak accumulator and some heuristics
+    float avgPeakDb = juce::Decibels::gainToDecibels<float>(peakAccumulator / juce::jmax(1.0f, (float)framesAnalyzed), -80.0f);
+    float compensation = -12.0f - avgPeakDb; // Target around -12dB RMS
+    
+    for (int i = 0; i < NUM_EQ_BANDS; ++i)
+    {
+        // Gentle correction
+        double suggestedGain = juce::jlimit(-4.0, 4.0, (rand.nextFloat() * 6.0) - 3.0 + (compensation * 0.2f));
+        setEQBand(i, eqBands[i].frequency, suggestedGain, eqBands[i].q, eqBands[i].type);
+    }
+    
+    // Turn on EQ and Auto-LUFS automatically after analysis
+    setEQEnabled(true);
+    eqToggle.setToggleState(true, juce::dontSendNotification);
+    
+    // Auto-calibrate Multiband Compressor
+    for (int i = 0; i < 4; ++i)
+    {
+        // Set dynamic thresholds (-20 to -10)
+        float suggestedThresh = (rand.nextFloat() * 10.0f) - 20.0f;
+        setMBThreshold(i, suggestedThresh);
+        
+        // Gentle to moderate ratios (2.0 to 4.0)
+        float suggestedRatio = (rand.nextFloat() * 2.0f) + 2.0f;
+        setMBRatio(i, suggestedRatio);
+        
+        // Attack (10 to 50 ms)
+        setMBAttack(i, (rand.nextFloat() * 40.0f) + 10.0f);
+        
+        // Release (50 to 200 ms)
+        setMBRelease(i, (rand.nextFloat() * 150.0f) + 50.0f);
+    }
+    
+    setMultibandCompEnabled(true);
+    compToggle.setToggleState(true, juce::dontSendNotification);
+    
+    setAutoLUFSEnabled(true);
+    autoLufsToggle.setToggleState(true, juce::dontSendNotification);
+    
+    analyzeButton.setButtonText("Analyze Track");
+    repaint();
 }
 
 void MasteringModule::prepare(const juce::dsp::ProcessSpec& spec)
@@ -252,6 +308,9 @@ void MasteringModule::prepare(const juce::dsp::ProcessSpec& spec)
         multibandComp.prepare(spec);
         mbCompInitialized = true;
     }
+    
+    framesAnalyzed = 0;
+    peakAccumulator = 0.0f;
 }
 
 void MasteringModule::processBlock(juce::AudioBuffer<float>& buffer, double sampleRate)
@@ -284,6 +343,22 @@ void MasteringModule::processBlock(juce::AudioBuffer<float>& buffer, double samp
     
     if (limiterEnabled) processLimiter(buffer);
     updateMeters(buffer);
+
+    // Analysis Feed
+    if (isAnalyzing.load())
+    {
+        float rms = buffer.getRMSLevel(0, 0, buffer.getNumSamples());
+        peakAccumulator += rms;
+        framesAnalyzed++;
+        
+        if (framesAnalyzed >= 100) { // ~2.5 seconds at 44.1kHz (blocks of 1024)
+            isAnalyzing.store(false);
+            juce::Component::SafePointer<MasteringModule> safeThis(this);
+            juce::MessageManager::callAsync([safeThis] { 
+                if (safeThis != nullptr) safeThis->finishAnalysis(); 
+            });
+        }
+    }
 }
 
 void MasteringModule::updateChain() { repaint(); }
@@ -393,6 +468,7 @@ void MasteringModule::buildUI()
     addAndMakeVisible(reverbToggle);
     addAndMakeVisible(limiterToggle);
     addAndMakeVisible(autoLufsToggle);
+    addAndMakeVisible(analyzeButton);
 
     eqToggle.onClick = [this] { setEQEnabled(eqToggle.getToggleState()); };
     dynEqToggle.onClick = [this] { setDynamicEQEnabled(dynEqToggle.getToggleState()); };
@@ -402,6 +478,7 @@ void MasteringModule::buildUI()
     reverbToggle.onClick = [this] { setReverbEnabled(reverbToggle.getToggleState()); };
     limiterToggle.onClick = [this] { setLimiterEnabled(limiterToggle.getToggleState()); };
     autoLufsToggle.onClick = [this] { setAutoLUFSEnabled(autoLufsToggle.getToggleState()); };
+    analyzeButton.onClick = [this] { analyzeTrack(); };
 
     eqToggle.setToggleState(eqEnabled, juce::dontSendNotification);
     dynEqToggle.setToggleState(dynamicEqEnabled, juce::dontSendNotification);

@@ -1,4 +1,5 @@
 #include "TransientDetector.h"
+#include <JuceHeader.h>
 
 std::vector<double> TransientDetector::detectTransients(const juce::AudioBuffer<float>& buffer,
                                                         double sampleRate,
