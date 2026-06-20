@@ -9,6 +9,8 @@
 #include "Timeline/AudioClip.h"
 #include "UI/VoiceCloningPanel.h"
 #include "UI/ProjectSettingsPanel.h"
+#include "UI/TextToSamplePanel.h"
+#include "UI/AutoMixPanel.h"
 
 //==============================================================================
 MainComponent::MainComponent()
@@ -76,12 +78,23 @@ MainComponent::MainComponent()
     aiCoPilot        = dynamic_cast<AICoPilotPanel*>(addPanel("AI Co-Pilot", std::make_unique<AICoPilotPanel>(*audioEngine), WorkspaceManager::Zone::Right));
     adrPanel         = dynamic_cast<ADRPanel*>(addPanel("ADR / Foley", std::make_unique<ADRPanel>(*audioEngine), WorkspaceManager::Zone::Right));
 
+    // Phase 19-20 Panels
+    addPanel("Text-to-Sample", std::make_unique<TextToSamplePanel>(), WorkspaceManager::Zone::Center);
+    addPanel("Auto-Mix", std::make_unique<AutoMixPanel>(audioEngine.get(), masteringModule), WorkspaceManager::Zone::Center);
+
+    // Mixer Panel (Bottom dock) — replaces the invisible standalone MixerPanel
+    addPanel("Mixer", std::make_unique<MixerPanel>(*audioEngine, appState), WorkspaceManager::Zone::Bottom);
+
+    // Spectrum Analyzer (Right dock)
+    auto specComp = std::make_unique<SpectrumAnalyzer>(*audioEngine);
+    audioEngine->registerAnalyzer(specComp.get());
+    addPanel("Spectrum", std::move(specComp), WorkspaceManager::Zone::Right);
+
     // Wire the Pitch Game to the AutoTune processor for live pitch data
     if (pitchGame != nullptr && autoTune != nullptr)
         pitchGame->setProcessor(&autoTune->getProcessor());
 
-    // Initialize Sidebar / Mixer components
-    mixerPanel = std::make_unique<MixerPanel>(*audioEngine, appState);
+    // MixerPanel is now added via workspace addPanel above
     
     addAndMakeVisible(projectSettingsBtn);
     projectSettingsBtn.setColour(juce::TextButton::buttonColourId, juce::Colours::transparentBlack);

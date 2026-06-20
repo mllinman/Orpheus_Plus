@@ -186,8 +186,8 @@ void ExportDialog::resized()
     makeRow(sampleRateLabel, sampleRateBox);
     makeRow(bitDepthLabel, bitDepthBox);
     
+    
     area.removeFromTop(10);
-    juce::Graphics g(juce::Image()); // just for visual separation, actual painting via layout isn't possible, we use space.
     
     makeRow(presetLabel, presetBox);
     makeRow(lufsLabel, lufsSlider);

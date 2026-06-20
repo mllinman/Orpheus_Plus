@@ -20,12 +20,18 @@ public:
     juce::ValueTree saveLayout();
     void loadLayout(const juce::ValueTree& state);
 
+    // Expose tab switching for center panels
+    void showCenterPanel(const juce::String& panelName);
+
 private:
     struct PanelInfo {
         DockablePanel* panel;
         Zone zone;
     };
     std::vector<PanelInfo> panels;
+
+    // Tabbed container for center zone panels
+    std::unique_ptr<juce::TabbedComponent> centerTabs;
 
     juce::StretchableLayoutManager horizontalLayout;
     juce::StretchableLayoutManager verticalLayout;

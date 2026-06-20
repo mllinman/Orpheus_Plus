@@ -1,29 +1,35 @@
 #include "WorkspaceManager.h"
+#include "OrpheusLookAndFeel.h"
 
 WorkspaceManager::WorkspaceManager()
 {
+    centerTabs = std::make_unique<juce::TabbedComponent>(juce::TabbedButtonBar::TabsAtTop);
+    centerTabs->setTabBarDepth(28);
+    centerTabs->setOutline(0);
+    centerTabs->setColour(juce::TabbedComponent::backgroundColourId, OrpheusLookAndFeel::bgDarkest());
+    centerTabs->setColour(juce::TabbedComponent::outlineColourId, juce::Colours::transparentBlack);
+    addAndMakeVisible(centerTabs.get());
 }
 
 WorkspaceManager::~WorkspaceManager()
 {
+    // Detach center panels from tabs before destruction
+    if (centerTabs)
+    {
+        centerTabs->clearTabs();
+    }
 }
 
 void WorkspaceManager::paint(juce::Graphics& g)
 {
-    g.fillAll(juce::Colours::darkgrey.darker());
+    g.fillAll(OrpheusLookAndFeel::bgDarkest());
 }
 
 void WorkspaceManager::resized()
 {
     auto bounds = getLocalBounds();
     
-    // Very simplified layout for now
-    juce::Rectangle<int> leftArea;
-    juce::Rectangle<int> rightArea;
-    juce::Rectangle<int> topArea;
-    juce::Rectangle<int> bottomArea;
-    juce::Rectangle<int> centerArea = bounds;
-
+    // Layout side/top/bottom panels first, consuming space from bounds
     for (auto& info : panels)
     {
         if (info.panel->isUndocked()) continue;
@@ -31,45 +37,84 @@ void WorkspaceManager::resized()
         switch (info.zone)
         {
         case Zone::Left:
-            info.panel->setBounds(centerArea.removeFromLeft(300));
+            info.panel->setBounds(bounds.removeFromLeft(300));
             break;
         case Zone::Right:
-            info.panel->setBounds(centerArea.removeFromRight(300));
+            info.panel->setBounds(bounds.removeFromRight(300));
             break;
         case Zone::Top:
-            info.panel->setBounds(centerArea.removeFromTop(200));
+            info.panel->setBounds(bounds.removeFromTop(200));
             break;
         case Zone::Bottom:
-            info.panel->setBounds(centerArea.removeFromBottom(250));
+            info.panel->setBounds(bounds.removeFromBottom(250));
             break;
         case Zone::Center:
-            // Center handled at the end
+            // Handled by TabbedComponent below
             break;
         }
     }
 
-    for (auto& info : panels)
-    {
-        if (!info.panel->isUndocked() && info.zone == Zone::Center)
-        {
-            info.panel->setBounds(centerArea);
-        }
-    }
+    // Give remaining space to the tabbed center area
+    if (centerTabs)
+        centerTabs->setBounds(bounds);
 }
 
 void WorkspaceManager::addPanel(DockablePanel* panel, Zone zone)
 {
     panels.push_back({panel, zone});
-    addAndMakeVisible(panel);
+
+    if (zone == Zone::Center)
+    {
+        // Add to tabbed center view instead of stacking
+        if (centerTabs)
+        {
+            centerTabs->addTab(panel->getPanelName(),
+                               OrpheusLookAndFeel::bgDarker(),
+                               panel, false);
+        }
+    }
+    else
+    {
+        addAndMakeVisible(panel);
+    }
+    
     resized();
 }
 
 void WorkspaceManager::removePanel(DockablePanel* panel)
 {
+    // Remove from tabs if it was a center panel
+    if (centerTabs)
+    {
+        for (int i = centerTabs->getNumTabs() - 1; i >= 0; --i)
+        {
+            if (centerTabs->getTabContentComponent(i) == panel)
+            {
+                centerTabs->removeTab(i);
+                break;
+            }
+        }
+    }
+
     panels.erase(std::remove_if(panels.begin(), panels.end(),
         [panel](const PanelInfo& info) { return info.panel == panel; }), panels.end());
     removeChildComponent(panel);
     resized();
+}
+
+void WorkspaceManager::showCenterPanel(const juce::String& panelName)
+{
+    if (centerTabs)
+    {
+        for (int i = 0; i < centerTabs->getNumTabs(); ++i)
+        {
+            if (centerTabs->getTabNames()[i] == panelName)
+            {
+                centerTabs->setCurrentTabIndex(i);
+                return;
+            }
+        }
+    }
 }
 
 juce::ValueTree WorkspaceManager::saveLayout()
@@ -83,6 +128,11 @@ juce::ValueTree WorkspaceManager::saveLayout()
         p.setProperty("zone", static_cast<int>(info.zone), nullptr);
         vt.addChild(p, -1, nullptr);
     }
+    
+    // Save current center tab index
+    if (centerTabs)
+        vt.setProperty("centerTabIndex", centerTabs->getCurrentTabIndex(), nullptr);
+    
     return vt;
 }
 
@@ -109,6 +159,11 @@ void WorkspaceManager::loadLayout(const juce::ValueTree& state)
                 }
             }
         }
+        
+        // Restore center tab
+        if (centerTabs && state.hasProperty("centerTabIndex"))
+            centerTabs->setCurrentTabIndex(state.getProperty("centerTabIndex"));
+        
         resized();
     }
 }
