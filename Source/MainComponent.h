@@ -19,6 +19,7 @@
 #include "UI/ModulationMatrixPanel.h"
 #include "UI/VocalAutomationPanel.h"
 #include "UI/UserManualPanel.h"
+#include "UI/PitchGamePanel.h"
 #include "Project/ProjectManager.h"
 #include "Project/AppState.h"
 
@@ -151,6 +152,7 @@ private:
     std::unique_ptr<DockablePanel> vocalAutomationPanel;
     std::unique_ptr<DockablePanel> voiceCloningPanel;
     std::unique_ptr<DockablePanel> userManualDockablePanel;
+    std::unique_ptr<DockablePanel> pitchGameDockablePanel;
 
     // Component pointers (raw pointers for easy access)
     TimelineComponent* timeline = nullptr;
@@ -166,6 +168,7 @@ private:
     VocalAutomationPanel* vocalAutomation = nullptr;
     class VoiceCloningPanel* voiceCloning = nullptr;
     UserManualPanel* userManual = nullptr;
+    PitchGamePanel* pitchGame = nullptr;
 
     // Sidebars & Mixer (managed separately for now)
     std::unique_ptr<MixerPanel> mixerPanel;

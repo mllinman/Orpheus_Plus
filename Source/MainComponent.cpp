@@ -63,6 +63,11 @@ MainComponent::MainComponent()
     vocalAutomation  = dynamic_cast<VocalAutomationPanel*>(addPanel(vocalAutomationPanel, "Vocal Auto", std::make_unique<VocalAutomationPanel>(*audioEngine, this)));
     voiceCloning     = dynamic_cast<VoiceCloningPanel*>(addPanel(voiceCloningPanel, "Voice Clone", std::make_unique<VoiceCloningPanel>(*audioEngine, this)));
     userManual       = dynamic_cast<UserManualPanel*>(addPanel(userManualDockablePanel, "User Manual", std::make_unique<UserManualPanel>()));
+    pitchGame        = dynamic_cast<PitchGamePanel*>(addPanel(pitchGameDockablePanel, "Pitch Game", std::make_unique<PitchGamePanel>(*audioEngine)));
+
+    // Wire the Pitch Game to the AutoTune processor for live pitch data
+    if (pitchGame != nullptr && autoTune != nullptr)
+        pitchGame->setProcessor(&autoTune->getProcessor());
 
     // Initialize Sidebar / Mixer components (not tabbed)
     mixerPanel = std::make_unique<MixerPanel>(*audioEngine, appState);

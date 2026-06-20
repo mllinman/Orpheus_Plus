@@ -114,6 +114,7 @@ target_sources(OrpheusPlus PRIVATE
     Source/UI/DockablePanel.cpp
     Source/UI/LibraryPanel.cpp
     Source/UI/UserManualPanel.cpp
+    Source/UI/PitchGamePanel.cpp
 
     # Transcription
     Source/Transcription/TablatureGenerator.cpp
