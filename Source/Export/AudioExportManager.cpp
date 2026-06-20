@@ -1,4 +1,6 @@
 #include "AudioExportManager.h"
+#include "../Project/AppState.h"
+#include "../StemSeparation/StemSeparator.h"
 #include "../Util/OrpheusLogger.h"
 #include "../Mastering/MasteringModule.h"
 
@@ -30,7 +32,7 @@ void AudioExportManager::registerFormats()
     OrpheusLogger::logInfo("AudioExportManager: Registered formats.");
 }
 
-void AudioExportManager::performExport(const juce::File& outputFileOrDir, const ExportSettings& settings)
+void AudioExportManager::performExport(const juce::File& outputFileOrDir, const ExportSettings& settings, class AppState* appState)
 {
     MasteringModule* mastering = audioEngine.getMasteringModule();
 
@@ -52,7 +54,7 @@ void AudioExportManager::performExport(const juce::File& outputFileOrDir, const 
             exportAutoStems(outputFileOrDir, settings);
             break;
         case ExportMode::AISeparation:
-            exportAISeparation(outputFileOrDir, settings);
+            exportAISeparation(outputFileOrDir, settings, appState);
             break;
     }
 
@@ -66,51 +68,73 @@ void AudioExportManager::exportMasterMix(const juce::File& outputFile, const Exp
 {
     OrpheusLogger::logInfo("Exporting Master Mix to " + outputFile.getFullPathName());
     
-    auto* format = formatManager.findFormatForFileExtension(settings.formatExtension);
-    if (!format)
+    // Create writer
+    std::unique_ptr<juce::AudioFormatWriter> writer(
+        formatManager.findFormatForFileExtension(settings.formatExtension)
+            ->createWriterFor(new juce::FileOutputStream(outputFile),
+                              settings.sampleRate,
+                              2,
+                              settings.bitDepth,
+                              {},
+                              settings.quality));
+
+    if (!writer)
     {
-        OrpheusLogger::logError("No format writer found for " + settings.formatExtension);
+        OrpheusLogger::logError("Failed to create audio format writer for " + settings.formatExtension);
         return;
     }
 
-    auto stream = outputFile.createOutputStream();
-    if (!stream) return;
+    // Set up bounce bounds
+    auto& timeline = audioEngine.getTimelineProcessor();
+    double endTime = timeline.getTotalLengthSeconds();
+    if (endTime <= 0) endTime = 10.0; // fallback
+    endTime += 2.0; // tail
 
-    // Quality index 0 for lossless, varies for lossy
-    std::unique_ptr<juce::AudioFormatWriter> writer(
-        format->createWriterFor(stream.release(), settings.sampleRate, 2, settings.bitDepth, {}, 0));
-
-    if (!writer) return;
-
-    // We pass to audio engine to run the offline graph
-    // Note: To cleanly move this from AudioEngine, we can just fetch the graph block by block here
-    // But for now, we will adapt AudioEngine's logic to use our custom writer properties
+    int numSamples = (int)(endTime * settings.sampleRate);
+    int blockSize = 512;
+    juce::AudioBuffer<float> buffer(2, blockSize);
     
-    // For simplicity, calling the engine's exportMix for now, but passing our settings
-    audioEngine.exportMix(outputFile, settings.sampleRate, settings.bitDepth);
+    auto oldState = audioEngine.getTransportState();
+    audioEngine.setTransportState(AudioEngine::TransportState::Exporting);
+    audioEngine.prepareToPlay(settings.sampleRate, blockSize);
+
+    for (int i = 0; i < numSamples; i += blockSize)
+    {
+        int samplesToProcess = juce::jmin(blockSize, numSamples - i);
+        buffer.setSize(2, samplesToProcess, false, false, true);
+        buffer.clear();
+
+        juce::MidiBuffer midiMessages;
+        audioEngine.processBlock(buffer, midiMessages);
+
+        writer->writeFromAudioSampleBuffer(buffer, 0, samplesToProcess);
+        
+        // Progress callback could go here
+    }
+
+    writer.reset();
+    audioEngine.setTransportState(oldState);
+    OrpheusLogger::logInfo("Master Mix exported successfully.");
 }
 
 void AudioExportManager::exportSelectedTracks(const juce::File& outputFile, const ExportSettings& settings)
 {
-    OrpheusLogger::logInfo("Exporting Selected Tracks to " + outputFile.getFullPathName());
-
+    OrpheusLogger::logInfo("Exporting Selected Tracks...");
+    
     auto numTracks = audioEngine.getTrackCount();
     struct TrackState { bool mute; bool solo; };
     std::vector<TrackState> originalStates(numTracks);
 
-    // Save states and mute non-selected
+    // Save current states and mute unselected
     for (int i = 0; i < numTracks; ++i)
     {
         auto* track = audioEngine.getTrack(i);
         if (track)
         {
             originalStates[i] = { track->mute, track->solo };
-            
             bool isSelected = std::find(settings.selectedTracks.begin(), settings.selectedTracks.end(), i) != settings.selectedTracks.end();
-            if (!isSelected)
-            {
-                audioEngine.setTrackMute(i, true);
-            }
+            audioEngine.setTrackMute(i, !isSelected);
+            audioEngine.setTrackSolo(i, false);
         }
     }
 
@@ -188,12 +212,83 @@ void AudioExportManager::exportAutoStems(const juce::File& outputDirectory, cons
     }
 }
 
-void AudioExportManager::exportAISeparation(const juce::File& outputDirectory, const ExportSettings& settings)
+void AudioExportManager::exportAISeparation(const juce::File& outputDirectory, const ExportSettings& settings, class AppState* appState)
 {
     OrpheusLogger::logInfo("Running AI Stem Separation...");
+    
+    if (!appState)
+    {
+        OrpheusLogger::logError("No AppState provided for AI Stem Separation.");
+        return;
+    }
+
     // 1. Export the master mix to a temp file
+    outputDirectory.createDirectory();
+    auto tempFile = outputDirectory.getChildFile("temp_master_mix.wav");
+    
+    ExportSettings tempSettings = settings;
+    tempSettings.formatExtension = ".wav"; // Model usually expects WAV
+    exportMasterMix(tempFile, tempSettings);
+
     // 2. Feed it into StemSeparator ONNX model
-    // 3. Receive Vocals, Bass, Drums, Other buffers
-    // 4. Write buffers to outputDirectory
-    // 5. Add new tracks to AudioEngine
+    audioEngine.getStemSeparator().separate(tempFile, *appState, [this, outputDirectory, tempFile, settings, appState](StemSeparationResult result) {
+        
+        // 3. Receive Vocals, Bass, Drums, Other buffers (StemSeparator writes to its own output folder)
+        // 4. Move files to outputDirectory, possibly re-encoding to requested format
+        
+        auto copyOrEncode = [&](const juce::File& source, const juce::String& name)
+        {
+            if (!source.existsAsFile()) return;
+            
+            auto targetFile = outputDirectory.getChildFile(name + settings.formatExtension);
+            
+            if (settings.formatExtension == ".wav")
+            {
+                source.copyFileTo(targetFile);
+            }
+            else
+            {
+                // Re-encode
+                std::unique_ptr<juce::AudioFormatReader> reader(formatManager.createReaderFor(source));
+                if (reader)
+                {
+                    std::unique_ptr<juce::AudioFormatWriter> writer(
+                        formatManager.findFormatForFileExtension(settings.formatExtension)
+                            ->createWriterFor(new juce::FileOutputStream(targetFile),
+                                              reader->sampleRate,
+                                              reader->numChannels,
+                                              settings.bitDepth,
+                                              {},
+                                              settings.quality));
+                                              
+                    if (writer)
+                        writer->writeFromAudioReader(*reader, 0, -1);
+                }
+            }
+            
+            // 5. Add new tracks to AudioEngine
+            int newTrackIdx = audioEngine.addAudioTrack(name);
+            auto* track = audioEngine.getTrack(newTrackIdx);
+            if (track)
+            {
+                appState->addAudioRegion(newTrackIdx, targetFile.getFullPathName(), 0.0, 0.0);
+            }
+        };
+
+        copyOrEncode(result.vocals, "Vocals");
+        copyOrEncode(result.drums, "Drums");
+        copyOrEncode(result.bass, "Bass");
+        copyOrEncode(result.guitar, "Guitar");
+        copyOrEncode(result.piano, "Piano");
+        copyOrEncode(result.other, "Other");
+        
+        // Cleanup temp file
+        tempFile.deleteFile();
+        
+        // Cleanup the temporary stems folder created by StemSeparator
+        if (result.vocals.existsAsFile())
+            result.vocals.getParentDirectory().deleteRecursively();
+
+        OrpheusLogger::logInfo("AI Stem Separation completed and auto-imported!");
+    });
 }

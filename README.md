@@ -108,9 +108,14 @@ With the major AI and composition paradigms successfully established, the future
 - **Intelligent Track Spacing**: Automatic spectral carving (e.g., dipping the exact frequencies of the guitar only when the vocal is singing) without the need for manual sidechain routing.
 - **Perfect Neural Vocal Restorer**: Synthesizing perfectly tuned human vocals from bad recordings, while dynamically re-injecting unvoiced stochastic analog noise to sound 100% human and bypass AI detectors.
 
-### Phase 13 — Distributed Processing Architecture
-- **Peer-to-Peer DSP Offloading**: Native capability to offload heavy VSTs and ONNX inferences to secondary computers on the local network (similar to Vienna Ensemble Pro but auto-configuring).
-- **WASM (WebAssembly) Engine**: Ability to compile and export the entire project state and engine to run natively inside a web browser, bridging the gap back to cloud distribution.
+### Phase 13 — Universal Export Engine & AI Stem Bounce
+- **Multi-Format Architecture**: Render master mixes and stems natively in WAV, FLAC, OGG, AIFF, MP3, and AAC with customizable bit depths and sample rates.
+- **Spotify Mastering Preset**: One-click export enforcing exact -14 LUFS / -1 dB True Peak standards dynamically.
+- **AI Separation Automation**: Seamlessly bounce the mix to a temporary file, pass it through the ONNX StemSeparator, and auto-import Vocals, Bass, Drums, and Guitar back into the DAW workspace.
+
+---
+
+## Migrating from Orpheus (Web)
 
 ---
 

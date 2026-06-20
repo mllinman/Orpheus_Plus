@@ -32,7 +32,7 @@ public:
 
     // The main entry point for exporting.
     // outputFileOrDir determines if it is a single file or a directory for stems.
-    void performExport(const juce::File& outputFileOrDir, const ExportSettings& settings);
+    void performExport(const juce::File& outputFileOrDir, const ExportSettings& settings, class AppState* appState = nullptr);
 
 private:
     AudioEngine& audioEngine;
@@ -41,7 +41,7 @@ private:
     void exportMasterMix(const juce::File& outputFile, const ExportSettings& settings);
     void exportSelectedTracks(const juce::File& outputFile, const ExportSettings& settings);
     void exportAutoStems(const juce::File& outputDirectory, const ExportSettings& settings);
-    void exportAISeparation(const juce::File& outputDirectory, const ExportSettings& settings);
+    void exportAISeparation(const juce::File& outputDirectory, const ExportSettings& settings, class AppState* appState);
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(AudioExportManager)
 };

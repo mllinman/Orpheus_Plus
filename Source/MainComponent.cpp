@@ -1070,7 +1070,7 @@ void MainComponent::showExportDialog()
 
                     if (exportManager)
                     {
-                        exportManager->performExport(file, settings);
+                        exportManager->performExport(file, settings, &appState);
                         
                         juce::AlertWindow::showMessageBoxAsync(
                             juce::MessageBoxIconType::InfoIcon,
