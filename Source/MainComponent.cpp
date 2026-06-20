@@ -18,6 +18,9 @@ MainComponent::MainComponent()
     // Initialize AudioEngine
     audioEngine = std::make_unique<AudioEngine>();
 
+    // Initialize ExportManager
+    exportManager = std::make_unique<AudioExportManager>(*audioEngine);
+
     // Initialize ProjectManager
     projectManager = std::make_unique<ProjectManager>(appState, *audioEngine);
 
@@ -990,14 +993,16 @@ void MainComponent::showAudioCleanupDialog()
 
 void MainComponent::showExportDialog()
 {
-    // Show format/quality selection first
-    auto* alert = new juce::AlertWindow("Export Mix", "Configure export settings:", juce::MessageBoxIconType::NoIcon);
+    auto* alert = new juce::AlertWindow("Export Engine", "Configure export settings:", juce::MessageBoxIconType::NoIcon);
 
-    alert->addComboBox("format", {"WAV", "FLAC", "OGG"}, "Format:");
+    alert->addComboBox("mode", {"Master Mix", "Selected Tracks", "Auto-Stems (Bounce)", "AI Stem Separation"}, "Mode:");
+    alert->addComboBox("format", {"WAV", "FLAC", "OGG", "AIFF", "MP3", "AAC"}, "Format:");
     alert->addComboBox("sampleRate", {"44100 Hz", "48000 Hz", "88200 Hz", "96000 Hz"}, "Sample Rate:");
     alert->addComboBox("bitDepth", {"16-bit", "24-bit", "32-bit float"}, "Bit Depth:");
+    
+    // Add Spotify Toggle
+    alert->addToggle("spotify", {"Save for Spotify Preset (-14 LUFS, 24-bit FLAC)"});
 
-    // Default to 48000 Hz
     alert->getComboBoxComponent("sampleRate")->setSelectedItemIndex(1, juce::dontSendNotification);
 
     alert->addButton("Export", 1, juce::KeyPress(juce::KeyPress::returnKey));
@@ -1008,58 +1013,64 @@ void MainComponent::showExportDialog()
         {
             if (result == 0) { delete alert; return; }
 
+            auto modeIdx   = alert->getComboBoxComponent("mode")->getSelectedItemIndex();
             auto formatIdx = alert->getComboBoxComponent("format")->getSelectedItemIndex();
             auto srIdx     = alert->getComboBoxComponent("sampleRate")->getSelectedItemIndex();
             auto bdIdx     = alert->getComboBoxComponent("bitDepth")->getSelectedItemIndex();
+            bool spotify   = alert->getToggleState("spotify");
+
             delete alert;
 
-            juce::String ext;
-            if (formatIdx == 0) ext = ".wav";
-            else if (formatIdx == 1) ext = ".flac";
-            else ext = ".ogg";
+            AudioExportManager::ExportSettings settings;
+            settings.spotifyPreset = spotify;
 
-            int sampleRates[] = { 44100, 48000, 88200, 96000 };
-            int bitDepths[]   = { 16, 24, 32 };
+            if (spotify)
+            {
+                settings.formatExtension = ".flac";
+                settings.sampleRate = 48000;
+                settings.bitDepth = 24;
+            }
+            else
+            {
+                juce::String exts[] = { ".wav", ".flac", ".ogg", ".aiff", ".mp3", ".aac" };
+                int sampleRates[] = { 44100, 48000, 88200, 96000 };
+                int bitDepths[]   = { 16, 24, 32 };
+                
+                settings.formatExtension = exts[formatIdx];
+                settings.sampleRate = sampleRates[srIdx];
+                settings.bitDepth = bitDepths[bdIdx];
+            }
 
-            int chosenSR = sampleRates[srIdx];
-            int chosenBD = bitDepths[bdIdx];
+            settings.mode = static_cast<AudioExportManager::ExportMode>(modeIdx);
 
-            juce::String filterStr = "*" + ext;
+            bool isDir = (settings.mode == AudioExportManager::ExportMode::AutoStems || 
+                          settings.mode == AudioExportManager::ExportMode::AISeparation);
 
             auto chooser = std::make_shared<juce::FileChooser>(
-                "Export Mix",
+                isDir ? "Select Output Directory" : "Export Mix",
                 juce::File::getSpecialLocation(juce::File::userDesktopDirectory)
-                    .getChildFile("mix" + ext),
-                filterStr);
+                    .getChildFile(isDir ? "" : "mix" + settings.formatExtension),
+                isDir ? "" : "*" + settings.formatExtension);
 
-            chooser->launchAsync(juce::FileBrowserComponent::saveMode
-                                | juce::FileBrowserComponent::canSelectFiles,
-                [this, chooser, chosenSR, chosenBD, ext](const juce::FileChooser& fc)
+            int flags = isDir ? juce::FileBrowserComponent::saveMode | juce::FileBrowserComponent::canSelectDirectories 
+                              : juce::FileBrowserComponent::saveMode | juce::FileBrowserComponent::canSelectFiles;
+
+            chooser->launchAsync(flags,
+                [this, chooser, settings](const juce::FileChooser& fc)
                 {
                     auto file = fc.getResult();
                     if (file == juce::File{}) return;
 
-                    // Ensure correct extension
-                    if (!file.hasFileExtension(ext.substring(1)))
-                        file = file.withFileExtension(ext.substring(1));
-
-                    if (audioEngine)
+                    if (exportManager)
                     {
-                        // Log export settings
-                        OrpheusLogger::logInfo("Exporting: " + file.getFullPathName()
-                            + " | SR=" + juce::String(chosenSR)
-                            + " | BD=" + juce::String(chosenBD)
-                            + " | Fmt=" + ext);
-
-                        audioEngine->exportMix(file);
-
+                        exportManager->performExport(file, settings);
+                        
                         juce::AlertWindow::showMessageBoxAsync(
                             juce::MessageBoxIconType::InfoIcon,
-                            "Export Complete",
-                            "Mix exported to:\n" + file.getFullPathName()
-                            + "\n\nFormat: " + ext.substring(1).toUpperCase()
-                            + "\nSample Rate: " + juce::String(chosenSR) + " Hz"
-                            + "\nBit Depth: " + juce::String(chosenBD) + "-bit");
+                            "Export Started",
+                            "Exporting to:\n" + file.getFullPathName()
+                            + "\n\nFormat: " + settings.formatExtension.substring(1).toUpperCase()
+                            + "\nSpotify Preset: " + (settings.spotifyPreset ? "Yes" : "No"));
                     }
                 });
         }), true);

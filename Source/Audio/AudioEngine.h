@@ -226,6 +226,14 @@ public:
                    int bitDepth   = 24);
     void exportStems(const juce::File& outputDirectory);
 
+    // Track Getters
+    int getTrackCount() const { return tracks.size(); }
+    AudioTrack* getTrack(int index) const 
+    { 
+        if (index >= 0 && index < tracks.size()) return tracks[index]; 
+        return nullptr; 
+    }
+
     //── MIDI ─────────────────────────────────────────────────────────────────
     juce::MidiMessageCollector& getMidiCollector() { return midiCollector; }
     const juce::MidiBuffer& getCurrentMidiBuffer() const { return midiBuffer; }

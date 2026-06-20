@@ -137,6 +137,8 @@ target_sources(OrpheusPlus PRIVATE
     Source/Mastering/LatentMatchEQ.cpp
     Source/Mastering/SpectralCarver.cpp
 
+    # Export Architecture
+    Source/Export/AudioExportManager.cpp
 )
 
 target_include_directories(OrpheusPlus PRIVATE

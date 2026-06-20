@@ -22,6 +22,8 @@
 #include "UI/PitchGamePanel.h"
 #include "UI/MacroControlPanel.h"
 #include "UI/ShortcutsSettingsPanel.h"
+#include "Audio/AudioEngine.h"
+#include "Export/AudioExportManager.h"
 #include "Project/ProjectManager.h"
 #include "Project/AppState.h"
 
@@ -126,6 +128,7 @@ private:
     OrpheusLookAndFeel orpheusLookAndFeel;
     AppState appState;
     std::unique_ptr<AudioEngine> audioEngine;
+    std::unique_ptr<AudioExportManager> exportManager;
     std::unique_ptr<ProjectManager> projectManager;
     juce::ApplicationCommandManager commandManager;
 
