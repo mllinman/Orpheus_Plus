@@ -20,6 +20,10 @@ void VoiceConversionProcessor::prepareToPlay(double sampleRate, int samplesPerBl
 
     inputBuffer.assign(samplesPerBlock, 0.0f);
     outputBuffer.assign(samplesPerBlock, 0.0f);
+
+    // Setup high-pass filter for humanize (unvoiced noise extraction)
+    // Cutoff around 6kHz to isolate breaths and lip noise
+    *highPassFilter.state = *juce::dsp::IIR::Coefficients<float>::makeHighPass(sampleRate, 6000.0f);
 }
 
 void VoiceConversionProcessor::releaseResources()
@@ -83,7 +87,20 @@ void VoiceConversionProcessor::processBlock(juce::AudioBuffer<float>& buffer, ju
 
     // 1. Pitch Extraction (YIN)
     float detectedPitch = detectPitchYIN(inputBuffer.data(), numSamples, currentSampleRate);
-    float targetPitch = detectedPitch * std::pow(2.0f, pitchShift / 12.0f);
+    
+    // Smooth F0 if preserving vibrato
+    float smoothedPitch = detectedPitch;
+    if (preserveVibrato.load() && detectedPitch > 0.0f) {
+        // Find nearest chromatic note
+        float midiNote = 69.0f + 12.0f * std::log2(detectedPitch / 440.0f);
+        float perfectMidiNote = std::round(midiNote);
+        float perfectPitch = 440.0f * std::pow(2.0f, (perfectMidiNote - 69.0f) / 12.0f);
+        
+        // Retain the deviation (vibrato) but center it on the perfect pitch
+        smoothedPitch = smoothF0Contour(detectedPitch, perfectPitch);
+    }
+    
+    float targetPitch = smoothedPitch * std::pow(2.0f, pitchShift / 12.0f);
 
 #if USE_ONNX_RUNTIME
     // If ONNX is available and session is loaded, run real-time inference
@@ -161,13 +178,31 @@ void VoiceConversionProcessor::processBlock(juce::AudioBuffer<float>& buffer, ju
     }
 #endif
 
-    // Wet/Dry Mix back to output
+    // Wet/Dry Mix back to output and Humanize
+    float humanize = humanizeAmount.load();
     for (int ch = 0; ch < numChannels; ++ch) {
         auto* out = buffer.getWritePointer(ch);
         for (int i = 0; i < numSamples; ++i) {
-            out[i] = (inputBuffer[i] * (1.0f - timbreMix)) + (outputBuffer[i] * timbreMix);
+            float original = inputBuffer[i];
+            float neural = outputBuffer[i];
+            
+            // Extract unvoiced noise from original
+            float unvoicedNoise = highPassFilter.processSample(original);
+            
+            // Mix Neural and Humanize Noise
+            float perfectVocal = (original * (1.0f - timbreMix)) + (neural * timbreMix);
+            out[i] = perfectVocal + (unvoicedNoise * humanize);
         }
     }
+}
+
+float VoiceConversionProcessor::smoothF0Contour(float currentF0, float targetF0)
+{
+    // A simplified micro-pitch preserver.
+    // In reality, this would require analyzing a window to find the mean F0 of the current note,
+    // and shifting the entire contour so the mean aligns with targetF0.
+    // For now, we gently interpolate towards the target to smooth out robotic snapping.
+    return currentF0 * 0.2f + targetF0 * 0.8f;
 }
 
 float VoiceConversionProcessor::detectPitchYIN(const float* samples, int numSamples, double sr)

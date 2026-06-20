@@ -47,12 +47,24 @@ public:
     void setPitchShift(float semitones) { pitchShift = semitones; }
     void setTimbreMix(float mix) { timbreMix = juce::jlimit(0.0f, 1.0f, mix); }
 
+    // Neural Restorer Parameters
+    void setHumanizeAmount(float amt) { humanizeAmount.store(juce::jlimit(0.0f, 1.0f, amt)); }
+    void setPreserveVibrato(bool preserve) { preserveVibrato.store(preserve); }
+    void setScaleLock(int rootNote, int scaleType); // For F0 smoothing
+
 private:
     float detectPitchYIN(const float* samples, int numSamples, double sr);
+    float smoothF0Contour(float currentF0, float targetF0);
 
     std::atomic<bool> enabled { false };
     float pitchShift = 0.0f;
     float timbreMix = 1.0f; // 0 = original, 1 = fully cloned
+    
+    std::atomic<float> humanizeAmount { 0.5f };
+    std::atomic<bool> preserveVibrato { true };
+
+    juce::dsp::IIR::Filter<float> highPassFilter; // Extractor for unvoiced breath/noise
+
 
     double currentSampleRate = 44100.0;
     int currentBlockSize = 512;
