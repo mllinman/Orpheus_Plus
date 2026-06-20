@@ -26,8 +26,21 @@ void LatentMatchEQ::analyzeReferenceTrack(const juce::File& audioFile)
     
     juce::Logger::writeToLog("LatentMatchEQ: Analyzing reference track... " + audioFile.getFileName());
 
-    // As a stub, we just load a dummy impulse response (or construct a basic EQ curve)
-    // Here we'll just bypass actual convolution until an IR is generated
+    // Mock Implementation: Generate a dummy 512-tap FIR filter that simulates a Match EQ curve
+    // In a real scenario, this is the output of the Latent Space Decoder.
+    std::vector<float> dummyIR(512, 0.0f);
+    dummyIR[0] = 1.0f; // Dry signal base
+    for (int i = 1; i < 512; ++i) {
+        // Create some ripples to simulate a complex matched frequency response
+        dummyIR[i] = 0.05f * std::sin(i * 0.1f) * std::exp(-i * 0.01f);
+    }
+    
+    convolutionFilter.loadImpulseResponse(dummyIR.data(), dummyIR.size(), 
+                                          currentSampleRate, 
+                                          juce::dsp::Convolution::Stereo::yes, 
+                                          juce::dsp::Convolution::Trim::no, 
+                                          juce::dsp::Convolution::Normalise::yes);
+
     hasAnalyzedReference = true;
 }
 

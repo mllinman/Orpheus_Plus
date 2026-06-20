@@ -97,10 +97,10 @@ private:
     // Header controls
     juce::TextButton muteButton  { "M" };
     juce::TextButton soloButton  { "S" };
-    juce::TextButton armButton     { "R" };
     juce::TextButton showTakesButton { "T" };
     juce::TextButton folderExpandButton { "-" };
-    
+    juce::TextButton phaseAlignButton { "P" }; // Track-specific phase align
+
     juce::Slider     volumeSlider;
     juce::Slider     panSlider;
     juce::Label      trackNameLabel;

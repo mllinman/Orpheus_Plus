@@ -5,6 +5,8 @@
 #include "LinearPhaseEQ.h"
 #include "LUFSMeter.h"
 #include "../Audio/ConvolutionReverbProcessor.h"
+#include "LatentMatchEQ.h"
+#include <functional>
 
 //==============================================================================
 // Linear Phase EQ Band
@@ -41,10 +43,14 @@ public:
     void setLimiterEnabled(bool e)       { limiterEnabled = e; updateChain(); }
     void setAutoLUFSEnabled(bool e)      { autoLufsEnabled = e; updateChain(); }
     void setDynamicEQEnabled(bool e)     { dynamicEqEnabled = e; updateChain(); }
+    void setMatchEQEnabled(bool e)       { matchEqEnabled = e; updateChain(); }
     void setTargetLUFS(float target)     { targetLUFS = target; }
 
     void analyzeTrack();
     void finishAnalysis();
+    void loadMatchEQReference();
+    
+    std::function<void()> onPhaseAlign;
 
     // EQ
     void setEQBand(int band, double freq, double gainDB, double q, EQBand::Type type);
@@ -93,10 +99,12 @@ private:
     bool limiterEnabled = true;
     bool autoLufsEnabled = false;
     bool dynamicEqEnabled = false;
+    bool matchEqEnabled   = false;
     float targetLUFS      = -14.0f;
     float autoGainDb      = 0.0f;
 
     ConvolutionReverbProcessor reverbProcessor;
+    LatentMatchEQ latentMatchEQ;
 
     // EQ
     static constexpr int NUM_EQ_BANDS = 8;
@@ -135,7 +143,10 @@ private:
     juce::ToggleButton limiterToggle { "LIMIT" };
     juce::ToggleButton autoLufsToggle { "AUTO-LUFS" };
     juce::ToggleButton dynEqToggle    { "DYN-EQ" };
+    juce::ToggleButton matchEqToggle  { "MATCH-EQ" };
     juce::TextButton   analyzeButton  { "Analyze Track" };
+    juce::TextButton   loadMatchEQBtn { "Load Reference" };
+    juce::TextButton   phaseAlignBtn  { "Phase Align All Tracks" };
 
     juce::Slider lufsSlider;  // display only
     juce::Label  lufsLabel;

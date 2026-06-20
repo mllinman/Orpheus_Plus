@@ -235,6 +235,10 @@ StemSeparationResult StemSeparator::collectResults(const juce::File& outputDir)
     result.bass   = findStem("bass");
     result.guitar = findStem("guitar");
     result.piano  = findStem("piano");
+    result.electricGuitar = findStem("electricGuitar");
+    if (!result.electricGuitar.existsAsFile()) result.electricGuitar = findStem("electric_guitar"); // fallback naming
+    result.percussion = findStem("percussion");
+    result.synth  = findStem("synth");
     result.other  = findStem("other");
 
     return result;

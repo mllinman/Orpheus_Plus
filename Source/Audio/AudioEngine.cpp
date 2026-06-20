@@ -11,6 +11,7 @@
 #include "../PitchCorrection/VocalSuiteProcessor.h"
 #include "../AudioCleanup/AudioCleanupProcessor.h"
 #include "../Mastering/MasteringModule.h"
+#include "../Mastering/PhaseAlignmentAI.h"
 // #include "../UI/SpectrumAnalyzer.h"
 
 
@@ -52,7 +53,7 @@ void AudioEngine::initialise()
 
     // Create IO nodes
     inputNode = processorGraph.addNode(std::make_unique<AudioGraphIOProcessor>(AudioGraphIOProcessor::audioInputNode));
-    outputNode = processorGraph.addNode(std::make_unique<AudioGraphIOProcessor>(AudioGraphIOProcessor::audioOutputNode));
+    outputNode = processorGraph.addNode(std::make_unique<AudioProcessorGraph::AudioGraphIOProcessor>(AudioGraphIOProcessor::audioOutputNode));
     
     // Create Master Node
     masterNode = processorGraph.addNode(std::make_unique<MixerProcessor>());
@@ -539,11 +540,47 @@ void AudioEngine::smoothAutomationRange(int trackIndex, const juce::String& para
 // Insert FX
 //──────────────────────────────────────────────────────────────────────────────
 
-
-
 void AudioEngine::addAudioCleanupToTrack(int trackIndex)
 {
-    // TODO: Phase 2 - Insert into graph between generator and fader
+    // Stub
+}
+
+void AudioEngine::alignAllTracksPhase()
+{
+    if (tracks.size() < 2) return;
+    
+    // Assume track 0 has the reference clip
+    OrpheusTrackInfo* refTrack = tracks[0];
+    if (refTrack->clips.isEmpty()) return;
+    
+    // We'll just align the first audio clip of each track for simplicity
+    auto* refClip = dynamic_cast<AudioClip*>(refTrack->clips[0]);
+    if (!refClip) return;
+
+    for (int i = 1; i < tracks.size(); ++i) {
+        if (tracks[i]->clips.isEmpty()) continue;
+        auto* targetClip = dynamic_cast<AudioClip*>(tracks[i]->clips[0]);
+        if (targetClip) {
+            PhaseAlignmentAI::alignBufferToReference(targetClip->audioData, refClip->audioData, 48000); // 1 sec max
+        }
+    }
+}
+
+void AudioEngine::alignTrackPhase(int trackIndex, int referenceTrackIndex)
+{
+    if (trackIndex < 0 || trackIndex >= tracks.size() || referenceTrackIndex < 0 || referenceTrackIndex >= tracks.size()) return;
+    
+    OrpheusTrackInfo* refTrack = tracks[referenceTrackIndex];
+    OrpheusTrackInfo* targetTrack = tracks[trackIndex];
+    
+    if (refTrack->clips.isEmpty() || targetTrack->clips.isEmpty()) return;
+    
+    auto* refClip = dynamic_cast<AudioClip*>(refTrack->clips[0]);
+    auto* targetClip = dynamic_cast<AudioClip*>(targetTrack->clips[0]);
+    
+    if (refClip && targetClip) {
+        PhaseAlignmentAI::alignBufferToReference(targetClip->audioData, refClip->audioData, 48000);
+    }
 }
 
 //──────────────────────────────────────────────────────────────────────────────

@@ -54,7 +54,12 @@ MainComponent::MainComponent()
     timeline        = dynamic_cast<TimelineComponent*>(addPanel(timelinePanel,      "Timeline",   std::make_unique<TimelineComponent>(*audioEngine, appState, commandManager)));
     pianoRoll       = dynamic_cast<PianoRollComponent*>(addPanel(pianoRollPanel,     "Piano Roll", std::make_unique<PianoRollComponent>(appState, *audioEngine)));
     masteringModule = dynamic_cast<MasteringModule*>(addPanel(masteringPanel,       "Mastering",  std::make_unique<MasteringModule>(*audioEngine)));
-    if (masteringModule) audioEngine->setMasteringModule(masteringModule);
+    if (masteringModule) {
+        audioEngine->setMasteringModule(masteringModule);
+        masteringModule->onPhaseAlign = [this]() {
+            audioEngine->alignAllTracksPhase();
+        };
+    }
     stemSeparator   = dynamic_cast<StemSeparatorPanel*>(addPanel(stemSeparatorPanel, "Stem Sep",   std::make_unique<StemSeparatorPanel>(*audioEngine, appState)));
     audioCleanup    = dynamic_cast<AudioCleanupPanel*>(addPanel(audioCleanupPanel,  "Cleanup",    std::make_unique<AudioCleanupPanel>(*audioEngine)));
     aiHumanizer     = dynamic_cast<AIHumanizerPanel*>(addPanel(aiHumanizerDockablePanel, "AI Humanizer", std::make_unique<AIHumanizerPanel>(*audioEngine, appState, this)));

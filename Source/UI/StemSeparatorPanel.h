@@ -72,9 +72,9 @@ private:
         juce::Slider     volumeSlider;
         juce::TextButton addToTimeline { "Add to Timeline" };
     };
-    std::array<StemCard, 6> stemCards;
-    static constexpr const char* stemNames[6] = {
-        "Vocals", "Drums", "Bass", "Guitar", "Piano", "Other"
+    std::array<StemCard, 9> stemCards;
+    static constexpr const char* stemNames[9] = {
+        "Vocals", "Drums", "Bass", "Guitar", "Piano", "Elec Guitar", "Percussion", "Synth", "Other"
     };
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(StemSeparatorPanel)

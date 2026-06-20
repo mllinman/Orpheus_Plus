@@ -11,6 +11,9 @@ struct StemSeparationResult
     juce::File bass;
     juce::File guitar;
     juce::File piano;
+    juce::File electricGuitar;
+    juce::File percussion;
+    juce::File synth;
     juce::File other;
 };
 

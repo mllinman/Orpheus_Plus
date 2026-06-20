@@ -214,6 +214,8 @@ public:
     //── AI / DSP Features ────────────────────────────────────────────────────
     void addVocalSuiteToTrack(int trackIndex);
     void addAudioCleanupToTrack(int trackIndex);
+    void alignAllTracksPhase(); // Global Phase Align
+    void alignTrackPhase(int trackIndex, int referenceTrackIndex); // Track-specific Phase Align
     
     StemSeparator&       getStemSeparator()        { return *stemSeparator; }
     AudioToMidiConverter& getAudioToMidiConverter() { return *audioToMidi; }

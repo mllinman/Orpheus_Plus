@@ -30,6 +30,16 @@ TrackLaneComponent::TrackLaneComponent(int idx, AudioEngine& e, AppState& s,
     };
     addAndMakeVisible(soloButton);
 
+    // Phase Align
+    phaseAlignButton.setColour(juce::TextButton::buttonColourId, juce::Colour(0xff2d2d44));
+    phaseAlignButton.setButtonText("Ph");
+    phaseAlignButton.onClick = [this] {
+        if (trackIndex > 0) {
+            audioEngine.alignTrackPhase(trackIndex, 0); 
+        }
+    };
+    addAndMakeVisible(phaseAlignButton);
+
     // Volume
     volumeSlider.setSliderStyle(juce::Slider::LinearHorizontal);
     volumeSlider.setRange(0.0, 1.5, 0.001);
@@ -118,6 +128,13 @@ TrackLaneComponent::TrackLaneComponent(int idx, AudioEngine& e, AppState& s,
         timeline.resized();
     };
     addAndMakeVisible(folderExpandButton);
+    
+    showTakesButton.onClick = [this] {
+        auto& t = audioEngine.getTrackInfo(trackIndex);
+        t.showTakes = !t.showTakes;
+        timeline.resized();
+    };
+    addAndMakeVisible(showTakesButton);
 }
 
 TrackLaneComponent::~TrackLaneComponent() {}
@@ -143,6 +160,7 @@ void TrackLaneComponent::resized()
         panSlider.setVisible(false);
         automationCombo.setVisible(false);
         folderExpandButton.setVisible(false);
+        phaseAlignButton.setVisible(false);
         return;
     }
 
@@ -155,6 +173,7 @@ void TrackLaneComponent::resized()
         volumeSlider.setVisible(true);
         panSlider.setVisible(true);
         automationCombo.setVisible(false);
+        phaseAlignButton.setVisible(true);
         
         folderExpandButton.setVisible(true);
         folderExpandButton.setButtonText(trackInfo.expanded ? "-" : "+");
@@ -165,6 +184,8 @@ void TrackLaneComponent::resized()
         muteButton.setBounds(buttonRow.removeFromLeft(22));
         buttonRow.removeFromLeft(2);
         soloButton.setBounds(buttonRow.removeFromLeft(22));
+        buttonRow.removeFromLeft(2);
+        phaseAlignButton.setBounds(buttonRow.removeFromLeft(22));
 
         auto sliderRow = header.removeFromTop(20);
         panSlider.setBounds(sliderRow.removeFromRight(30));

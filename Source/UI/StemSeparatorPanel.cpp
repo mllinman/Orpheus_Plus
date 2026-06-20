@@ -57,7 +57,7 @@ StemSeparatorPanel::StemSeparatorPanel(AudioEngine& e, AppState& s)
     addAndMakeVisible(cancelButton);
 
     // Stem result cards
-    for (int i = 0; i < 6; ++i) {
+    for (int i = 0; i < 9; ++i) {
         stemCards[i].soloButton.setColour(juce::TextButton::buttonColourId, OrpheusLookAndFeel::bgDark());
         stemCards[i].muteButton.setColour(juce::TextButton::buttonColourId, OrpheusLookAndFeel::bgDark());
         stemCards[i].volumeSlider.setSliderStyle(juce::Slider::LinearHorizontal);
@@ -123,7 +123,7 @@ void StemSeparatorPanel::stemSeparationComplete(const StemSeparationResult& resu
     cancelButton.setVisible(false);
 
     // Show stem cards
-    for (int i = 0; i < 6; ++i) {
+    for (int i = 0; i < 9; ++i) {
         stemCards[i].soloButton.setVisible(true);
         stemCards[i].muteButton.setVisible(true);
         stemCards[i].volumeSlider.setVisible(true);
@@ -273,13 +273,14 @@ void StemSeparatorPanel::paint(juce::Graphics& g)
         g.setFont(juce::Font(10.0f).boldened());
         g.drawText("SEPARATED STEMS", area.removeFromTop(18).reduced(4, 0), juce::Justification::centredLeft);
 
-        const juce::File stems[6] = { lastResult.vocals, lastResult.drums, lastResult.bass,
-                                       lastResult.guitar, lastResult.piano, lastResult.other };
-        int cardH = 40;
-        for (int i = 0; i < 6; ++i) {
+        const juce::File stems[9] = { lastResult.vocals, lastResult.drums, lastResult.bass,
+                                       lastResult.guitar, lastResult.piano, lastResult.electricGuitar,
+                                       lastResult.percussion, lastResult.synth, lastResult.other };
+        int cardH = 35; // slightly smaller to fit 9 cards
+        for (int i = 0; i < 9; ++i) {
             auto cardBounds = area.removeFromTop(cardH);
             paintStemCard(g, cardBounds, stemNames[i], stems[i], i);
-            area.removeFromTop(4);
+            area.removeFromTop(2);
         }
     }
 }
@@ -323,15 +324,15 @@ void StemSeparatorPanel::resized()
     // Stem cards
     if (hasResult) {
         area.removeFromTop(26); // header
-        int cardH = 40;
-        for (int i = 0; i < 6; ++i) {
+        int cardH = 35; // slightly smaller to fit 9 cards
+        for (int i = 0; i < 9; ++i) {
             auto card = area.removeFromTop(cardH);
             auto right = card.removeFromRight(card.getWidth() - 86);
             stemCards[i].soloButton.setBounds(right.removeFromLeft(24).reduced(2));
             stemCards[i].muteButton.setBounds(right.removeFromLeft(24).reduced(2));
             stemCards[i].volumeSlider.setBounds(right.removeFromLeft(100).reduced(2));
             stemCards[i].addToTimeline.setBounds(right.reduced(2));
-            area.removeFromTop(4);
+            area.removeFromTop(2);
         }
     }
 }

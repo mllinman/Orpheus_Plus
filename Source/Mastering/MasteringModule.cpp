@@ -223,20 +223,24 @@ void MasteringModule::paint(juce::Graphics& g)
 void MasteringModule::resized()
 {
     auto area = getLocalBounds();
-    area.removeFromTop(40); // header
+    auto bounds = getLocalBounds();
+    bounds.removeFromTop(40); // header
+    int w = bounds.getWidth() / 9;
+    auto togglesRow = bounds.removeFromTop(40);
+    eqToggle.setBounds(togglesRow.removeFromLeft(w));
+    compToggle.setBounds(togglesRow.removeFromLeft(w));
+    msToggle.setBounds(togglesRow.removeFromLeft(w));
+    satToggle.setBounds(togglesRow.removeFromLeft(w));
+    reverbToggle.setBounds(togglesRow.removeFromLeft(w));
+    limiterToggle.setBounds(togglesRow.removeFromLeft(w));
+    autoLufsToggle.setBounds(togglesRow.removeFromLeft(w));
+    dynEqToggle.setBounds(togglesRow.removeFromLeft(w));
+    matchEqToggle.setBounds(togglesRow.removeFromLeft(w));
 
-    // Toggle buttons row
-    auto topArea = area.removeFromTop(40).reduced(8, 4);
-    int toggleW = topArea.getWidth() / 9;
-    eqToggle.setBounds(topArea.removeFromLeft(toggleW).reduced(4));
-    dynEqToggle.setBounds(topArea.removeFromLeft(toggleW).reduced(4));
-    compToggle.setBounds(topArea.removeFromLeft(toggleW).reduced(4));
-    msToggle.setBounds(topArea.removeFromLeft(toggleW).reduced(4));
-    satToggle.setBounds(topArea.removeFromLeft(toggleW).reduced(4));
-    reverbToggle.setBounds(topArea.removeFromLeft(toggleW).reduced(4));
-    limiterToggle.setBounds(topArea.removeFromLeft(toggleW).reduced(4));
-    autoLufsToggle.setBounds(topArea.removeFromLeft(toggleW).reduced(4));
-    analyzeButton.setBounds(topArea.reduced(4));
+    auto buttonRow = bounds.removeFromTop(40);
+    analyzeButton.setBounds(buttonRow.removeFromLeft(150).reduced(5));
+    loadMatchEQBtn.setBounds(buttonRow.removeFromLeft(150).reduced(5));
+    phaseAlignBtn.setBounds(buttonRow.removeFromLeft(200).reduced(5));
 
     // Meters are painted, so nothing to layout for them
     // The rest (signal chain strip, EQ visualization, etc.) are all painted
@@ -244,10 +248,20 @@ void MasteringModule::resized()
 
 void MasteringModule::analyzeTrack()
 {
+    if (isAnalyzing.load()) return;
     isAnalyzing.store(true);
     framesAnalyzed = 0;
     peakAccumulator = 0.0f;
-    analyzeButton.setButtonText("Analyzing...");
+    juce::Logger::writeToLog("MasteringModule: Starting analysis pass...");
+}
+
+void MasteringModule::loadMatchEQReference()
+{
+    // Simplified stub to load the file
+    // In actual implementation, we'd open a fileChooser
+    juce::File dummyFile = juce::File::getSpecialLocation(juce::File::userDesktopDirectory).getChildFile("reference.wav");
+    latentMatchEQ.analyzeReferenceTrack(dummyFile);
+    matchEqToggle.setToggleState(true, juce::sendNotification);
 }
 
 void MasteringModule::finishAnalysis()
@@ -301,9 +315,13 @@ void MasteringModule::prepare(const juce::dsp::ProcessSpec& spec)
 {
     currentSampleRate = spec.sampleRate;
     linearPhaseEQ.prepare(spec);
-    reverbProcessor.prepareToPlay(spec.sampleRate, (int)spec.maximumBlockSize);
-    lufsMeter.prepare(spec.sampleRate, spec.maximumBlockSize);
+    multibandComp.prepare(spec);
+    reverbProcessor.prepare(spec);
+    latentMatchEQ.prepareToPlay(spec.sampleRate, spec.maximumBlockSize);
 
+    lufsMeter.prepare(spec);
+    lufsMeter.setTargetLUFS(targetLUFS);
+    
     if (!mbCompInitialized) {
         multibandComp.prepare(spec);
         mbCompInitialized = true;
@@ -324,7 +342,14 @@ void MasteringModule::processBlock(juce::AudioBuffer<float>& buffer, double samp
     }
 
     if (midSideEnabled) processMidSide(buffer, true);
-    if (eqEnabled) processEQ(buffer);
+    if (eqEnabled)
+        processEQ(buffer);
+        
+    if (matchEqEnabled) {
+        juce::MidiBuffer midiMessages;
+        latentMatchEQ.processBlock(buffer, midiMessages);
+    }
+
     if (mbCompEnabled) processMultibandComp(buffer);
     if (satEnabled) processSaturation(buffer);
     if (reverbEnabled) processReverb(buffer);
@@ -461,24 +486,37 @@ void MasteringModule::updateMeters(const juce::AudioBuffer<float>& buffer)
 void MasteringModule::buildUI()
 {
     addAndMakeVisible(eqToggle);
-    addAndMakeVisible(dynEqToggle);
     addAndMakeVisible(compToggle);
     addAndMakeVisible(msToggle);
     addAndMakeVisible(satToggle);
     addAndMakeVisible(reverbToggle);
     addAndMakeVisible(limiterToggle);
     addAndMakeVisible(autoLufsToggle);
-    addAndMakeVisible(analyzeButton);
+    addAndMakeVisible(dynEqToggle);
+    addAndMakeVisible(matchEqToggle);
 
-    eqToggle.onClick = [this] { setEQEnabled(eqToggle.getToggleState()); };
-    dynEqToggle.onClick = [this] { setDynamicEQEnabled(dynEqToggle.getToggleState()); };
-    compToggle.onClick = [this] { setMultibandCompEnabled(compToggle.getToggleState()); };
-    msToggle.onClick = [this] { setMidSideEnabled(msToggle.getToggleState()); };
-    satToggle.onClick = [this] { setSaturationEnabled(satToggle.getToggleState()); };
-    reverbToggle.onClick = [this] { setReverbEnabled(reverbToggle.getToggleState()); };
+    addAndMakeVisible(analyzeButton);
+    addAndMakeVisible(loadMatchEQBtn);
+    addAndMakeVisible(phaseAlignBtn);
+    addAndMakeVisible(lufsSlider);
+    addAndMakeVisible(lufsLabel);
+    addAndMakeVisible(truePeakLabel);
+    addAndMakeVisible(correlationLabel);
+
+    // Basic callbacks
+    eqToggle.onClick      = [this] { setEQEnabled(eqToggle.getToggleState()); };
+    compToggle.onClick    = [this] { setMultibandCompEnabled(compToggle.getToggleState()); };
+    msToggle.onClick      = [this] { setMidSideEnabled(msToggle.getToggleState()); };
+    satToggle.onClick     = [this] { setSaturationEnabled(satToggle.getToggleState()); };
+    reverbToggle.onClick  = [this] { setReverbEnabled(reverbToggle.getToggleState()); };
     limiterToggle.onClick = [this] { setLimiterEnabled(limiterToggle.getToggleState()); };
     autoLufsToggle.onClick = [this] { setAutoLUFSEnabled(autoLufsToggle.getToggleState()); };
+    dynEqToggle.onClick    = [this] { setDynamicEQEnabled(dynEqToggle.getToggleState()); };
+    matchEqToggle.onClick  = [this] { setMatchEQEnabled(matchEqToggle.getToggleState()); };
+
     analyzeButton.onClick = [this] { analyzeTrack(); };
+    loadMatchEQBtn.onClick = [this] { loadMatchEQReference(); };
+    phaseAlignBtn.onClick = [this] { if (onPhaseAlign) onPhaseAlign(); };
 
     eqToggle.setToggleState(eqEnabled, juce::dontSendNotification);
     dynEqToggle.setToggleState(dynamicEqEnabled, juce::dontSendNotification);
