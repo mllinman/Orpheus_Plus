@@ -30,10 +30,10 @@ juce::MidiMessageSequence MelodyCompleter::generateCompletion(const juce::MidiMe
         noteOn.setTimeStamp(lastTime + tickSpacing * (i + 1));
         generatedSeq.addEvent(noteOn);
 
-        // Add Note Off (8th note length)
-        juce::MidiMessage noteOff = juce::MidiMessage::noteOff(1, nextNote);
-        noteOff.setTimeStamp(lastTime + tickSpacing * (i + 1) + (tickSpacing / 2.0));
-        generatedSeq.addEvent(noteOff);
+        // Add Note Off (8th note length) using noteOff method or noteOn with 0 velocity
+        juce::MidiMessage noteOffMsg = juce::MidiMessage::noteOff(1, nextNote, 0.0f);
+        noteOffMsg.setTimeStamp(lastTime + tickSpacing * (i + 1) + (tickSpacing / 2.0));
+        generatedSeq.addEvent(noteOffMsg);
 
         lastNoteNumber = nextNote;
     }
