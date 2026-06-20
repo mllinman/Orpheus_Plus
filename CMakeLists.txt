@@ -138,6 +138,7 @@ target_sources(OrpheusPlus PRIVATE
     Source/UI/PitchGamePanel.cpp
     Source/UI/ShortcutsSettingsPanel.cpp
     Source/UI/MacroControlPanel.cpp
+    Source/UI/TextToSamplePanel.cpp
 
     # Transcription
     Source/Transcription/TablatureGenerator.cpp

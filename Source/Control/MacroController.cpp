@@ -11,22 +11,31 @@ void MacroController::setValue(float newValue)
 
     for (auto& target : targets)
     {
-        if (target.parameter != nullptr)
+        if (target.cachedParameter != nullptr)
         {
-            // Simple linear scaling for now
-            float scaledValue = target.minScaling + currentValue * (target.maxScaling - target.minScaling);
-            target.parameter->setValueNotifyingHost(scaledValue);
+            // Simple depth scaling mapping: 0.0 to 1.0 applied as range based on depth
+            float scaledValue = currentValue * target.depth;
+            target.cachedParameter->setValueNotifyingHost(scaledValue);
         }
     }
 }
 
-void MacroController::addTarget(juce::AudioProcessorParameter* param, float minScaling, float maxScaling)
+void MacroController::addTarget(int trackIndex, const juce::String& paramID, float depth, juce::AudioProcessorParameter* param)
 {
-    targets.push_back({param, minScaling, maxScaling});
+    targets.push_back({trackIndex, paramID, depth, param});
 }
 
-void MacroController::removeTarget(juce::AudioProcessorParameter* param)
+void MacroController::removeTarget(int trackIndex, const juce::String& paramID)
 {
     targets.erase(std::remove_if(targets.begin(), targets.end(),
-        [param](const Target& t) { return t.parameter == param; }), targets.end());
+        [trackIndex, paramID](const MacroTarget& t) { 
+            return t.trackIndex == trackIndex && t.paramID == paramID; 
+        }), targets.end());
+}
+
+void MacroController::syncWithAudioEngine(class AudioEngine* engine)
+{
+    // MOCK: This would iterate over targets and map `cachedParameter` correctly via engine pointer
+    // e.g. target.cachedParameter = engine->getTrack(target.trackIndex)->getParameter(target.paramID);
+    juce::ignoreUnused(engine);
 }

@@ -11,20 +11,23 @@ public:
     void setValue(float newValue);
     float getValue() const { return currentValue; }
 
-    struct Target {
-        juce::AudioProcessorParameter* parameter;
-        float minScaling;
-        float maxScaling;
-        // Optionally a custom curve could go here
+    struct MacroTarget {
+        int trackIndex;
+        juce::String paramID;
+        float depth;
+        juce::AudioProcessorParameter* cachedParameter { nullptr }; // Fast lookups
     };
 
-    void addTarget(juce::AudioProcessorParameter* param, float minScaling = 0.0f, float maxScaling = 1.0f);
-    void removeTarget(juce::AudioProcessorParameter* param);
+    void addTarget(int trackIndex, const juce::String& paramID, float depth, juce::AudioProcessorParameter* param = nullptr);
+    void removeTarget(int trackIndex, const juce::String& paramID);
 
     juce::String getName() const { return name; }
+    
+    // Automation sync
+    void syncWithAudioEngine(class AudioEngine* engine);
 
 private:
     juce::String name;
     float currentValue = 0.0f;
-    std::vector<Target> targets;
+    std::vector<MacroTarget> targets;
 };

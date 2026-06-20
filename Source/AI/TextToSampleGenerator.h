@@ -23,4 +23,8 @@ private:
     std::atomic<bool> finished { false };
     juce::AudioBuffer<float> internalBuffer;
     juce::String currentPrompt;
+
+#if USE_ONNX_RUNTIME
+    // Forward-declare or include ONNX structs if needed
+#endif
 };
