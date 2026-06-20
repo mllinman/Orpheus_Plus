@@ -112,7 +112,8 @@ public:
         cmdScratchPadLoad,
         cmdImportAudio,
         cmdShowUserManual,
-        cmdOpenAIHumanizer
+        cmdOpenAIHumanizer,
+        cmdProjectSettings
     };
 
 private:
@@ -123,6 +124,7 @@ private:
     void showSettingsDialog();
     void showAudioCleanupDialog();
     void showAIHumanizerDialog();
+    void showProjectSettingsDialog();
     void showAboutDialog();
     void updateLayout();
     void switchToView(int viewIndex);

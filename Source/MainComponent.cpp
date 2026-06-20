@@ -8,6 +8,7 @@
 #include "AI/MixingAssistant.h"
 #include "Timeline/AudioClip.h"
 #include "UI/VoiceCloningPanel.h"
+#include "UI/ProjectSettingsPanel.h"
 
 //==============================================================================
 MainComponent::MainComponent()
@@ -257,6 +258,7 @@ juce::PopupMenu MainComponent::getMenuForIndex(int menuIndex, const juce::String
             menu.addCommandItem(&commandManager, cmdExportMix);
             menu.addCommandItem(&commandManager, cmdExportStems);
             menu.addSeparator();
+            menu.addCommandItem(&commandManager, cmdProjectSettings);
             menu.addCommandItem(&commandManager, cmdOpenSettings);
             menu.addSeparator();
             menu.addCommandItem(&commandManager, cmdQuit);
@@ -323,7 +325,7 @@ void MainComponent::getAllCommands(juce::Array<juce::CommandID>& commands)
         cmdOpenMastering, cmdOpenStemSeparation, cmdAudioToMidi,
         cmdOpenPianoRoll, cmdShowTimeline,
         cmdExportMix, cmdExportStems,
-        cmdOpenPluginBrowser, cmdOpenSettings,
+        cmdProjectSettings, cmdOpenPluginBrowser, cmdOpenSettings,
         cmdToggleMixer, cmdAudioCleanup, cmdAbout, cmdQuit,
         cmdOpenAutoTune, cmdOpenAIHumanizer, cmdToggleTrackSettings, cmdToggleLibraryPanel,
         cmdAddVocalTrack, cmdAddInstrumentTrack,
@@ -426,6 +428,9 @@ void MainComponent::getCommandInfo(juce::CommandID commandID, juce::ApplicationC
         case cmdOpenSettings:
             result.setInfo("Settings...", "Open Audio/MIDI Settings", "File", 0);
             result.addDefaultKeypress(',', juce::ModifierKeys::commandModifier);
+            break;
+        case cmdProjectSettings:
+            result.setInfo("Project Settings...", "Configure Project Directory", "File", 0);
             break;
         case cmdAbout:
             result.setInfo("About Orpheus Plus", "About this application", "Help", 0);
@@ -560,6 +565,10 @@ bool MainComponent::perform(const InvocationInfo& info)
         case cmdExportMix:
         case cmdExportStems:
             showExportDialog();
+            return true;
+
+        case cmdProjectSettings:
+            showProjectSettingsDialog();
             return true;
 
         case cmdOpenSettings:
@@ -870,6 +879,32 @@ void MainComponent::showSettingsDialog()
     auto* panel = new AudioMidiSettingsPanel(*deviceManager);
 
     juce::DialogWindow::LaunchOptions options;
+    options.content.setOwned(panel);
+    options.dialogTitle = "Audio & MIDI Settings";
+    options.dialogBackgroundColour = getLookAndFeel().findColour(juce::ResizableWindow::backgroundColourId);
+    options.escapeKeyTriggersCloseButton = true;
+    options.useNativeTitleBar = false;
+    options.resizable = false;
+
+    options.launchAsync();
+}
+
+void MainComponent::showProjectSettingsDialog()
+{
+    if (!projectManager) return;
+
+    auto* panel = new ProjectSettingsPanel(*projectManager);
+
+    juce::DialogWindow::LaunchOptions options;
+    options.content.setOwned(panel);
+    options.dialogTitle = "Project Settings";
+    options.dialogBackgroundColour = getLookAndFeel().findColour(juce::ResizableWindow::backgroundColourId);
+    options.escapeKeyTriggersCloseButton = true;
+    options.useNativeTitleBar = false;
+    options.resizable = false;
+
+    options.launchAsync();
+}
     options.content.setOwned(panel);
     options.dialogTitle = "Audio & MIDI Settings";
     options.dialogBackgroundColour = getLookAndFeel().findColour(juce::ResizableWindow::backgroundColourId);
