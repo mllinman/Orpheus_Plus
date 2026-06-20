@@ -189,12 +189,15 @@ void AIHumanizerProcessor::processFileOffline(const juce::File& inputFile, const
 
     int blockSize = 2048;
     juce::AudioBuffer<float> blockBuffer;
+    blockBuffer.setSize(numChannels, blockSize);
     juce::MidiBuffer emptyMidi;
 
     for (int i = 0; i < lengthInSamples; i += blockSize)
     {
         int numSamples = juce::jmin(blockSize, lengthInSamples - i);
-        blockBuffer.makeCopyOf(buffer, true, i, numSamples);
+        for (int c = 0; c < numChannels; ++c) {
+            blockBuffer.copyFrom(c, 0, buffer, c, i, numSamples);
+        }
         
         processBlock(blockBuffer, emptyMidi);
 
@@ -222,8 +225,11 @@ void AIHumanizerProcessor::processFileOffline(const juce::File& inputFile, const
 
         if (appState && engine)
         {
-            int newTrackIdx = engine->addAudioTrack("Humanized");
-            appState->addAudioRegion(newTrackIdx, outputFile.getFullPathName(), 0.0, 0.0);
+            int newTrackIdx = appState->addAudioTrack("Humanized");
+            engine->addAudioTrack("Humanized"); // Sync
+            
+            auto* newClip = new AudioClip(outputFile, 0.0);
+            engine->getTrackInfo(newTrackIdx).clips.add(newClip);
         }
     }
     else

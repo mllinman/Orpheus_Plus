@@ -11,11 +11,17 @@ MacroControlPanel::MacroControlPanel()
         knob.slider->setValue(0.5);
         addAndMakeVisible(knob.slider.get());
         
-        knob.label = std::make_unique<juce::Label>("", "Macro " + juce::String(i + 1));
+        juce::String macroName = "Macro " + juce::String(i + 1);
+        knob.label = std::make_unique<juce::Label>("", macroName);
         knob.label->setJustificationType(juce::Justification::centred);
         knob.label->setColour(juce::Label::textColourId, OrpheusLookAndFeel::textSecondary());
         knob.label->setFont(12.0f);
         addAndMakeVisible(knob.label.get());
+
+        knob.controller = std::make_unique<MacroController>(macroName);
+        knob.slider->onValueChange = [this, i]() {
+            macros[i].controller->setValue((float)macros[i].slider->getValue());
+        };
         
         macros.push_back(std::move(knob));
     }
@@ -56,5 +62,19 @@ void MacroControlPanel::resized()
         auto knobArea = area.removeFromTop(knobSize).withSizeKeepingCentre(knobSize, knobSize);
         macros[i].slider->setBounds(knobArea);
         macros[i].label->setBounds(area);
+    }
+}
+
+void MacroControlPanel::mouseDrag(const juce::MouseEvent& e)
+{
+    for (int i = 0; i < (int)macros.size(); ++i)
+    {
+        if (macros[i].label->getBounds().contains(e.getMouseDownPosition()) ||
+            macros[i].slider->getBounds().contains(e.getMouseDownPosition()))
+        {
+            // Start drag
+            startDragging(macros[i].controller->getName(), this, juce::Image(), true);
+            break;
+        }
     }
 }

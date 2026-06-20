@@ -316,11 +316,10 @@ void MasteringModule::prepare(const juce::dsp::ProcessSpec& spec)
     currentSampleRate = spec.sampleRate;
     linearPhaseEQ.prepare(spec);
     multibandComp.prepare(spec);
-    reverbProcessor.prepare(spec);
+    reverbProcessor.prepareToPlay(spec.sampleRate, spec.maximumBlockSize);
     latentMatchEQ.prepareToPlay(spec.sampleRate, spec.maximumBlockSize);
 
-    lufsMeter.prepare(spec);
-    lufsMeter.setTargetLUFS(targetLUFS);
+    lufsMeter.prepare(spec.sampleRate, spec.maximumBlockSize);
     
     if (!mbCompInitialized) {
         multibandComp.prepare(spec);

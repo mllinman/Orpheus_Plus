@@ -110,7 +110,9 @@ public:
     juce::ValueTree getValueTree() { return valueTree; }
 
     std::vector<double> userGrooveTemplate;
-
+    std::function<void()> onProjectLoaded;
+    juce::ValueTree& getState() { return valueTree; }
+    
 private:
     bool         dirty       = false;
     juce::String projectName = "Untitled Project";

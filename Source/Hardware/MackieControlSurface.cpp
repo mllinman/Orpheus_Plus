@@ -35,13 +35,13 @@ void MackieControlSurface::handleNoteOn(int note, int velocity)
     switch (note)
     {
     case CMD_PLAY:
-        audioEngine.setPlaying(true);
+        if (!audioEngine.isPlaying()) audioEngine.play();
         break;
     case CMD_STOP:
-        audioEngine.setPlaying(false);
+        if (audioEngine.isPlaying()) audioEngine.stop();
         break;
     case CMD_RECORD:
-        audioEngine.setRecording(true);
+        if (!audioEngine.isRecording()) audioEngine.toggleRecord();
         break;
     case CMD_BANK_LEFT:
         if (currentBank > 0) currentBank--;
@@ -54,15 +54,15 @@ void MackieControlSurface::handleNoteOn(int note, int velocity)
         if (note >= 16 && note <= 23) {
             int trackIdx = (note - 16) + (currentBank * 8);
             // Toggle mute
-            bool isMuted = audioEngine.getTrack(trackIdx)->isMuted();
-            audioEngine.getTrack(trackIdx)->setMute(!isMuted);
+            bool isMuted = audioEngine.getTrack(trackIdx)->mute;
+            audioEngine.setTrackMute(trackIdx, !isMuted);
             updateMute(trackIdx, !isMuted);
         }
         // Check Solo (8-15)
         else if (note >= 8 && note <= 15) {
             int trackIdx = (note - 8) + (currentBank * 8);
-            bool isSolo = audioEngine.getTrack(trackIdx)->isSolo();
-            audioEngine.getTrack(trackIdx)->setSolo(!isSolo);
+            bool isSolo = audioEngine.getTrack(trackIdx)->solo;
+            audioEngine.setTrackSolo(trackIdx, !isSolo);
             updateSolo(trackIdx, !isSolo);
         }
         break;
@@ -89,13 +89,13 @@ void MackieControlSurface::handleControlChange(int controller, int value)
         int trackIndex = (controller - 16) + (currentBank * 8);
         // value is typically endless encoder (1-63 right, 65-127 left)
         // Convert to absolute pan value -1.0 to 1.0
-        float currentPan = audioEngine.getTrack(trackIndex)->getPan();
+        float currentPan = audioEngine.getTrack(trackIndex)->pan;
         float delta = 0.0f;
         if (value >= 1 && value <= 63) delta = value * 0.05f;
         else if (value >= 65 && value <= 127) delta = -(value - 64) * 0.05f;
         
         float newPan = juce::jlimit(-1.0f, 1.0f, currentPan + delta);
-        audioEngine.getTrack(trackIndex)->setPan(newPan);
+        audioEngine.setTrackPan(trackIndex, newPan);
     }
 }
 

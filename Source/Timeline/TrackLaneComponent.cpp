@@ -208,7 +208,7 @@ void TrackLaneComponent::resized()
     buttonRow.removeFromLeft(2);
     soloButton.setBounds(buttonRow.removeFromLeft(22));
     buttonRow.removeFromLeft(2);
-    armButton.setBounds(buttonRow.removeFromLeft(22));
+    // armButton.setBounds(buttonRow.removeFromLeft(22));
     buttonRow.removeFromLeft(2);
     showTakesButton.setBounds(buttonRow.removeFromLeft(22));
 
@@ -593,6 +593,25 @@ void TrackLaneComponent::mouseDown(const juce::MouseEvent& e)
                 });
                 return;
             }
+            
+            // General Clip Right Click
+            juce::PopupMenu m;
+            
+            // Needs to safely capture AudioClip since getClipAt returns Clip*
+            bool isAudio = (clip->getType() == Clip::Type::Audio);
+            m.addItem(1, "Generate Variations (AI)...", isAudio);
+
+            m.showMenuAsync(juce::PopupMenu::Options{}, [this, clip, isAudio](int res) {
+                if (res == 1 && isAudio) {
+                    // Forward to some AI Variation generator
+                    // In a real implementation this would spawn a thread and show a loading bar
+                    auto* ac = static_cast<AudioClip*>(clip);
+                    juce::AlertWindow::showMessageBoxAsync(juce::AlertWindow::InfoIcon, 
+                        "AI Variation Generator", 
+                        "Generating 5 variations for: " + ac->sourceFile.getFileName() + "\n(This feature is a preview simulation)");
+                }
+            });
+            return;
         }
 
         // Global Track Right Click

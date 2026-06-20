@@ -23,7 +23,7 @@ void VoiceConversionProcessor::prepareToPlay(double sampleRate, int samplesPerBl
 
     // Setup high-pass filter for humanize (unvoiced noise extraction)
     // Cutoff around 6kHz to isolate breaths and lip noise
-    *highPassFilter.state = *juce::dsp::IIR::Coefficients<float>::makeHighPass(sampleRate, 6000.0f);
+    highPassFilter.coefficients = juce::dsp::IIR::Coefficients<float>::makeHighPass(sampleRate, 6000.0f);
 }
 
 void VoiceConversionProcessor::releaseResources()

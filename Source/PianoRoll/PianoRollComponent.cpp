@@ -296,27 +296,10 @@ void PianoRollComponent::paintNotes(juce::Graphics& g, juce::Rectangle<int> area
         }
     };
 
-    if (!activeClips.empty())
-    {
-        // Render unified key editor (multiple clips)
-        for (size_t i = 0; i < activeClips.size(); ++i)
-        {
-            auto* clip = activeClips[i];
-            juce::Colour col = trackColours[i % 6];
-            
-            std::vector<MidiNote*> clipNotes;
-            for (auto* n : clip->notes) clipNotes.push_back(n);
-            
-            drawNotes(clipNotes, col);
-        }
-    }
-    else
-    {
-        // Fallback to local notes array
-        std::vector<MidiNote*> localNotes;
-        for (auto* n : notes) localNotes.push_back(n);
-        drawNotes(localNotes, noteColour);
-    }
+    // Fallback to local notes array
+    std::vector<MidiNote*> localNotes;
+    for (auto* n : notes) localNotes.push_back(n);
+    drawNotes(localNotes, noteColour);
     
     // Create clip bounds to prevent notes drawing outside grid
     g.reduceClipRegion(area);

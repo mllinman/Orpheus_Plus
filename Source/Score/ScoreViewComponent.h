@@ -14,7 +14,7 @@ public:
 
 private:
     void drawStaff(juce::Graphics& g, int yCenter);
-    void drawNote(juce::Graphics& g, MidiNote* note, int staffY, int xPos);
+    void drawNote(juce::Graphics& g, int pitch, int staffY, int xPos);
 
     MidiClip* activeClip = nullptr;
 

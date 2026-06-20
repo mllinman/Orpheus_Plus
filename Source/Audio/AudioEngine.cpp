@@ -588,9 +588,6 @@ void AudioEngine::alignTrackPhase(int trackIndex, int referenceTrackIndex)
 //──────────────────────────────────────────────────────────────────────────────
 void AudioEngine::audioDeviceAboutToStart(juce::AudioIODevice* device)
 {
-    // Realtime Audio Thread Priority Boosting
-    juce::Thread::setCurrentThreadPriority(10); 
-    
     currentSampleRate = device->getCurrentSampleRate();
     currentBlockSize  = device->getCurrentBufferSizeSamples();
     midiCollector.reset(currentSampleRate);

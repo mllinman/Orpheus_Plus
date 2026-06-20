@@ -85,18 +85,28 @@ void AudioExportManager::exportMasterMix(const juce::File& outputFile, const Exp
     }
 
     // Set up bounce bounds
-    auto& timeline = audioEngine.getTimelineProcessor();
-    double endTime = timeline.getTotalLengthSeconds();
-    if (endTime <= 0) endTime = 10.0; // fallback
+    double endTime = 0.0;
+    for (int i = 0; i < audioEngine.getTrackCount(); ++i)
+    {
+        if (auto* t = audioEngine.getTrack(i))
+        {
+            for (auto* c : t->clips)
+            {
+                endTime = juce::jmax(endTime, c->startTime + c->duration);
+            }
+        }
+    }
+    if (endTime <= 0.0) endTime = 10.0; // fallback
     endTime += 2.0; // tail
 
     int numSamples = (int)(endTime * settings.sampleRate);
     int blockSize = 512;
     juce::AudioBuffer<float> buffer(2, blockSize);
     
-    auto oldState = audioEngine.getTransportState();
-    audioEngine.setTransportState(AudioEngine::TransportState::Exporting);
-    audioEngine.prepareToPlay(settings.sampleRate, blockSize);
+    bool wasPlaying = audioEngine.isPlaying();
+    audioEngine.stop();
+    audioEngine.setExporting(true);
+    audioEngine.getGraph().prepareToPlay(settings.sampleRate, blockSize);
 
     for (int i = 0; i < numSamples; i += blockSize)
     {
@@ -105,7 +115,7 @@ void AudioExportManager::exportMasterMix(const juce::File& outputFile, const Exp
         buffer.clear();
 
         juce::MidiBuffer midiMessages;
-        audioEngine.processBlock(buffer, midiMessages);
+        audioEngine.getGraph().processBlock(buffer, midiMessages);
 
         writer->writeFromAudioSampleBuffer(buffer, 0, samplesToProcess);
         
@@ -113,7 +123,8 @@ void AudioExportManager::exportMasterMix(const juce::File& outputFile, const Exp
     }
 
     writer.reset();
-    audioEngine.setTransportState(oldState);
+    audioEngine.setExporting(false);
+    if (wasPlaying) audioEngine.play();
     OrpheusLogger::logInfo("Master Mix exported successfully.");
 }
 
@@ -268,10 +279,10 @@ void AudioExportManager::exportAISeparation(const juce::File& outputDirectory, c
             
             // 5. Add new tracks to AudioEngine
             int newTrackIdx = audioEngine.addAudioTrack(name);
-            auto* track = audioEngine.getTrack(newTrackIdx);
-            if (track)
+            if (auto* track = audioEngine.getTrack(newTrackIdx))
             {
-                appState->addAudioRegion(newTrackIdx, targetFile.getFullPathName(), 0.0, 0.0);
+                auto* newClip = new AudioClip(targetFile, 0.0);
+                track->clips.add(newClip);
             }
         };
 

@@ -40,8 +40,6 @@ private:
     AudioEngine& audioEngine;
     juce::File   currentFile;
 
-    juce::File   currentFile;
-
     juce::File defaultProjectDir;
     bool copyAudioOnSave = true;
 

@@ -46,6 +46,13 @@ target_sources(OrpheusPlus PRIVATE
     Source/Main.cpp
     Source/MainComponent.cpp
 
+    # Newly Added Missing Sources
+    Source/Util/OrpheusLogger.cpp
+    Source/UI/ExportDialog.cpp
+    Source/UI/WorkspaceManager.cpp
+    Source/Mastering/PhaseAlignmentAI.cpp
+    Source/Control/MacroController.cpp
+
     # Audio Engine
     Source/Audio/AudioEngine.cpp
     Source/Audio/ClipGeneratorProcessor.cpp

@@ -36,9 +36,9 @@ void LatentMatchEQ::analyzeReferenceTrack(const juce::File& audioFile)
     }
     
     convolutionFilter.loadImpulseResponse(dummyIR.data(), dummyIR.size(), 
-                                          currentSampleRate, 
                                           juce::dsp::Convolution::Stereo::yes, 
                                           juce::dsp::Convolution::Trim::no, 
+                                          0,
                                           juce::dsp::Convolution::Normalise::yes);
 
     hasAnalyzedReference = true;

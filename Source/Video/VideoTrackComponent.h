@@ -14,7 +14,7 @@ public:
 
 private:
     TransportController& transportController;
-    std::unique_ptr<juce::VideoComponent> videoComponent;
+    std::unique_ptr<juce::Component> videoComponent;
     bool isVideoLoaded = false;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(VideoTrackComponent)

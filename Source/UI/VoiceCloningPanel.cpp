@@ -72,7 +72,7 @@ void VoiceCloningPanel::processUploadedSong(const juce::File& file)
     statusLabel.setText("Separating Stems...", juce::dontSendNotification);
 
     // 1. Separate Stems
-    audioEngine.getStemSeparator().separate(file, *mainComponent->getAppState(), [this](StemSeparationResult result) {
+    audioEngine.getStemSeparator().separate(file, *(mainComponent->getAppState()), [this](StemSeparationResult result) {
         
         if (result.vocals.existsAsFile()) {
             statusLabel.setText("Extracting AI Embedding...", juce::dontSendNotification);

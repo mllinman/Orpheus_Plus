@@ -130,23 +130,32 @@ void ExportDialog::triggerExport()
         case 3: settings.bitDepth = 32; break; // float
     }
 
-    settings.spotifyPreset = (presetBox.getSelectedId() > 1); // If a standard is picked, we'll map this broadly internally
+    settings.enforceStandard = (presetBox.getSelectedId() > 1); // If a standard is picked, we'll map this broadly internally
     
     settings.mode = static_cast<AudioExportManager::ExportMode>(modeBox.getSelectedId() - 1);
 
-    juce::FileChooser chooser("Select export destination...", juce::File::getSpecialLocation(juce::File::userMusicDirectory), "*" + ext);
-    if (chooser.browseForFileToSave(true))
+    auto chooserFlags = juce::FileBrowserComponent::saveMode | juce::FileBrowserComponent::canSelectFiles;
+    chooser = std::make_unique<juce::FileChooser>("Select export destination...", juce::File::getSpecialLocation(juce::File::userMusicDirectory), "*" + ext);
+    chooser->launchAsync(chooserFlags, [this, settings](const juce::FileChooser& fc)
     {
-        juce::File target = chooser.getResult();
-        manager.performExport(target, settings, nullptr);
-        if (onExportStarted) onExportStarted();
-    }
+        juce::File target = fc.getResult();
+        if (target != juce::File{})
+        {
+            manager.performExport(target, settings, nullptr);
+            if (onExportStarted) onExportStarted();
+        }
+    });
 }
 
 void ExportDialog::paint(juce::Graphics& g)
 {
     auto bounds = getLocalBounds().toFloat();
-    OrpheusLookAndFeel::drawGlassPanel(g, bounds, 12.0f);
+    if (auto* lnf = dynamic_cast<OrpheusLookAndFeel*>(&getLookAndFeel())) {
+        lnf->drawGlassBackground(g, bounds, 12.0f);
+    } else {
+        g.setColour(juce::Colours::black.withAlpha(0.8f));
+        g.fillRoundedRectangle(bounds, 12.0f);
+    }
     
     // Draw an accent glow top line
     g.setGradientFill(juce::ColourGradient(OrpheusLookAndFeel::accentPrimary().withAlpha(0.6f), bounds.getWidth() * 0.5f, 0.0f,

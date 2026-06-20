@@ -28,10 +28,13 @@ void ScoreViewComponent::paint(juce::Graphics& g)
     {
         // Simple mapping just to verify render
         int xPos = 50;
-        for (auto* note : activeClip->notes)
+        for (auto* event : activeClip->midiData)
         {
-            drawNote(g, note, staffY, xPos);
-            xPos += 40; // Spacing
+            if (event->message.isNoteOn())
+            {
+                drawNote(g, event->message.getNoteNumber(), staffY, xPos);
+                xPos += 40; // Spacing
+            }
         }
     }
 }
@@ -50,12 +53,12 @@ void ScoreViewComponent::drawStaff(juce::Graphics& g, int yCenter)
     }
 }
 
-void ScoreViewComponent::drawNote(juce::Graphics& g, MidiNote* note, int staffY, int xPos)
+void ScoreViewComponent::drawNote(juce::Graphics& g, int pitch, int staffY, int xPos)
 {
     g.setColour(juce::Colours::black);
     
     // Very naive mapping of pitch to y offset
-    int pitchOffset = (60 - note->pitch) * 5; 
+    int pitchOffset = (60 - pitch) * 5; 
     
     // Draw note head
     g.fillEllipse((float)xPos, (float)(staffY + pitchOffset), 12.0f, 10.0f);

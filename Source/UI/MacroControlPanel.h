@@ -2,7 +2,9 @@
 #include <JuceHeader.h>
 #include "OrpheusLookAndFeel.h"
 
-class MacroControlPanel : public juce::Component
+#include "../Control/MacroController.h"
+
+class MacroControlPanel : public juce::Component, public juce::DragAndDropContainer
 {
 public:
     MacroControlPanel();
@@ -11,10 +13,13 @@ public:
     void paint(juce::Graphics&) override;
     void resized() override;
 
+    void mouseDrag(const juce::MouseEvent& e) override;
+
 private:
     struct MacroKnob {
         std::unique_ptr<juce::Slider> slider;
         std::unique_ptr<juce::Label> label;
+        std::unique_ptr<MacroController> controller;
     };
     std::vector<MacroKnob> macros;
 

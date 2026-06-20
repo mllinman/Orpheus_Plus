@@ -161,6 +161,7 @@ public:
     bool isPlaying()   const { return playing.load(); }
     bool isRecording() const { return recording.load(); }
     bool isExporting() const { return exporting.load(); }
+    void setExporting(bool e) { exporting.store(e); }
 
     void setLooping(bool loop) { looping.store(loop); }
     bool isLooping() const { return looping.load(); }
