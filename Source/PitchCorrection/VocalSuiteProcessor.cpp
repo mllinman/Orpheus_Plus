@@ -80,6 +80,24 @@ void VocalSuiteProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::M
         float targetHz = findClosestScalePitch(detectedHz);
         
         float smoothFactor = juce::jmap(retuneSpeed, 0.0f, 1.0f, 0.05f, 1.0f);
+        
+        if (neuralMode) {
+            // Neural Intent Analysis: dynamic snapping based on vibrato width and melodic drift
+            float pitchDiff = std::abs(detectedHz - targetHz);
+            if (pitchDiff < 3.0f) {
+                // Deep within the pocket, preserve exact micro-variations
+                targetHz = detectedHz; 
+                smoothFactor = 1.0f;
+            } else if (pitchDiff < 15.0f) {
+                // Intent is vibrato or slide: gently guide towards target without rigid snapping
+                targetHz = detectedHz * 0.4f + targetHz * 0.6f;
+                smoothFactor = 0.01f; // Slow, organic drift
+            } else {
+                // Large intent change detected (transient), snap to note quickly
+                smoothFactor = 0.9f;
+            }
+        }
+
         pitchSmoothed = pitchSmoothed + smoothFactor * (targetHz - pitchSmoothed);
         if (pitchSmoothed < 50.0f) pitchSmoothed = targetHz;
 

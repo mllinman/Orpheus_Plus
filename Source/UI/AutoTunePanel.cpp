@@ -26,8 +26,11 @@ AutoTunePanel::AutoTunePanel(AudioEngine& e)
     enableToggle.setClickingTogglesState(true);
     enableToggle.onClick = [this] { processor.setEnabled(enableToggle.getToggleState()); };
     bypassToggle.setClickingTogglesState(true);
+    neuralModeToggle.setClickingTogglesState(true);
+    neuralModeToggle.onClick = [this] { processor.setNeuralMode(neuralModeToggle.getToggleState()); };
     addAndMakeVisible(enableToggle);
     addAndMakeVisible(bypassToggle);
+    addAndMakeVisible(neuralModeToggle);
 
     // Key selector
     const char* noteNames[] = { "C","C#","D","D#","E","F","F#","G","G#","A","A#","B" };
@@ -161,8 +164,17 @@ void AutoTunePanel::paintPitchMeter(juce::Graphics& g, juce::Rectangle<int> boun
 {
     g.setColour(OrpheusLookAndFeel::bgDark());
     g.fillRoundedRectangle(bounds.toFloat(), 8.0f);
-    g.setColour(OrpheusLookAndFeel::borderSubtle());
-    g.drawRoundedRectangle(bounds.toFloat(), 8.0f, 1.0f);
+    
+    // Neural Mode Glow
+    if (processor.getNeuralMode()) {
+        g.setColour(juce::Colour(0x3000FFFF)); // Subtle cyan glow
+        g.fillRoundedRectangle(bounds.toFloat().expanded(4.0f), 12.0f);
+        g.setColour(juce::Colour(0x6000FFFF));
+        g.drawRoundedRectangle(bounds.toFloat(), 8.0f, 2.0f);
+    } else {
+        g.setColour(OrpheusLookAndFeel::borderSubtle());
+        g.drawRoundedRectangle(bounds.toFloat(), 8.0f, 1.0f);
+    }
 
     auto center = bounds.getCentre();
 
@@ -319,8 +331,9 @@ void AutoTunePanel::resized()
     auto area = getLocalBounds().reduced(16).withTrimmedTop(48);
 
     // Enable/bypass
-    enableToggle.setBounds(area.getRight() - 160, 10, 70, 24);
-    bypassToggle.setBounds(area.getRight() - 80, 10, 70, 24);
+    enableToggle.setBounds(area.getRight() - 250, 10, 70, 24);
+    bypassToggle.setBounds(area.getRight() - 170, 10, 70, 24);
+    neuralModeToggle.setBounds(area.getRight() - 90, 10, 100, 24);
 
     area.removeFromTop(188); // pitch meter
     area.removeFromBottom(68); // keyboard

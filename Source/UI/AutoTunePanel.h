@@ -29,6 +29,7 @@ private:
     // Master
     juce::ToggleButton enableToggle { "ENABLE" };
     juce::ToggleButton bypassToggle { "BYPASS" };
+    juce::ToggleButton neuralModeToggle { "NEURAL INTENT" };
 
     // ── Key / Scale ──
     juce::Label    keyLabel   { {}, "KEY" };

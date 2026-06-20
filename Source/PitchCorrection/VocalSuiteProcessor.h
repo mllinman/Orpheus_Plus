@@ -37,6 +37,9 @@ public:
 
     //── Parameters ──────────────────────────────────────────────────────────
     void setEnabled(bool e)           { enabled = e; }
+    void setNeuralMode(bool n)        { neuralMode = n; }
+    bool getNeuralMode() const        { return neuralMode; }
+    
     void setRetuneSpeed(float s)      { retuneSpeed = juce::jlimit(0.0f, 1.0f, s); } // 0=Natural, 1=Robotic
     void setKey(int semitone)         { key = semitone; }
     void setScale(int scaleType)      { scale = scaleType; }
@@ -74,6 +77,7 @@ private:
 
     // State
     bool  enabled         = false;
+    bool  neuralMode      = false;
     float retuneSpeed     = 0.5f;
     int   key             = 0;
     int   scale           = 1;

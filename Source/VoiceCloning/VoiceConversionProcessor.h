@@ -50,6 +50,7 @@ public:
     // Neural Restorer Parameters
     void setHumanizeAmount(float amt) { humanizeAmount.store(juce::jlimit(0.0f, 1.0f, amt)); }
     void setPreserveVibrato(bool preserve) { preserveVibrato.store(preserve); }
+    void setPreserveTiming(bool preserve) { preserveTiming.store(preserve); }
     void setScaleLock(int rootNote, int scaleType); // For F0 smoothing
 
 private:
@@ -62,6 +63,7 @@ private:
     
     std::atomic<float> humanizeAmount { 0.5f };
     std::atomic<bool> preserveVibrato { true };
+    std::atomic<bool> preserveTiming { true };
 
     juce::dsp::IIR::Filter<float> highPassFilter; // Extractor for unvoiced breath/noise
 

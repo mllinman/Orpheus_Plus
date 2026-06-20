@@ -26,6 +26,7 @@ private:
 
     juce::TextButton loadBtn { "Load Reference Song" };
     juce::ToggleButton enableToggle { "Enable Voice Clone" };
+    juce::ToggleButton preserveTimingToggle { "Preserve Exact Timing" };
     
     juce::Slider timbreMixSlider { juce::Slider::RotaryHorizontalVerticalDrag, juce::Slider::NoTextBox };
     juce::Slider pitchShiftSlider { juce::Slider::RotaryHorizontalVerticalDrag, juce::Slider::NoTextBox };

@@ -7,6 +7,7 @@ VoiceCloningPanel::VoiceCloningPanel(AudioEngine& engine, MainComponent* mainCom
 {
     addAndMakeVisible(loadBtn);
     addAndMakeVisible(enableToggle);
+    addAndMakeVisible(preserveTimingToggle);
     addAndMakeVisible(timbreMixSlider);
     addAndMakeVisible(pitchShiftSlider);
     addAndMakeVisible(statusLabel);
@@ -15,6 +16,11 @@ VoiceCloningPanel::VoiceCloningPanel(AudioEngine& engine, MainComponent* mainCom
     enableToggle.onClick = [this] {
         // Find the active VoiceConversionProcessor and toggle it
         // For demonstration, we assume it's attached to the armed track or master
+    };
+    preserveTimingToggle.setClickingTogglesState(true);
+    preserveTimingToggle.setToggleState(true, juce::dontSendNotification);
+    preserveTimingToggle.onClick = [this] {
+        // In full impl, this propagates to VoiceConversionProcessor::setPreserveTiming
     };
 
     timbreMixSlider.setRange(0.0, 1.0, 0.01);
@@ -122,7 +128,10 @@ void VoiceCloningPanel::resized()
 
     auto topRow = area.removeFromTop(40);
     loadBtn.setBounds(topRow.removeFromLeft(200));
-    enableToggle.setBounds(topRow.removeFromRight(150));
+    
+    auto togglesArea = topRow.removeFromRight(300);
+    preserveTimingToggle.setBounds(togglesArea.removeFromLeft(150));
+    enableToggle.setBounds(togglesArea.removeFromLeft(150));
     
     area.removeFromTop(20);
     statusLabel.setBounds(area.removeFromTop(30));

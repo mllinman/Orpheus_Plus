@@ -180,6 +180,8 @@ void VoiceConversionProcessor::processBlock(juce::AudioBuffer<float>& buffer, ju
 
     // Wet/Dry Mix back to output and Humanize
     float humanize = humanizeAmount.load();
+    bool keepTiming = preserveTiming.load();
+    
     for (int ch = 0; ch < numChannels; ++ch) {
         auto* out = buffer.getWritePointer(ch);
         for (int i = 0; i < numSamples; ++i) {
@@ -189,9 +191,18 @@ void VoiceConversionProcessor::processBlock(juce::AudioBuffer<float>& buffer, ju
             // Extract unvoiced noise from original
             float unvoicedNoise = highPassFilter.processSample(original);
             
+            // If preserveTiming is engaged, we emphasize original consonants 
+            // by injecting more of the unvoiced noise and dynamically docking the neural signal 
+            // during transient attacks to prevent smearing.
+            float consonantInjection = 0.0f;
+            if (keepTiming && std::abs(unvoicedNoise) > 0.1f) {
+                consonantInjection = unvoicedNoise * 1.5f;
+                neural *= 0.5f; // Duck neural slightly during hard consonants
+            }
+            
             // Mix Neural and Humanize Noise
             float perfectVocal = (original * (1.0f - timbreMix)) + (neural * timbreMix);
-            out[i] = perfectVocal + (unvoicedNoise * humanize);
+            out[i] = perfectVocal + (unvoicedNoise * humanize) + consonantInjection;
         }
     }
 }
