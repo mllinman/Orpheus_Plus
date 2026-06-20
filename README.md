@@ -4,72 +4,57 @@ Orpheus Plus is a state-of-the-art, fully offline Desktop Digital Audio Workstat
 
 The ultimate goal of Orpheus Plus is simple: **Perfect audio recorded every time.** It achieves this by combining latency-free playback with deeply embedded neural networks that autocorrect pitch, timing, and timbre without ever sounding robotic or machine-generated, cleaning up AI-generated tracks, and seamlessly separating elements into manageable stems.
 
-The output? **Pristine, 100% human-sounding, high-quality audio files that flawlessly bypass AI detectors**, completely offline and completely self-reliant.
-
 ---
 
 ## The Vision: The Future of Production
 
 ### 1. The Human Vocal Guarantee & AI Humanization
-Through the use of advanced local ONNX models, Orpheus Plus dynamically injects unvoiced stochastic analog noise, breath mapping, and human-like micro-variations into autocorrected and AI-generated tracks (like SUNO/Suno audio). This means heavy pitch correction, formant shifting, voice cloning, and AI-generated music sound organically performed by a real band.
+Through the use of advanced local ONNX models, Orpheus Plus dynamically injects unvoiced stochastic analog noise, breath mapping, and human-like micro-variations into autocorrected and AI-generated tracks. Heavy pitch correction, formant shifting, voice cloning, and AI-generated music sound organically performed by a real band.
 
 ### 2. Zero-Latency AI Playback
-The days of rendering AI effects offline are over. Orpheus Plus natively integrates ONNX Runtime via C++ `FetchContent` directly into the `AudioProcessorGraph`. This allows dense neural acoustic models (Stem Separation, AI Humanizer, Match EQ) to run in real-time alongside traditional plugins.
+Orpheus Plus natively integrates ONNX Runtime via C++ directly into the `AudioProcessorGraph`. This allows dense neural acoustic models (Stem Separation, AI Humanizer, Generative Diffusion) to run in real-time alongside traditional VST3/AU plugins on the GPU (DirectML/CoreML).
 
 ### 3. Absolute Offline Autonomy & Project Management
-The DAW is entirely self-contained. No subscriptions, no cloud latency, no external Python APIs. Every neural network runs 100% locally. Projects are smartly managed using the `.orph` format, automatically organizing and safely containing all audio files in dedicated project folders.
+The DAW is entirely self-contained. No subscriptions, no cloud latency, no external Python APIs. Every neural network runs 100% locally. Projects are smartly managed using the `.orph` format, automatically organizing and safely containing all audio files.
 
 ---
 
-## Current Architecture & Completed Milestones
+## Completed Architecture Milestones (Phases 1-19)
 
-### Core Architecture & UI
-- **Multi-track Timeline**: High-performance arrangement view with comping and beat-matching.
-- **Dynamic Workspace Manager**: A fully customizable, dockable panel system allowing users to tear off, resize, and construct their perfect studio layout. 
-- **Glassmorphic Design**: A breathtaking, top-tier aesthetic powered by modern UI rendering techniques, frosted glass blurring, and dynamic accent gradients.
-- **Project Settings & Smart Directories**: Dedicated `.orph` files with intelligent auto-creation of `Audio/` sub-folders, keeping sessions flawlessly organized.
-- **Universal Export Engine**: Render master mixes and stems natively in WAV, FLAC, OGG, ALAC, AIFF, MP3, and AAC with customizable bit depths and sample rates.
-- **Spotify Mastering Preset**: One-click export enforcing exact -14 LUFS / -1 dB True Peak standards dynamically.
-
-### AI Processing & DSP
-- **Native ONNX Runtime**: Local inference built directly into the C++ graph.
-- **The Flawless Vocal Suite & Humanization**: AI-driven pitch correction and a post-processing neural layer that guarantees the vocal takes sound organically recorded by injecting realistic breath mapping, sibilance, and subtle analog imperfections to outsmart AI detectors.
-- **Timbre Transfer**: Deep fake vocals replacing timbre while retaining exact timing.
-- **Latent Space Match-EQ**: Upload a reference track, and the AI learns its exact characteristics dynamically.
-- **Phase Alignment AI**: Automatically phase-align multi-mic recordings.
-- **Stem Auto-Arranger Expansion**: Advanced extraction that separates, renames, categorizes, and optimally arranges stems for mixing (Vocals, Electric Guitar, Bass, Drums, Percussion, Synth).
-- **Dynamic AI Mastering**: Automatically configures Linear Phase EQs and Multiband Compressors to achieve optimal LUFS loudness levels.
+- **Dynamic Workspace Manager & Glassmorphic UI**: Fully customizable, dockable panel system with breathtaking aesthetic rendering.
+- **ONNX GPU Acceleration**: Zero-latency neural network inference offloaded to the GPU.
+- **Lock-Free Audio Engine**: Absolute zero-latency monitoring utilizing atomic operations and `AbstractFifo` architectures.
+- **Plugin Sandboxing**: Out-Of-Process (OOP) VST3/AU hosting ensuring the DAW never crashes from third-party plugins.
+- **Generative Sound Design**: Local Text-to-Sample generation directly dropping AI-generated sounds into the timeline.
+- **AI Spectral Carving & Latent Match EQ**: Intelligent multi-band unmasking and mastering.
+- **Cinematic & Spatial Ecosystem**: Frame-accurate video playback, Foley ADR, 3D Dolby Atmos panning, and MusicXML score generation.
 
 ---
 
-## The All-New Roadmap
+## The Future Roadmap (Phases 20-24)
 
-With the foundational AI processing and dynamic UI ecosystem completed, the new roadmap aims to push Orpheus Plus into the realm of Spatial Audio, Generative AI Composition, and Cinematic Scoring.
+As Orpheus Plus transcends traditional DAW capabilities, the next evolution focuses on absolute creative freedom, advanced automation, and future-proofed engineering.
 
-### Phase 15 — Spatial Audio & Immersive Mixing
-- **Immersive Engine**: Native routing for 7.1.4 Dolby Atmos and Ambisonics, with a binaural renderer for headphone monitoring.
-- **3D Panner UI**: A modern, interactive spatial panner integrated into the `TrackSettingsPanel` and `MixerPanel`.
-- **Spatial AI Reverb**: Convolution reverb that maps impulse responses into 3D space dynamically.
+### Phase 20 — Auto-Mixing Master Assistant
+- **Automated Mixing Engine**: An AI that "listens" to the entire session and automatically balances faders, EQ, and panning to achieve a professional mix.
+- **Reference Track Sync**: Drag and drop a commercial reference track; the AI will continuously adapt the mix bus compressor, saturation, and multi-band EQ to match the target's sonic signature dynamically.
 
-### Phase 16 — AI Composition Co-Pilot
-- **Generative Progression Engine**: AI-driven chord progression suggestions that adapt to the user's genre and style.
-- **Melody Autocomplete**: Feed a 4-bar melody and have the Co-Pilot generate infinite, stylistically matching variations.
-- **Rhythm Style Transfer**: Extract the groove/timing from an audio file and apply it instantly to a MIDI piano roll sequence.
+### Phase 21 — Visual Node-Based DSP Sandbox
+- **Modular Patching Environment**: A Max/MSP or PureData-style node-based sandbox directly inside the DAW.
+- **Custom Synth & FX Creation**: Users can drag oscillators, filters, neural network blocks, and math nodes, wiring them together visually to create proprietary synthesizers and effects that compile at runtime.
 
-### Phase 17 — The Scoring & Cinematic Ecosystem
-- **Video Playback Engine**: Frame-accurate video synchronization for film scoring and sound design.
-- **Dialogue Leveling & Foley Match**: AI tools to automatically clean up location audio and match ADR (Automated Dialogue Replacement) to the original acoustic space.
-- **Score View Enhancement**: Printing and exporting traditional sheet music directly from MIDI clips.
+### Phase 22 — Cloud Collaboration & Intelligent Versioning
+- **Real-Time Studio Sync**: Low-latency network protocol allowing multiple producers to co-edit the same `.orph` session over the internet seamlessly.
+- **AI Version Diffing**: A system that analyzes two saved versions of a mix and generates a verbal summary of the differences (e.g., "In Version 2, the snare drum has 2dB more presence at 4kHz and the bass is more heavily sidechained").
 
-### Phase 18 — GPU Acceleration & Zero-Latency Overhaul
-- **ONNX DirectML / CoreML Integration**: Offloading neural network processing to the GPU to free up the CPU for audio threads.
-- **Lock-Free Architecture**: A complete audit and refactor of the audio graph using lock-free rings and atomic structures to achieve absolute zero-latency monitoring.
-- **Plugin Sandboxing**: Isolating VST3/AU plugins in separate processes to prevent external crashes from bringing down the DAW.
+### Phase 23 — Polyphonic Transcription 2.0 & MPE
+- **Intelligent Audio-To-MIDI**: Converting complex, full polyphonic audio (like an acoustic guitar or piano) into separated MIDI tracks with velocity and articulation data.
+- **MIDI Polyphonic Expression (MPE) Engine**: Full support for advanced MPE controllers (like ROLI) natively integrated into the Piano Roll and Auto-Arranger.
 
-### Phase 19 — Generative Sound Design & Advanced Spectral Processing
-- **Text-to-Sample Generation**: A dedicated panel for localized, ONNX-driven text-to-audio generation, allowing users to type "vintage 808 kick with tape saturation" and instantly drop it into the timeline.
-- **AI Spectral Carving**: Intelligent unmasking that analyzes multiple tracks and dynamically sculpts out conflicting frequencies in real-time.
-- **Advanced Macro Modulation Matrix**: A global LFO and Envelope routing matrix capable of targeting any parameter in the DAW for complex, generative sound design.
+### Phase 24 — Cross-Platform Build System Overhaul & CI/CD
+- **Universal Binary & Linux Support**: Upgrading the CMake architecture for universal Apple Silicon/Intel binaries and expanding support for Linux Wayland standalone environments.
+- **Automated CI/CD Pipelines**: Integration with GitHub Actions for automated nightly builds, static analysis, and regression testing of the audio graph.
+- **WASM Web-Player Export**: The ability to export a playable, interactive mix directly to WebAssembly for embedding in portfolios and websites.
 
 ---
 
@@ -79,7 +64,7 @@ With the foundational AI processing and dynamic UI ecosystem completed, the new 
 - **CMake 3.22+**
 - **C++20 Compiler**: MSVC 2022 (Windows), Xcode 14+ (macOS), GCC 12+ / Clang 15+ (Linux).
 - **JUCE 8**: Retrieved automatically or mapped via `git submodule`.
-- **ONNX Runtime**: Handled entirely via CMake `FetchContent` during the configuration step.
+- **ONNX Runtime**: Handled entirely via CMake `FetchContent`.
 
 ### Instructions
 ```bash
@@ -92,7 +77,7 @@ git submodule update --init --recursive
 cmake -B build -DCMAKE_BUILD_TYPE=Release
 
 # 3. Build
-cmake --build build --config Release -j$(nproc)
+cmake --build build --config Release
 
 # 4. Run
 ./build/OrpheusPlus_artefacts/Release/OrpheusPlus
