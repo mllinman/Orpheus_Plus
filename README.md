@@ -1,35 +1,35 @@
 # Orpheus Plus — Advanced JUCE C++ DAW
 
-A complete rewrite of the Orpheus web DAW as a professional, offline-capable desktop application
-built with JUCE 7 and C++20. Targeting Windows, macOS, and Linux.
+A complete rewrite of the Orpheus web DAW as a professional, offline-capable desktop application built with JUCE 7 and C++20. Targeting Windows, macOS, and Linux, it brings massive improvements to performance, AI integrations, and professional mixing capabilities natively to the desktop.
 
 ---
 
-## Features
+## Current Status & Completed Features
 
-| Feature | Status | Technology |
-|---|---|---|
-| Multi-track timeline | ✅ Core | JUCE AudioProcessorGraph |
-| Audio clips (WAV/AIFF/MP3/FLAC) | ✅ Core | JUCE AudioFormatManager |
-| MIDI clips + Piano Roll | ✅ Core | JUCE MidiMessageSequence |
-| VST3 / AU plugin hosting | ✅ Core | JUCE PluginManager |
-| Real-time mixer with level meters | ✅ Core | JUCE DSP |
-| Advanced mastering module | ✅ Core | JUCE DSP / Custom |
-| LUFS / True Peak metering | ✅ Core | Custom EBU R128 |
-| Mid/Side EQ | ✅ Core | Custom |
-| Multiband compressor | ✅ Core | Custom |
-| Spectrum analyzer | ✅ Core | JUCE FFT |
-| AI Stem Separation | ✅ AI (Demucs v4) | Python + ChildProcess |
-| Audio to MIDI | ✅ AI (Basic Pitch) | Python + ChildProcess |
-| Auto-Tune / Pitch Correction | ✅ DSP (YIN + Phase Vocoder) | Custom C++ |
-| Audio Cleanup (noise, de-ess, hum) | ✅ DSP | Custom C++ |
-| Neural Noise Removal | ✅ AI (RNNoise) | Python + ChildProcess |
-| Project save/load (.orpheus) | ✅ Core | JUCE ValueTree + XML |
-| Undo/Redo | ✅ Core | JUCE UndoManager |
-| MIDI transport control (MMC) | ✅ Core | JUCE MIDI |
-| Export mix (WAV/AIFF/FLAC) | ✅ Core | JUCE AudioFormatWriter |
-| Export stems | ✅ Core | Per-track offline render |
-| Dark theme | ✅ UI | Custom LookAndFeel |
+Orpheus Plus has transitioned far beyond its web origins. The core audio engine has been built, and extensive, state-of-the-art AI and workflow features have been successfully natively integrated into the app.
+
+### Core Architecture & Playback
+- **Multi-track Timeline**: High-performance arrangement view with `JUCE AudioProcessorGraph`.
+- **Smart Audio Comping & Takes**: Swipe-and-drag UI for assembling perfect takes, with automatic transient detection and beat-matching.
+- **Unified Key Editor (Piano Roll)**: Multi-track MIDI overlay and editing directly in the arrangement view.
+- **MPE Synth Integration**: Replaced the legacy synth with a `juce::MPESynthesiser` for rich polyphonic expression, pitch bends, and per-note articulation.
+- **Plugin Hosting**: Full VST3 & AU scanning, loading, and routing via `JUCE PluginManager`.
+
+### AI & DSP Processing
+- **Native ONNX Runtime**: Local, offline AI inference built directly into the C++ source via `FetchContent`—no Python runtime required.
+- **Dynamic AI Mastering**: Evaluates track dynamics via RMS and Peak calculations, automatically configuring Linear Phase EQs and Multiband Compressors to achieve optimal LUFS loudness levels.
+- **Vocal Suite & Pitch Correction**: Real-time pitch correction and format shifting (Auto-Tune style) built in natively without external plugins.
+- **AI Voice Cloning / Profile Training**: Train and apply custom vocal profiles natively in the DAW via ONNX embedding extractors.
+- **Stem Separation**: Split mixed audio tracks into isolated vocals, drums, bass, and other instruments.
+- **Audio to MIDI**: Convert monophonic and polyphonic audio clips to MIDI notes instantly.
+- **Vocal Pitch Game**: Real-time vocal training tool that displays user singing pitch vs correct song key to train vocality accuracy.
+
+### Advanced Composition & Workflow
+- **Generative MIDI**: Built-in AI Chord Generation (`ChordGeneratorProcessor`) and Arpeggiators.
+- **Macro Controls**: Centralized knob clusters to control multiple parameters within third-party plugins directly from a single interface.
+- **Custom Hotkeys**: Configurable keyboard shortcut mapping (`ShortcutsSettingsPanel`).
+- **Comprehensive Automation**: Smoothly drawn automation curves via a moving average window, completely synchronized to the audio callback.
+- **In-App Documentation**: An embedded, searchable User Manual to help users learn every feature on the fly.
 
 ---
 
@@ -37,39 +37,23 @@ built with JUCE 7 and C++20. Targeting Windows, macOS, and Linux.
 
 ### Build Tools
 - **CMake 3.22+**
-- **C++20 compiler**: MSVC 2022 (Windows), Xcode 14+ (macOS), GCC 12+ / Clang 15+ (Linux)
-- **JUCE 7**: `git submodule add https://github.com/juce-framework/JUCE.git JUCE`
+- **C++20 Compiler**: MSVC 2022 (Windows), Xcode 14+ (macOS), GCC 12+ / Clang 15+ (Linux).
+- **JUCE 7**: Retrieved automatically or mapped via `git submodule add https://github.com/juce-framework/JUCE.git JUCE`.
+- **ONNX Runtime**: Handled entirely via CMake `FetchContent` during the configuration step.
 
-### Optional (AI features)
-Install these Python packages for AI-powered features:
-
-```bash
-pip install demucs          # Stem separation (Demucs v4)
-pip install basic-pitch     # Audio to MIDI (Spotify Basic Pitch)
-pip install crepe           # Monophonic pitch detection
-pip install librosa pretty_midi  # CREPE + onset detection helpers
-pip install rnnoise-python soundfile  # Neural noise removal
-```
-
-### Optional (Better pitch shifting)
-For production-quality pitch correction, integrate **Rubber Band Library**:
-```
-https://breakfastquay.com/rubberband/
-```
-Replace the phase vocoder in `AutoTuneProcessor.cpp` with Rubber Band calls.
+*Note on MSVC: To prevent internal compiler errors (`C1001`) during Release builds, Link-Time Code Generation (`/GL`) is disabled for certain optimization flags in the CMake setup, or you can build in Debug mode.*
 
 ---
 
 ## Building
 
 ```bash
-# 1. Clone and get JUCE submodule
+# 1. Clone and fetch submodules
 git clone https://github.com/yourusername/OrpheusPlus.git
 cd OrpheusPlus
-git submodule add https://github.com/juce-framework/JUCE.git JUCE
 git submodule update --init --recursive
 
-# 2. Configure
+# 2. Configure (CMake handles downloading ONNX Runtime & linking JUCE)
 cmake -B build -DCMAKE_BUILD_TYPE=Release
 
 # 3. Build
@@ -93,101 +77,27 @@ cmake -B build -G "Visual Studio 17 2022"
 
 ---
 
-## Project Structure
+## Future Roadmap
 
-```
-OrpheusPlus/
-├── CMakeLists.txt
-├── JUCE/                          ← JUCE submodule
-├── Source/
-│   ├── Main.cpp                   ← App entry point
-│   ├── MainComponent.h/.cpp       ← Top-level UI + menu + command routing
-│   ├── Audio/
-│   │   ├── AudioEngine.h/.cpp     ← Core audio engine, transport, track mgmt
-│   │   └── PluginManager.h/.cpp   ← VST3/AU scanning + loading
-│   ├── Timeline/
-│   │   ├── TimelineComponent.h/.cpp     ← Main arranger view
-│   │   ├── TrackLaneComponent.h/.cpp    ← Individual track row + clips
-│   │   └── TransportController.h/.cpp  ← MMC MIDI transport
-│   ├── PianoRoll/
-│   │   └── PianoRollComponent.h/.cpp   ← MIDI editor
-│   ├── Mastering/
-│   │   └── MasteringModule.h/.cpp      ← EQ + comp + limiter + LUFS meter
-│   ├── StemSeparation/
-│   │   └── StemSeparator.h/.cpp        ← Demucs v4 / Spleeter integration
-│   ├── AudioToMidi/
-│   │   └── AudioToMidiConverter.h/.cpp ← Basic Pitch / CREPE integration
-│   ├── PitchCorrection/
-│   │   └── AutoTuneProcessor.h/.cpp    ← YIN pitch detection + phase vocoder
-│   ├── AudioCleanup/
-│   │   └── AudioCleanupProcessor.h/.cpp ← Noise reduction, de-click, de-ess, hum
-│   ├── Project/
-│   │   ├── AppState.h/.cpp             ← ValueTree state + undo
-│   │   └── ProjectManager.h/.cpp       ← File load/save
-│   └── UI/
-│       ├── OrpheusLookAndFeel.h/.cpp   ← Dark theme
-│       ├── TransportBar.h/.cpp         ← Playback controls + BPM + meters
-│       ├── MixerPanel.h/.cpp           ← Channel strip mixer
-│       ├── SpectrumAnalyzer.h/.cpp     ← FFT spectrum display
-│       └── PluginBrowser.h/.cpp        ← Plugin list + scan
-```
+With the major AI and composition paradigms successfully established, the future roadmap is focused on hardware integration, ecosystem expansion, and ultimate professional polish.
 
----
+### Phase 8 — Hardware & Ecosystem
+- **Hardware Control Surfaces**: Full native support for Mackie Control Universal (MCU), HUI protocols, and motorized fader banks.
+- **Cloud Collaboration & Sync**: Optional end-to-end encrypted cloud project sync, allowing real-time multi-user project sessions over a network.
+- **Advanced Video Sync**: Import and scrub video files directly on a video track in the timeline for scoring to picture.
+- **Score & Notation View**: Translate MIDI regions dynamically into standard sheet music for classical composition and printing.
+- **ReWire / Advanced Output Routing**: Multi-channel surround outputs (Atmos 7.1.4) and advanced bussing.
 
-## Keyboard Shortcuts
-
-| Action | Shortcut |
-|---|---|
-| New Project | Cmd/Ctrl + N |
-| Open Project | Cmd/Ctrl + O |
-| Save | Cmd/Ctrl + S |
-| Save As | Cmd/Ctrl + Shift + S |
-| Play / Pause | Space |
-| Stop | Enter |
-| Record | Cmd/Ctrl + R |
-| Add Audio Track | Cmd/Ctrl + T |
-| Add MIDI Track | Cmd/Ctrl + Shift + T |
-| Export Mix | Cmd/Ctrl + E |
-| Export Stems | Cmd/Ctrl + Shift + E |
-| Plugin Browser | Cmd/Ctrl + P |
-| Undo | Cmd/Ctrl + Z |
-| Redo | Cmd/Ctrl + Shift + Z |
-| Zoom In (Timeline) | Cmd/Ctrl + Scroll Up |
-| Zoom Out (Timeline) | Cmd/Ctrl + Scroll Down |
-
----
-
-## Development Roadmap
-
-### Phase 1 — Core ✅ (This codebase)
-- Audio engine, timeline, MIDI, VST hosting, mastering, AI features, project management
-
-### Phase 2 — Polish
-- [ ] Full AudioProcessorGraph wiring (clip → FX chain → master bus)
-- [ ] Per-track plugin chains with drag-and-drop reordering
-- [ ] Automation lanes per parameter
-- [ ] MIDI learn for all controls
-- [ ] Rubber Band Library integration for better pitch shifting
-
-### Phase 3 — Advanced
-- [ ] ONNX Runtime direct integration (run Demucs/BasicPitch natively, no Python)
-- [ ] Convolution reverb with IR loading
-- [ ] Built-in synth using JUCE's Synthesiser class
-- [ ] Sidechain routing
-- [ ] ReWire / VST3 instrument tracks
-- [ ] Comping and takes
-
-### Phase 4 — Pro
-- [ ] Hardware control surface support (Mackie Control, HUI)
-- [ ] Video sync
-- [ ] Cloud project sync (optional, using your existing Railway backend)
-- [ ] Score/notation view
+### Phase 9 — Expansion Modules
+- **Advanced Convolution Reverb**: Expansion of the existing reverb processor to allow importing user Impulse Responses (IRs) with 3D graphical room visualization.
+- **Custom Scripting Environment**: Exposing internal DAW states and actions to a Lua or Python scripting engine so power users can create macro scripts or custom generative sequences.
+- **Third-Party AI Plugins API**: Allowing third-party developers to plug custom ONNX/TensorFlow Lite models directly into Orpheus Plus's generic inference handlers.
 
 ---
 
 ## Migrating from Orpheus (Web)
 
-Your existing Orpheus_Plus web project maps to this codebase as follows:
+Your existing Orpheus_Plus web project maps to this desktop C++ codebase as follows:
 
 | Orpheus Web | Orpheus Plus JUCE |
 |---|---|
@@ -196,9 +106,10 @@ Your existing Orpheus_Plus web project maps to this codebase as follows:
 | HTML5 Canvas timeline | TimelineComponent + TrackLaneComponent |
 | Piano roll (JS) | PianoRollComponent |
 | Prisma DB projects | ProjectManager (.orpheus XML files) |
-| Railway server | Removed (fully offline) |
+| Railway server | Removed (fully offline, 100% local processing) |
+| Python Microservices | Replaced by native C++ ONNX Runtime inference |
 | Vite dev server | CMake build system |
-| Electron wrapper | Native JUCE standalone app |
+| Electron wrapper | Native JUCE standalone C++ app |
 
 ---
 
