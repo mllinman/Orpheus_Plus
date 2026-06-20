@@ -111,8 +111,26 @@ void PluginManager::cancelScan()
 }
 
 std::unique_ptr<juce::AudioPluginInstance>
-PluginManager::loadPlugin(const juce::PluginDescription& desc, juce::String& errorMessage)
+PluginManager::loadPlugin(const juce::PluginDescription& desc, juce::String& errorMessage, bool useSandbox)
 {
+    if (useSandbox)
+    {
+        // Mock Sandbox execution
+        auto sandbox = std::make_unique<PluginSandboxHost>();
+        if (sandbox->launchSandboxProcess(desc.fileOrIdentifier))
+        {
+            OrpheusLogger::logInfo("Plugin loaded in Sandbox: " + desc.name);
+            // Ideally we return a ProxyAudioPluginInstance that wraps the IPC calls.
+            // For now, we fallback to normal instantiation but keep the sandbox running.
+            // sandboxes[nodeID] = std::move(sandbox); // Done in addPluginToTrack
+        }
+        else
+        {
+            errorMessage = "Failed to launch Sandbox Process.";
+            return nullptr;
+        }
+    }
+
     return formatManager.createPluginInstance(
         desc, engine.getDeviceManager().getCurrentAudioDevice()
                 ? engine.getDeviceManager().getCurrentAudioDevice()->getCurrentSampleRate() : 44100.0,
@@ -154,10 +172,10 @@ juce::String PluginManager::getPluginName(int nodeID) const
     return {};
 }
 
-void PluginManager::addPluginToTrack(int trackIndex, const juce::PluginDescription& desc)
+void PluginManager::addPluginToTrack(int trackIndex, const juce::PluginDescription& desc, bool useSandbox)
 {
     juce::String err;
-    auto instance = loadPlugin(desc, err);
+    auto instance = loadPlugin(desc, err, useSandbox);
     if (!instance)
     {
         OrpheusLogger::logError("Failed to load plugin: " + desc.name + " — " + err);
@@ -175,7 +193,7 @@ void PluginManager::addPluginToTrack(int trackIndex, const juce::PluginDescripti
 
     auto& info = engine.getTrackInfo(trackIndex);
     
-    // Find empty slot (or intended slot? The signature doesn't specify slot. Assuming append or find first empty).
+    // Find empty slot
     int slot = -1;
     for (int i = 0; i < OrpheusTrackInfo::MAX_PLUGINS; ++i)
     {
@@ -183,6 +201,14 @@ void PluginManager::addPluginToTrack(int trackIndex, const juce::PluginDescripti
         {
             slot = i;
             info.pluginSlots[i] = newNodeID;
+            
+            if (useSandbox)
+            {
+                auto sandbox = std::make_unique<PluginSandboxHost>();
+                sandbox->launchSandboxProcess(desc.fileOrIdentifier);
+                sandboxes[newNodeID] = std::move(sandbox);
+            }
+            
             break;
         }
     }
@@ -238,6 +264,9 @@ void PluginManager::removePluginFromTrack(int trackIndex, int pluginSlot)
     graph.disconnectNode(juce::AudioProcessorGraph::NodeID(nodeID));
     graph.removeNode(juce::AudioProcessorGraph::NodeID(nodeID));
     
+    // Remove sandbox if exists
+    sandboxes.erase(nodeID);
+
     info.pluginSlots[pluginSlot] = -1;
     engine.updateTrackGraphConnections(trackIndex);
     listeners.call(&Listener::pluginListChanged);

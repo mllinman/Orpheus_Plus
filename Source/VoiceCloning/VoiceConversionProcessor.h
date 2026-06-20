@@ -9,6 +9,11 @@
 
 #if USE_ONNX_RUNTIME
 #include <onnxruntime_cxx_api.h>
+#ifdef _WIN32
+  // #include <dml_provider_factory.h>
+#elif defined(__APPLE__)
+  // #include <coreml_provider_factory.h>
+#endif
 #endif
 
 class VoiceConversionProcessor : public juce::AudioProcessor

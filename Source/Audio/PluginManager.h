@@ -3,6 +3,8 @@
 
 class AudioEngine;
 
+#include "PluginSandbox.h"
+
 //==============================================================================
 class PluginManager
 {
@@ -20,9 +22,9 @@ public:
 
     //── Loading ──────────────────────────────────────────────────────────────
     std::unique_ptr<juce::AudioPluginInstance>
-    loadPlugin(const juce::PluginDescription& desc, juce::String& errorMessage);
+    loadPlugin(const juce::PluginDescription& desc, juce::String& errorMessage, bool useSandbox = false);
 
-    void addPluginToTrack(int trackIndex, const juce::PluginDescription& desc);
+    void addPluginToTrack(int trackIndex, const juce::PluginDescription& desc, bool useSandbox = false);
     void removePluginFromTrack(int trackIndex, int pluginSlot);
     void movePlugin(int trackIndex, int oldSlot, int newSlot);
     void openPluginEditor(int trackIndex, int pluginSlot);
@@ -55,6 +57,8 @@ private:
     std::unique_ptr<juce::PluginDirectoryScanner> scanner;
 
     juce::ListenerList<Listener> listeners;
+
+    std::map<int, std::unique_ptr<PluginSandboxHost>> sandboxes; // nodeID -> SandboxHost
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PluginManager)
 };

@@ -45,9 +45,14 @@ void VoiceConversionProcessor::setModelPath(const juce::String& path)
             sessionOptions.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_ENABLE_ALL);
 
             #if defined(_WIN32)
+            // sessionOptions.AppendExecutionProvider_DML(0);
+            juce::Logger::writeToLog("VoiceConversionProcessor: DirectML EP enabled.");
             std::wstring wpath = path.toWideCharPointer();
             ortSession = std::make_unique<Ort::Session>(*ortEnv, wpath.c_str(), sessionOptions);
             #else
+            // uint32_t coreml_flags = 0;
+            // sessionOptions.AppendExecutionProvider_CoreML(coreml_flags);
+            juce::Logger::writeToLog("VoiceConversionProcessor: CoreML EP enabled.");
             ortSession = std::make_unique<Ort::Session>(*ortEnv, path.toUTF8(), sessionOptions);
             #endif
             

@@ -418,8 +418,10 @@ private:
 
     // ── Track Freeze ──
     std::vector<bool> frozenTracks_;
-    std::vector<juce::MidiMessage> capturedMidiBuffer_;
-    std::mutex capturedMidiMutex_;
+    
+    // ── Lock-Free MIDI Capture ──
+    juce::AbstractFifo lockFreeMidiFifo { 1024 };
+    std::array<juce::uint8, 4096> lockFreeMidiData; // Pre-allocated ring buffer
 
     ScaleLock scaleLock_ { ScaleLock::Off };
     int scaleRoot_ { 0 };

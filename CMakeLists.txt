@@ -69,6 +69,7 @@ target_sources(OrpheusPlus PRIVATE
     Source/Audio/TrackFaderProcessor.cpp
     Source/Audio/MixerProcessor.cpp
     Source/Audio/PluginManager.cpp
+    Source/Audio/PluginSandbox.cpp
     Source/Audio/MidiLearnManager.cpp
     Source/Audio/TimeStretcher.cpp
     Source/Audio/ConvolutionReverbProcessor.cpp
