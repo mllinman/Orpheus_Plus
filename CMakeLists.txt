@@ -204,9 +204,14 @@ target_link_libraries(OrpheusPlus PRIVATE
     juce::juce_gui_basics
     juce::juce_gui_extra
     juce::juce_recommended_config_flags
-    juce::juce_recommended_lto_flags
+    # juce::juce_recommended_lto_flags  # Disabled — triggers MSVC 14.44 ICE (C1001) during LTCG
     ${ONNXRUNTIME_LIB_DIR}/onnxruntime.lib
 )
+
+# MSVC 14.44 ICE workarounds
+if(MSVC)
+    target_compile_options(OrpheusPlus PRIVATE /bigobj /d2FH4-)
+endif()
 
 # Copy the onnxruntime.dll to the output directory so the executable can find it at runtime
 add_custom_command(TARGET OrpheusPlus POST_BUILD
