@@ -83,6 +83,11 @@ MainComponent::MainComponent()
     aiHumanizer = humanizerComp.get();
     workspace->addToBottomTab("AI Humanizer", humanizerComp.release());
 
+    // Distribution Prep
+    auto distPrepComp = std::make_unique<DistributionPrepPanel>(*audioEngine, appState, this);
+    distPrep = distPrepComp.get();
+    workspace->addToBottomTab("Dist Prep", distPrepComp.release());
+
     // VST Plugins
     auto pluginComp = std::make_unique<PluginWorkspacePanel>(*audioEngine, appState);
     pluginWorkspace = pluginComp.get();

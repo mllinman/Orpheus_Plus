@@ -169,6 +169,10 @@ target_sources(OrpheusPlus PRIVATE
     # ADR
     Source/AudioCleanup/ADRProcessor.cpp
     Source/UI/ADRPanel.cpp
+
+    # Distribution Prep
+    Source/AudioCleanup/DistributionPrepProcessor.cpp
+    Source/UI/DistributionPrepPanel.cpp
 )
 
 target_include_directories(OrpheusPlus PRIVATE

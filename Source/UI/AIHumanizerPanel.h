@@ -31,6 +31,7 @@ private:
     // An offline processor instance just for this panel (if not using the insert)
     AIHumanizerProcessor offlineProcessor;
 
+    //── Original sliders ─────────────────────────────────────────────────────
     juce::Slider warmthSlider;
     juce::Slider flutterSlider;
     juce::Slider noiseFloorSlider;
@@ -41,9 +42,27 @@ private:
     juce::Label noiseFloorLabel;
     juce::Label deChatterLabel;
 
+    //── New sliders ──────────────────────────────────────────────────────────
+    juce::Slider microTimingSlider;
+    juce::Slider stereoWidthSlider;
+    juce::Slider harmonicExciterSlider;
+    juce::Slider dynamicBreathingSlider;
+
+    juce::Label microTimingLabel;
+    juce::Label stereoWidthLabel;
+    juce::Label harmonicExciterLabel;
+    juce::Label dynamicBreathingLabel;
+
+    //── Preset selector ──────────────────────────────────────────────────────
+    juce::ComboBox presetCombo;
+    juce::Label presetLabel;
+
     juce::TextButton applyToTrackButton { "Add as Realtime Insert to Selected Track" };
 
     bool isProcessing = false;
+
+    // Sync all sliders to match current processor parameters
+    void syncSlidersFromPreset();
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(AIHumanizerPanel)
 };
