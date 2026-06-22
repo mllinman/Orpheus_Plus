@@ -3,7 +3,7 @@
 TrackFaderProcessor::TrackFaderProcessor()
     : AudioProcessor(BusesProperties()
                      .withInput("Input", juce::AudioChannelSet::stereo(), true)
-                     .withOutput("Output", juce::AudioChannelSet::discreteChannels(12), true))
+                     .withOutput("Output", juce::AudioChannelSet::stereo(), true))
 {
 }
 
