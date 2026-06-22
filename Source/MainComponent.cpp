@@ -204,7 +204,7 @@ void MainComponent::resized()
 
     // Toolbar (top)
     if (toolbar)
-        toolbar->setBounds(area.removeFromTop(36));
+        toolbar->setBounds(area.removeFromTop(46));
 
     // Transport (below toolbar)
     if (transportBar)
