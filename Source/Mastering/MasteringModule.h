@@ -49,6 +49,7 @@ public:
     void analyzeTrack();
     void finishAnalysis();
     void loadMatchEQReference();
+    void loadReferenceFile(const juce::File& file) { latentMatchEQ.analyzeReferenceTrack(file); }
     
     std::function<void()> onPhaseAlign;
 

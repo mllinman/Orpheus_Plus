@@ -523,25 +523,70 @@ void OrpheusLookAndFeel::drawTabButton(juce::Graphics& g, int w, int h, const ju
                                        bool isMouseOver, bool isMouseDown, bool isFront,
                                        const juce::String& text, int /*tabIndex*/)
 {
-    auto bounds = juce::Rectangle<float>(0, 0, (float)w, (float)h).reduced(2, 0);
+    auto bounds = juce::Rectangle<float>(0, 0, (float)w, (float)h).reduced(1, 0);
     float cornerSize = 4.0f;
+
+    // Use backgroundColour as category accent (passed via addTab)
+    juce::Colour catColour = backgroundColour.getBrightness() > 0.15f
+                           ? backgroundColour
+                           : accentPrimary();
 
     if (isFront)
     {
+        // Active tab — dark background with coloured underline
         g.setColour(bgSurface());
         g.fillRoundedRectangle(bounds, cornerSize);
-        
-        // Indicator line at bottom
-        g.setColour(accentPrimary());
-        g.fillRect(bounds.removeFromBottom(2).reduced(4, 0));
+
+        // Coloured indicator line at bottom
+        g.setColour(catColour);
+        g.fillRect(bounds.getX() + 3, bounds.getBottom() - 2.5f, bounds.getWidth() - 6, 2.5f);
+
+        // Subtle category glow
+        g.setColour(catColour.withAlpha(0.08f));
+        g.fillRoundedRectangle(bounds, cornerSize);
     }
     else if (isMouseOver || isMouseDown)
     {
         g.setColour(bgElevated().withAlpha(0.5f));
         g.fillRoundedRectangle(bounds, cornerSize);
+
+        // Subtle colour hint on hover
+        g.setColour(catColour.withAlpha(0.06f));
+        g.fillRoundedRectangle(bounds, cornerSize);
     }
 
-    g.setColour(isFront ? textPrimary() : textSecondary());
-    g.setFont(isFront ? defaultFont.withHeight(12.0f).boldened() : defaultFont.withHeight(12.0f));
-    g.drawText(text, 0, 0, w, h, juce::Justification::centred);
+    // Tab text — coloured when active, muted otherwise
+    if (isFront)
+    {
+        g.setColour(catColour.brighter(0.3f));
+        g.setFont(defaultFont.withHeight(11.5f).boldened());
+    }
+    else if (isMouseOver)
+    {
+        g.setColour(textPrimary());
+        g.setFont(defaultFont.withHeight(11.5f));
+    }
+    else
+    {
+        g.setColour(textMuted());
+        g.setFont(defaultFont.withHeight(11.0f));
+    }
+
+    // Small coloured dot before text for category identification
+    if (isFront || isMouseOver)
+    {
+        float dotR = 3.0f;
+        float dotX = bounds.getX() + 6.0f;
+        float dotY = bounds.getCentreY() - dotR;
+        g.setColour(catColour);
+        g.fillEllipse(dotX, dotY, dotR * 2, dotR * 2);
+
+        g.drawText(text, juce::Rectangle<float>(dotX + dotR * 2 + 3, 0, (float)w - dotX - dotR * 2 - 6, (float)h),
+                   juce::Justification::centredLeft, true);
+    }
+    else
+    {
+        g.drawText(text, 0, 0, w, h, juce::Justification::centred, true);
+    }
 }
+

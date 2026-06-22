@@ -199,7 +199,7 @@ void DistributionPrepPanel::paint(juce::Graphics& g)
     }
     else if (lastDroppedFile.existsAsFile())
     {
-        g.drawText(juce::CharPointer_UTF8("\xf0\x9f\x93\x81 ") + lastDroppedFile.getFileName(), dropZone.removeFromTop(30), juce::Justification::centred);
+        g.drawText(juce::String(juce::CharPointer_UTF8("\xf0\x9f\x93\x81 ")) + lastDroppedFile.getFileName(), dropZone.removeFromTop(30), juce::Justification::centred);
         if (statusMessage.isNotEmpty())
         {
             g.setColour(juce::Colour(0xff4ecdc4));

@@ -66,11 +66,10 @@ void AutoMixPanel::filesDropped(const juce::StringArray& files, int /*x*/, int /
             
             if (masteringModule != nullptr)
             {
-                // In a real scenario, LatentMatchEQ might be a sub-module of MasteringModule
-                // For this mock, we assume MasteringModule handles passing this to LatentMatchEQ
-                // masteringModule->analyzeReferenceFile(currentReferenceFile);
+                masteringModule->loadReferenceFile(currentReferenceFile);
             }
             break; // Just take the first valid audio file
         }
     }
 }
+

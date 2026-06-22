@@ -28,7 +28,7 @@ public:
     bool isUndocked() const { return floatingWindow != nullptr; }
 
     static constexpr int headerHeight = 26;
-    static constexpr int expandedMinHeight = 150;
+    static constexpr int expandedMinHeight = 120;
 
 private:
     class FloatingWindow : public juce::DocumentWindow

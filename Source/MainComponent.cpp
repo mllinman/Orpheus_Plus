@@ -51,95 +51,91 @@ MainComponent::MainComponent()
     workspace->addToTimeline(timelineComp.release()); // Workspace takes ownership via addAndMakeVisible
 
     //═══════════════════════════════════════════════════════════════════════
-    //  BOTTOM TABS ZONE — All editor/tool panels
+    //  BOTTOM TABS ZONE — All editor/tool panels (colour-coded by category)
     //═══════════════════════════════════════════════════════════════════════
 
-    // Mixer (default first tab)
-    mixerPanel = std::make_unique<MixerPanel>(*audioEngine, appState);
-    workspace->addToBottomTab("Mixer", mixerPanel.get());
+    // Category colours
+    auto colCore   = juce::Colour(0xff06b6d4);  // Cyan — core views
+    auto colAudio  = juce::Colour(0xff10b981);  // Emerald — audio tools
+    auto colVST    = juce::Colour(0xff8b5cf6);  // Violet — plugins
+    auto colComp   = juce::Colour(0xfff59e0b);  // Amber — composition
+    auto colAI     = juce::Colour(0xffec4899);  // Pink — AI
+    auto colUtil   = juce::Colour(0xffa1a1aa);  // Zinc — utility
 
-    // Piano Roll
+    // ── Core Views ────────────────────────────────────────────────────────
+    mixerPanel = std::make_unique<MixerPanel>(*audioEngine, appState);
+    workspace->addToBottomTab("Mixer", colCore, mixerPanel.get());
+
     auto pianoRollComp = std::make_unique<PianoRollComponent>(appState, *audioEngine);
     pianoRoll = pianoRollComp.get();
-    workspace->addToBottomTab("Piano Roll", pianoRollComp.release());
+    workspace->addToBottomTab("Piano Roll", colCore, pianoRollComp.release());
 
-    // Session View
     auto sessionComp = std::make_unique<SessionViewPanel>(*audioEngine);
     sessionView = sessionComp.get();
-    workspace->addToBottomTab("Session", sessionComp.release());
+    workspace->addToBottomTab("Session", colCore, sessionComp.release());
 
-    // Stem Separation
+    // ── Audio Tools ───────────────────────────────────────────────────────
     auto stemComp = std::make_unique<StemSeparatorPanel>(*audioEngine, appState);
     stemSeparator = stemComp.get();
-    workspace->addToBottomTab("Stem Sep", stemComp.release());
+    workspace->addToBottomTab("Stem Sep", colAudio, stemComp.release());
 
-    // Audio Cleanup
     auto cleanupComp = std::make_unique<AudioCleanupPanel>(*audioEngine);
     audioCleanup = cleanupComp.get();
-    workspace->addToBottomTab("Cleanup", cleanupComp.release());
+    workspace->addToBottomTab("Cleanup", colAudio, cleanupComp.release());
 
-    // AI Humanizer
     auto humanizerComp = std::make_unique<AIHumanizerPanel>(*audioEngine, appState, this);
     aiHumanizer = humanizerComp.get();
-    workspace->addToBottomTab("AI Humanizer", humanizerComp.release());
+    workspace->addToBottomTab("AI Humanizer", colAudio, humanizerComp.release());
 
-    // Distribution Prep
     auto distPrepComp = std::make_unique<DistributionPrepPanel>(*audioEngine, appState, this);
     distPrep = distPrepComp.get();
-    workspace->addToBottomTab("Dist Prep", distPrepComp.release());
+    workspace->addToBottomTab("Dist Prep", colAudio, distPrepComp.release());
 
-    // VST Plugins
+    // ── VST Plugins ───────────────────────────────────────────────────────
     auto pluginComp = std::make_unique<PluginWorkspacePanel>(*audioEngine, appState);
     pluginWorkspace = pluginComp.get();
-    workspace->addToBottomTab("VST Plugins", pluginComp.release());
+    workspace->addToBottomTab("VST Plugins", colVST, pluginComp.release());
 
-    // Tablature
+    // ── Composition ───────────────────────────────────────────────────────
     auto tabComp = std::make_unique<TablaturePanel>(*audioEngine);
     tablature = tabComp.get();
-    workspace->addToBottomTab("Tablature", tabComp.release());
+    workspace->addToBottomTab("Tablature", colComp, tabComp.release());
 
-    // Vocal Automation
     auto vocalComp = std::make_unique<VocalAutomationPanel>(*audioEngine, this);
     vocalAutomation = vocalComp.get();
-    workspace->addToBottomTab("Vocal Auto", vocalComp.release());
+    workspace->addToBottomTab("Vocal Auto", colComp, vocalComp.release());
 
-    // Voice Cloning
-    auto voiceComp = std::make_unique<VoiceCloningPanel>(*audioEngine, this);
-    voiceCloning = voiceComp.get();
-    workspace->addToBottomTab("Voice Clone", voiceComp.release());
-
-    // Text-to-Sample
-    auto ttsComp = std::make_unique<TextToSamplePanel>();
-    workspace->addToBottomTab("Text-to-Sample", ttsComp.release());
-
-    // Auto-Mix (needs masteringModule pointer, but it's not created yet — use nullptr, we'll set it after)
-    auto autoMixComp = std::make_unique<AutoMixPanel>(audioEngine.get(), nullptr);
-    workspace->addToBottomTab("Auto-Mix", autoMixComp.release());
-
-    // Modulation Matrix
     auto modComp = std::make_unique<ModulationMatrixPanel>(*audioEngine);
     modulationMatrix = modComp.get();
-    workspace->addToBottomTab("Modulation", modComp.release());
+    workspace->addToBottomTab("Modulation", colComp, modComp.release());
 
-    // Macro Controls
     auto macroComp = std::make_unique<MacroControlPanel>();
     macroControls = macroComp.get();
-    workspace->addToBottomTab("Macros", macroComp.release());
+    workspace->addToBottomTab("Macros", colComp, macroComp.release());
 
-    // Shortcuts Settings
+    // ── AI Tools ──────────────────────────────────────────────────────────
+    auto voiceComp = std::make_unique<VoiceCloningPanel>(*audioEngine, this);
+    voiceCloning = voiceComp.get();
+    workspace->addToBottomTab("Voice Clone", colAI, voiceComp.release());
+
+    auto ttsComp = std::make_unique<TextToSamplePanel>();
+    workspace->addToBottomTab("Text-to-Sample", colAI, ttsComp.release());
+
+    auto autoMixComp = std::make_unique<AutoMixPanel>(audioEngine.get(), nullptr);
+    workspace->addToBottomTab("Auto-Mix", colAI, autoMixComp.release());
+
+    // ── Utility ───────────────────────────────────────────────────────────
     auto shortcutsComp = std::make_unique<ShortcutsSettingsPanel>(commandManager);
     shortcutsSettings = shortcutsComp.get();
-    workspace->addToBottomTab("Shortcuts", shortcutsComp.release());
+    workspace->addToBottomTab("Shortcuts", colUtil, shortcutsComp.release());
 
-    // Pitch Game
     auto pitchComp = std::make_unique<PitchGamePanel>(*audioEngine);
     pitchGame = pitchComp.get();
-    workspace->addToBottomTab("Pitch Game", pitchComp.release());
+    workspace->addToBottomTab("Pitch Game", colUtil, pitchComp.release());
 
-    // User Manual
     auto manualComp = std::make_unique<UserManualPanel>();
     userManual = manualComp.get();
-    workspace->addToBottomTab("User Manual", manualComp.release());
+    workspace->addToBottomTab("User Manual", colUtil, manualComp.release());
 
     //═══════════════════════════════════════════════════════════════════════
     //  LEFT SIDEBAR — Library + Track Settings

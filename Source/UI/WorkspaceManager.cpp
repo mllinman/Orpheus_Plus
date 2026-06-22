@@ -2,18 +2,38 @@
 #include "OrpheusLookAndFeel.h"
 
 //==============================================================================
-// SidebarContainer — lays out CollapsiblePanels vertically
+// SidebarContainer — proportionally distributes height among expanded panels
 //==============================================================================
 void WorkspaceManager::SidebarContainer::resized()
 {
+    int viewportH = getParentHeight();
+    if (viewportH <= 0) viewportH = 600;
+
+    // Count collapsed vs expanded
+    int collapsedTotal = 0;
+    int expandedCount = 0;
+    for (auto* panel : panels)
+    {
+        if (panel->isCollapsed())
+            collapsedTotal += CollapsiblePanel::headerHeight;
+        else
+            expandedCount++;
+    }
+
+    // Distribute remaining height proportionally among expanded panels
+    int availableForExpanded = juce::jmax(0, viewportH - collapsedTotal);
+    int perExpandedHeight = expandedCount > 0
+        ? juce::jmax(CollapsiblePanel::expandedMinHeight, availableForExpanded / expandedCount)
+        : 0;
+
     int y = 0;
     for (auto* panel : panels)
     {
-        int h = panel->getDesiredHeight();
+        int h = panel->isCollapsed() ? CollapsiblePanel::headerHeight : perExpandedHeight;
         panel->setBounds(0, y, getWidth(), h);
         y += h;
     }
-    setSize(getWidth(), juce::jmax(y, getParentHeight()));
+    setSize(getWidth(), juce::jmax(y, viewportH));
 }
 
 void WorkspaceManager::SidebarContainer::addPanel(const juce::String& name,
@@ -29,9 +49,9 @@ void WorkspaceManager::SidebarContainer::addPanel(const juce::String& name,
 //==============================================================================
 WorkspaceManager::WorkspaceManager()
 {
-    // Bottom tabs
+    // Bottom tabs — increased depth for readability with many tabs
     bottomTabs = std::make_unique<juce::TabbedComponent>(juce::TabbedButtonBar::TabsAtTop);
-    bottomTabs->setTabBarDepth(26);
+    bottomTabs->setTabBarDepth(30);
     bottomTabs->setOutline(0);
     bottomTabs->setColour(juce::TabbedComponent::backgroundColourId, OrpheusLookAndFeel::bgDarkest());
     addAndMakeVisible(bottomTabs.get());
@@ -54,6 +74,21 @@ WorkspaceManager::WorkspaceManager()
     timelineBottomResizer = std::make_unique<juce::StretchableLayoutResizerBar>(
         &verticalLayout, 1, false);
     addAndMakeVisible(timelineBottomResizer.get());
+
+    // Horizontal layout: [0]=leftSidebar, [1]=resizer, [2]=center, [3]=resizer, [4]=rightSidebar
+    horizontalLayout.setItemLayout(0, 150, 500, 240);     // Left sidebar
+    horizontalLayout.setItemLayout(1, resizerBarSize, resizerBarSize, resizerBarSize);
+    horizontalLayout.setItemLayout(2, 200, -1.0, -1.0);   // Center (flex)
+    horizontalLayout.setItemLayout(3, resizerBarSize, resizerBarSize, resizerBarSize);
+    horizontalLayout.setItemLayout(4, 150, 500, 280);     // Right sidebar
+
+    leftSidebarResizer = std::make_unique<juce::StretchableLayoutResizerBar>(
+        &horizontalLayout, 1, true);
+    addAndMakeVisible(leftSidebarResizer.get());
+
+    rightSidebarResizer = std::make_unique<juce::StretchableLayoutResizerBar>(
+        &horizontalLayout, 3, true);
+    addAndMakeVisible(rightSidebarResizer.get());
 }
 
 WorkspaceManager::~WorkspaceManager()
@@ -65,72 +100,86 @@ WorkspaceManager::~WorkspaceManager()
 void WorkspaceManager::paint(juce::Graphics& g)
 {
     g.fillAll(OrpheusLookAndFeel::bgDarkest());
-
-    // Draw sidebar edges
-    if (leftSidebarVisible)
-    {
-        g.setColour(OrpheusLookAndFeel::borderSubtle());
-        g.drawVerticalLine(leftSidebarWidth, 0, (float)getHeight());
-    }
-    if (rightSidebarVisible)
-    {
-        g.setColour(OrpheusLookAndFeel::borderSubtle());
-        g.drawVerticalLine(getWidth() - rightSidebarWidth, 0, (float)getHeight());
-    }
 }
 
 void WorkspaceManager::resized()
 {
     auto bounds = getLocalBounds();
 
-    // Left sidebar
-    if (leftSidebarVisible)
+    if (leftSidebarVisible && rightSidebarVisible)
     {
-        auto leftArea = bounds.removeFromLeft(leftSidebarWidth);
-        leftViewport.setBounds(leftArea);
-        leftViewport.setVisible(true);
-        leftContainer.setSize(leftArea.getWidth() - leftViewport.getScrollBarThickness(), 
+        // Full 5-component horizontal layout
+        juce::Component* hComps[] = {
+            &leftViewport, leftSidebarResizer.get(),
+            nullptr, // placeholder — we'll set center bounds manually
+            rightSidebarResizer.get(), &rightViewport
+        };
+
+        // We need a temporary component for the center to get its bounds
+        juce::Component centerPlaceholder;
+        hComps[2] = &centerPlaceholder;
+        addAndMakeVisible(&centerPlaceholder);
+
+        horizontalLayout.layOutComponents(hComps, 5,
+            bounds.getX(), bounds.getY(),
+            bounds.getWidth(), bounds.getHeight(),
+            false, true);
+
+        auto centerBounds = centerPlaceholder.getBounds();
+        removeChildComponent(&centerPlaceholder);
+
+        // Sync sidebar container sizes
+        leftContainer.setSize(leftViewport.getWidth() - leftViewport.getScrollBarThickness(),
                               leftContainer.getHeight());
         leftContainer.resized();
-    }
-    else
-    {
-        leftViewport.setVisible(false);
-    }
 
-    // Right sidebar
-    if (rightSidebarVisible)
+        rightContainer.setSize(rightViewport.getWidth() - rightViewport.getScrollBarThickness(),
+                               rightContainer.getHeight());
+        rightContainer.resized();
+
+        // Vertical layout inside center
+        layoutCenter(centerBounds);
+    }
+    else if (leftSidebarVisible)
     {
-        auto rightArea = bounds.removeFromRight(rightSidebarWidth);
+        // Left sidebar + center only
+        auto leftArea = bounds.removeFromLeft(240);
+        leftViewport.setBounds(leftArea);
+        leftViewport.setVisible(true);
+        leftSidebarResizer->setVisible(false);
+        rightSidebarResizer->setVisible(false);
+        rightViewport.setVisible(false);
+
+        leftContainer.setSize(leftArea.getWidth() - leftViewport.getScrollBarThickness(),
+                              leftContainer.getHeight());
+        leftContainer.resized();
+
+        layoutCenter(bounds);
+    }
+    else if (rightSidebarVisible)
+    {
+        // Center + right sidebar only
+        auto rightArea = bounds.removeFromRight(280);
         rightViewport.setBounds(rightArea);
         rightViewport.setVisible(true);
+        leftSidebarResizer->setVisible(false);
+        rightSidebarResizer->setVisible(false);
+        leftViewport.setVisible(false);
+
         rightContainer.setSize(rightArea.getWidth() - rightViewport.getScrollBarThickness(),
                                rightContainer.getHeight());
         rightContainer.resized();
+
+        layoutCenter(bounds);
     }
     else
     {
+        // No sidebars
+        leftViewport.setVisible(false);
         rightViewport.setVisible(false);
-    }
-
-    // Center area: timeline (top) + resizer + bottom tabs
-    // Use StretchableLayoutManager for the vertical split
-    juce::Component* comps[] = { timelineComponent ? (juce::Component*)timelineComponent : (juce::Component*)bottomTabs.get(),
-                                 timelineBottomResizer.get(),
-                                 bottomTabs.get() };
-
-    if (timelineComponent)
-    {
-        verticalLayout.layOutComponents(comps, 3,
-                                        bounds.getX(), bounds.getY(),
-                                        bounds.getWidth(), bounds.getHeight(),
-                                        true, true);
-    }
-    else
-    {
-        // No timeline — give all space to bottom tabs
-        bottomTabs->setBounds(bounds);
-        timelineBottomResizer->setVisible(false);
+        leftSidebarResizer->setVisible(false);
+        rightSidebarResizer->setVisible(false);
+        layoutCenter(bounds);
     }
 }
 
@@ -143,9 +192,14 @@ void WorkspaceManager::addToTimeline(juce::Component* timeline)
 
 void WorkspaceManager::addToBottomTab(const juce::String& name, juce::Component* content)
 {
+    addToBottomTab(name, OrpheusLookAndFeel::bgDarker(), content);
+}
+
+void WorkspaceManager::addToBottomTab(const juce::String& name, juce::Colour tabColour, juce::Component* content)
+{
     if (bottomTabs)
     {
-        bottomTabs->addTab(name, OrpheusLookAndFeel::bgDarker(), content, false);
+        bottomTabs->addTab(name, tabColour, content, false);
     }
 }
 
@@ -177,12 +231,16 @@ void WorkspaceManager::showBottomTab(const juce::String& name)
 void WorkspaceManager::setLeftSidebarVisible(bool visible)
 {
     leftSidebarVisible = visible;
+    leftViewport.setVisible(visible);
+    leftSidebarResizer->setVisible(visible && rightSidebarVisible);
     resized();
 }
 
 void WorkspaceManager::setRightSidebarVisible(bool visible)
 {
     rightSidebarVisible = visible;
+    rightViewport.setVisible(visible);
+    rightSidebarResizer->setVisible(visible && leftSidebarVisible);
     resized();
 }
 
@@ -191,8 +249,6 @@ juce::ValueTree WorkspaceManager::saveLayout()
     juce::ValueTree vt("WorkspaceLayout");
     vt.setProperty("leftVisible", leftSidebarVisible, nullptr);
     vt.setProperty("rightVisible", rightSidebarVisible, nullptr);
-    vt.setProperty("leftWidth", leftSidebarWidth, nullptr);
-    vt.setProperty("rightWidth", rightSidebarWidth, nullptr);
     if (bottomTabs)
         vt.setProperty("activeTab", bottomTabs->getCurrentTabIndex(), nullptr);
     return vt;
@@ -204,10 +260,31 @@ void WorkspaceManager::loadLayout(const juce::ValueTree& state)
     {
         leftSidebarVisible = state.getProperty("leftVisible", true);
         rightSidebarVisible = state.getProperty("rightVisible", true);
-        leftSidebarWidth = state.getProperty("leftWidth", 240);
-        rightSidebarWidth = state.getProperty("rightWidth", 280);
         if (bottomTabs && state.hasProperty("activeTab"))
             bottomTabs->setCurrentTabIndex(state.getProperty("activeTab"));
         resized();
     }
 }
+
+void WorkspaceManager::layoutCenter(juce::Rectangle<int> centerBounds)
+{
+    if (timelineComponent)
+    {
+        juce::Component* comps[] = { timelineComponent,
+                                     timelineBottomResizer.get(),
+                                     bottomTabs.get() };
+
+        verticalLayout.layOutComponents(comps, 3,
+                                        centerBounds.getX(), centerBounds.getY(),
+                                        centerBounds.getWidth(), centerBounds.getHeight(),
+                                        true, true);
+        timelineBottomResizer->setVisible(true);
+    }
+    else
+    {
+        // No timeline — give all space to bottom tabs
+        bottomTabs->setBounds(centerBounds);
+        timelineBottomResizer->setVisible(false);
+    }
+}
+

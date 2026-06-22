@@ -23,6 +23,7 @@ public:
     // Add a component to a zone
     void addToTimeline(juce::Component* timeline);
     void addToBottomTab(const juce::String& name, juce::Component* content);
+    void addToBottomTab(const juce::String& name, juce::Colour tabColour, juce::Component* content);
     void addToLeftSidebar(const juce::String& name, std::unique_ptr<juce::Component> content);
     void addToRightSidebar(const juce::String& name, std::unique_ptr<juce::Component> content);
 
@@ -60,15 +61,20 @@ private:
     bool leftSidebarVisible = true;
     bool rightSidebarVisible = true;
 
-    int leftSidebarWidth = 240;
-    int rightSidebarWidth = 280;
+    // Horizontal layout: [leftSidebar | resizer | center | resizer | rightSidebar]
+    juce::StretchableLayoutManager horizontalLayout;
+    std::unique_ptr<juce::StretchableLayoutResizerBar> leftSidebarResizer;
+    std::unique_ptr<juce::StretchableLayoutResizerBar> rightSidebarResizer;
 
-    // Resizer bars
-    juce::StretchableLayoutManager verticalLayout;   // Timeline vs BottomTabs
+    // Vertical layout for center area: [timeline | resizer | bottomTabs]
+    juce::StretchableLayoutManager verticalLayout;
     std::unique_ptr<juce::StretchableLayoutResizerBar> timelineBottomResizer;
 
     // Static sizes
     static constexpr int resizerBarSize = 5;
+
+    // Internal helper to lay out the center area (timeline + bottom tabs)
+    void layoutCenter(juce::Rectangle<int> centerBounds);
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(WorkspaceManager)
 };
