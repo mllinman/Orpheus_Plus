@@ -1431,6 +1431,21 @@ void TrackLaneComponent::addAudioClip(const juce::File& file, double startTime)
     
     // Load audio data for playback
     clip->loadAudioData(audioEngine.getFormatManager());
+
+    // Auto-detect BPM from audio file and update session tempo
+    if (clip->sourceBpm > 0 && clip->sourceBpm != 120.0)
+    {
+        // Update session BPM if this is the first real clip
+        int totalClips = 0;
+        for (int t = 0; t < audioEngine.getTrackCount(); ++t)
+            totalClips += audioEngine.getTrackInfo(t).clips.size();
+        if (totalClips == 0)
+            audioEngine.setBpm(clip->sourceBpm);
+    }
+
+    // Auto-set clip duration from loaded audio length
+    if (clip->isLoaded && clip->sampleRate > 0 && clip->duration <= 0.0)
+        clip->duration = (double)clip->audioData.getNumSamples() / clip->sampleRate;
     
     audioEngine.getTrackInfo(trackIndex).clips.add(clip);
     repaint();

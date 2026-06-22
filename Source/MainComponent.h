@@ -37,7 +37,8 @@
 #include "UI/TextToSamplePanel.h"
 #include "UI/AutoMixPanel.h"
 
-class MainComponent : public juce::Component
+class MainComponent : public juce::Component,
+                      public juce::MenuBarModel
 {
 public:
     MainComponent();
@@ -61,6 +62,14 @@ public:
     void showExportDialog();
     void setupCallbacks();
 
+    // MenuBarModel
+    juce::StringArray getMenuBarNames() override;
+    juce::PopupMenu getMenuForIndex(int menuIndex, const juce::String& menuName) override;
+    void menuItemSelected(int menuItemID, int topLevelMenuIndex) override;
+
+    void importAudioFile();
+    void importMidiFile();
+
 private:
     void wireToolbarCallbacks();
 
@@ -73,6 +82,7 @@ private:
 
     // Layout components (top to bottom)
     std::unique_ptr<ToolbarComponent> toolbar;
+    std::unique_ptr<juce::MenuBarComponent> menuBar;
     std::unique_ptr<TransportBar> transportBar;
     std::unique_ptr<WorkspaceManager> workspace;
     std::unique_ptr<StatusBar> statusBar;
@@ -111,6 +121,9 @@ private:
 
     // Tooltip support for toolbar hover descriptions
     std::unique_ptr<juce::TooltipWindow> tooltipWindow;
+
+    // Import file chooser
+    std::unique_ptr<juce::FileChooser> importChooser;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MainComponent)
 };

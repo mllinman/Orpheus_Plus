@@ -27,7 +27,11 @@ MainComponent::MainComponent()
     //  TOP-LEVEL LAYOUT: Toolbar → Transport → Workspace → StatusBar
     //═══════════════════════════════════════════════════════════════════════
 
-    // 1. Toolbar
+    // 1. Menu Bar
+    menuBar = std::make_unique<juce::MenuBarComponent>(this);
+    addAndMakeVisible(menuBar.get());
+
+    // 2. Toolbar
     toolbar = std::make_unique<ToolbarComponent>();
     addAndMakeVisible(toolbar.get());
 
@@ -193,6 +197,7 @@ MainComponent::MainComponent()
 
 MainComponent::~MainComponent()
 {
+    menuBar->setModel(nullptr);
     juce::LookAndFeel::setDefaultLookAndFeel(nullptr);
 }
 
@@ -205,7 +210,11 @@ void MainComponent::resized()
 {
     auto area = getLocalBounds();
 
-    // Toolbar (top)
+    // Menu bar (top)
+    if (menuBar)
+        menuBar->setBounds(area.removeFromTop(24));
+
+    // Toolbar (below menu)
     if (toolbar)
         toolbar->setBounds(area.removeFromTop(46));
 
@@ -226,7 +235,9 @@ void MainComponent::wireToolbarCallbacks()
 {
     if (!toolbar) return;
 
-    // File
+    toolbar->onNewProject  = [this]() { projectManager->newProject(); };
+    toolbar->onOpenProject = [this]() { projectManager->openProject(); };
+    toolbar->onSaveProject = [this]() { projectManager->saveProject(); };
     toolbar->onExport = [this]() { showExportDialog(); };
     toolbar->onShowSettings = [this]() { workspace->showBottomTab("Settings"); };
 
@@ -277,4 +288,263 @@ void MainComponent::showExportDialog()
 
 void MainComponent::setupCallbacks()
 {
+}
+
+//==============================================================================
+// Menu Bar Implementation
+//==============================================================================
+juce::StringArray MainComponent::getMenuBarNames()
+{
+    return { "File", "Edit", "View", "AI", "Help" };
+}
+
+juce::PopupMenu MainComponent::getMenuForIndex(int menuIndex, const juce::String& /*menuName*/)
+{
+    juce::PopupMenu menu;
+
+    if (menuIndex == 0) // File
+    {
+        menu.addItem(100, "New Project",       true, false);
+        menu.addItem(101, "Open Project...",   true, false);
+        menu.addSeparator();
+        menu.addItem(102, "Save",              true, false);
+        menu.addItem(103, "Save As...",        true, false);
+        menu.addSeparator();
+        menu.addItem(110, "Import Audio...",   true, false);
+        menu.addItem(111, "Import MIDI...",    true, false);
+        menu.addSeparator();
+        menu.addItem(120, "Export Audio...",   true, false);
+        menu.addItem(121, "Export MIDI...",    true, false);
+        menu.addItem(122, "Export Stems...",   true, false);
+        menu.addSeparator();
+
+        // Recent files submenu
+        juce::PopupMenu recentMenu;
+        auto recentFiles = projectManager->getRecentFiles();
+        for (int i = 0; i < recentFiles.size(); ++i)
+            recentMenu.addItem(200 + i, juce::File(recentFiles[i]).getFileName());
+        if (recentFiles.isEmpty())
+            recentMenu.addItem(299, "(No recent files)", false);
+        menu.addSubMenu("Recent Projects", recentMenu);
+
+        menu.addSeparator();
+        menu.addItem(199, "Settings", true, false);
+    }
+    else if (menuIndex == 1) // Edit
+    {
+        menu.addItem(300, "Undo",     true, false);
+        menu.addItem(301, "Redo",     true, false);
+        menu.addSeparator();
+        menu.addItem(310, "Cut",      true, false);
+        menu.addItem(311, "Copy",     true, false);
+        menu.addItem(312, "Paste",    true, false);
+        menu.addItem(313, "Delete",   true, false);
+        menu.addSeparator();
+        menu.addItem(320, "Select All", true, false);
+        menu.addItem(321, "Deselect All", true, false);
+    }
+    else if (menuIndex == 2) // View
+    {
+        menu.addItem(400, "Mixer",           true, false);
+        menu.addItem(401, "Piano Roll",      true, false);
+        menu.addItem(402, "Session View",    true, false);
+        menu.addSeparator();
+        menu.addItem(410, "Left Sidebar",    true, workspace ? workspace->isLeftSidebarVisible() : false);
+        menu.addItem(411, "Right Sidebar",   true, workspace ? workspace->isRightSidebarVisible() : false);
+        menu.addSeparator();
+
+        // Reopen closed tabs
+        if (workspace)
+        {
+            auto closedNames = workspace->getClosedTabNames();
+            if (!closedNames.isEmpty())
+            {
+                juce::PopupMenu reopenMenu;
+                for (int i = 0; i < closedNames.size(); ++i)
+                    reopenMenu.addItem(500 + i, closedNames[i]);
+                menu.addSubMenu("Reopen Closed Tab", reopenMenu);
+            }
+        }
+
+        menu.addSeparator();
+        menu.addItem(420, "Zoom In",  true, false);
+        menu.addItem(421, "Zoom Out", true, false);
+    }
+    else if (menuIndex == 3) // AI
+    {
+        menu.addItem(600, "Stem Separation",   true, false);
+        menu.addItem(601, "AutoTune",          true, false);
+        menu.addItem(602, "AI Humanizer",      true, false);
+        menu.addItem(603, "Auto-Mix",          true, false);
+        menu.addItem(604, "Text-to-Sample",    true, false);
+        menu.addItem(605, "Voice Clone",       true, false);
+        menu.addSeparator();
+        menu.addItem(610, "AI Co-Pilot",       true, false);
+        menu.addItem(611, "Distribution Prep", true, false);
+    }
+    else if (menuIndex == 4) // Help
+    {
+        menu.addItem(700, "User Manual",       true, false);
+        menu.addItem(701, "Keyboard Shortcuts", true, false);
+        menu.addSeparator();
+        menu.addItem(710, "About Orpheus Plus", true, false);
+    }
+
+    return menu;
+}
+
+void MainComponent::menuItemSelected(int menuItemID, int /*topLevelMenuIndex*/)
+{
+    // Handle range-based IDs first (recent files, closed tabs)
+    if (menuItemID >= 200 && menuItemID < 299)
+    {
+        auto recentFiles = projectManager->getRecentFiles();
+        int idx = menuItemID - 200;
+        if (idx < recentFiles.size())
+            projectManager->loadProjectFile(juce::File(recentFiles[idx]));
+        return;
+    }
+    if (menuItemID >= 500 && menuItemID < 600)
+    {
+        if (workspace)
+        {
+            auto closedNames = workspace->getClosedTabNames();
+            int idx = menuItemID - 500;
+            if (idx < closedNames.size())
+                workspace->reopenBottomTab(closedNames[idx]);
+        }
+        return;
+    }
+
+    switch (menuItemID)
+    {
+        // ── File ─────────────────────────────────────────────────────────
+        case 100: projectManager->newProject();    break;
+        case 101: projectManager->openProject();   break;
+        case 102: projectManager->saveProject();   break;
+        case 103: projectManager->saveProjectAs(); break;
+        case 110: importAudioFile();                break;
+        case 111: importMidiFile();                 break;
+        case 120: showExportDialog();               break;
+        case 121: /* Export MIDI — TODO */          break;
+        case 122: /* Export Stems — TODO */         break;
+        case 199: workspace->showBottomTab("Settings"); break;
+
+        // ── Edit ─────────────────────────────────────────────────────────
+        case 300: commandManager.invokeDirectly(juce::StandardApplicationCommandIDs::undo, true);  break;
+        case 301: commandManager.invokeDirectly(juce::StandardApplicationCommandIDs::redo, true);  break;
+        case 310: commandManager.invokeDirectly(juce::StandardApplicationCommandIDs::cut,  true);  break;
+        case 311: commandManager.invokeDirectly(juce::StandardApplicationCommandIDs::copy, true);  break;
+        case 312: commandManager.invokeDirectly(juce::StandardApplicationCommandIDs::paste, true); break;
+        case 313: commandManager.invokeDirectly(juce::StandardApplicationCommandIDs::del, true);   break;
+        case 320: commandManager.invokeDirectly(juce::StandardApplicationCommandIDs::selectAll, true); break;
+        case 321: if (timeline) timeline->clearAllSelections(); break;
+
+        // ── View ─────────────────────────────────────────────────────────
+        case 400: workspace->showBottomTab("Mixer");      break;
+        case 401: workspace->showBottomTab("Piano Roll");  break;
+        case 402: workspace->showBottomTab("Session");     break;
+        case 410: workspace->setLeftSidebarVisible(!workspace->isLeftSidebarVisible());   break;
+        case 411: workspace->setRightSidebarVisible(!workspace->isRightSidebarVisible()); break;
+        case 420: if (timeline) timeline->zoomIn();  break;
+        case 421: if (timeline) timeline->zoomOut(); break;
+
+        // ── AI ───────────────────────────────────────────────────────────
+        case 600: workspace->showBottomTab("Stem Sep");        break;
+        case 601: workspace->setRightSidebarVisible(true);     break;
+        case 602: workspace->showBottomTab("AI Humanizer");    break;
+        case 603: workspace->showBottomTab("Auto-Mix");        break;
+        case 604: workspace->showBottomTab("Text-to-Sample");  break;
+        case 605: workspace->showBottomTab("Voice Clone");     break;
+        case 610: workspace->setRightSidebarVisible(true);     break;
+        case 611: workspace->showBottomTab("Dist Prep");       break;
+
+        // ── Help ─────────────────────────────────────────────────────────
+        case 700: workspace->showBottomTab("User Manual");  break;
+        case 701: workspace->showBottomTab("Settings");     break;
+        case 710: workspace->showBottomTab("Settings");     break;
+        default: break;
+    }
+}
+
+void MainComponent::importAudioFile()
+{
+    if (importChooser) return;
+    importChooser = std::make_unique<juce::FileChooser>(
+        "Import Audio File",
+        juce::File::getSpecialLocation(juce::File::userMusicDirectory),
+        "*.wav;*.aiff;*.flac;*.mp3;*.ogg");
+
+    importChooser->launchAsync(
+        juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectFiles
+        | juce::FileBrowserComponent::canSelectMultipleItems,
+        [this](const juce::FileChooser& fc)
+        {
+            auto results = fc.getResults();
+            for (auto& file : results)
+            {
+                if (file.existsAsFile())
+                {
+                    int trackIdx = audioEngine->addAudioTrack(file.getFileNameWithoutExtension());
+                    auto& trackInfo = audioEngine->getTrackInfo(trackIdx);
+
+                    auto* clip = new AudioClip(file, 0.0);
+                    clip->loadAudioData(audioEngine->getFormatManager());
+                    trackInfo.clips.add(clip);
+
+                    // Auto-detect BPM and update session if first track
+                    if (audioEngine->getTrackCount() == 1 && clip->sourceBpm > 0 && clip->sourceBpm != 120.0)
+                        audioEngine->setBpm(clip->sourceBpm);
+                }
+            }
+            if (timeline) timeline->rebuildTracks();
+            juce::MessageManager::callAsync([this]() { importChooser.reset(); });
+        });
+}
+
+void MainComponent::importMidiFile()
+{
+    if (importChooser) return;
+    importChooser = std::make_unique<juce::FileChooser>(
+        "Import MIDI File",
+        juce::File::getSpecialLocation(juce::File::userMusicDirectory),
+        "*.mid;*.midi");
+
+    importChooser->launchAsync(
+        juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectFiles,
+        [this](const juce::FileChooser& fc)
+        {
+            auto result = fc.getResult();
+            if (result.existsAsFile())
+            {
+                int trackIdx = audioEngine->addMidiTrack(result.getFileNameWithoutExtension());
+                auto& trackInfo = audioEngine->getTrackInfo(trackIdx);
+
+                // Load the MIDI file and add clips
+                juce::FileInputStream stream(result);
+                if (stream.openedOk())
+                {
+                    juce::MidiFile midiFile;
+                    midiFile.readFrom(stream);
+                    midiFile.convertTimestampTicksToSeconds();
+
+                    for (int t = 0; t < midiFile.getNumTracks(); ++t)
+                    {
+                        auto* midiTrack = midiFile.getTrack(t);
+                        if (midiTrack && midiTrack->getNumEvents() > 0)
+                        {
+                            double clipStart = midiTrack->getStartTime();
+                            double clipDur = midiTrack->getEndTime() - clipStart;
+                            if (clipDur <= 0.0) clipDur = 4.0;
+
+                            auto* clip = new MidiClip(clipStart, clipDur);
+                            clip->midiData = *midiTrack;
+                            trackInfo.clips.add(clip);
+                        }
+                    }
+                }
+                if (timeline) timeline->rebuildTracks();
+            }
+            juce::MessageManager::callAsync([this]() { importChooser.reset(); });
+        });
 }
