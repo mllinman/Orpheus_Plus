@@ -58,6 +58,55 @@ PluginBrowser::PluginBrowser(AudioEngine& e, AppState& s)
     progressBar.setVisible(false);
     addChildComponent(progressBar);
 
+    //── Custom path management ───────────────────────────────────────────────
+    showPathsToggle.onClick = [this] {
+        showingPaths = showPathsToggle.getToggleState();
+        pathListBox.setVisible(showingPaths);
+        addPathButton.setVisible(showingPaths);
+        removePathButton.setVisible(showingPaths);
+        resized();
+    };
+    addAndMakeVisible(showPathsToggle);
+
+    addPathButton.onClick = [this] {
+        fileChooser = std::make_unique<juce::FileChooser>(
+            "Select VST Plugin Directory",
+            juce::File::getSpecialLocation(juce::File::userHomeDirectory));
+
+        fileChooser->launchAsync(
+            juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectDirectories,
+            [this](const juce::FileChooser& fc)
+            {
+                auto result = fc.getResult();
+                if (result.isDirectory())
+                {
+                    audioEngine.getPluginManager().addSearchPath(result);
+                    refreshPathList();
+                }
+            });
+    };
+    addPathButton.setVisible(false);
+    addAndMakeVisible(addPathButton);
+
+    removePathButton.onClick = [this] {
+        int selected = pathListBox.getSelectedRow();
+        if (selected >= 0 && selected < pathModel.paths.size())
+        {
+            juce::File dir(pathModel.paths[selected]);
+            audioEngine.getPluginManager().removeSearchPath(dir);
+            refreshPathList();
+        }
+    };
+    removePathButton.setVisible(false);
+    addAndMakeVisible(removePathButton);
+
+    pathListBox.setModel(&pathModel);
+    pathListBox.setRowHeight(18);
+    pathListBox.setColour(juce::ListBox::backgroundColourId, juce::Colour(0xff0a0a16));
+    pathListBox.setVisible(false);
+    addAndMakeVisible(pathListBox);
+
+    refreshPathList();
     rebuildFilteredList();
 }
 
@@ -83,7 +132,20 @@ void PluginBrowser::resized()
     auto filterRow = bounds.removeFromTop(24);
     categoryCombo.setBounds(filterRow.removeFromLeft(filterRow.getWidth() / 2).reduced(0, 2));
     sortCombo.setBounds(filterRow.reduced(0, 2));
-    
+
+    // Custom paths section (collapsible, at bottom)
+    showPathsToggle.setBounds(bounds.removeFromBottom(22));
+
+    if (showingPaths)
+    {
+        auto pathBtnRow = bounds.removeFromBottom(26);
+        addPathButton.setBounds(pathBtnRow.removeFromLeft(pathBtnRow.getWidth() / 2).reduced(1, 2));
+        removePathButton.setBounds(pathBtnRow.reduced(1, 2));
+
+        int pathListHeight = juce::jmin(90, bounds.getHeight() / 3);
+        pathListBox.setBounds(bounds.removeFromBottom(pathListHeight));
+    }
+
     pluginList.setBounds(bounds);
 }
 
@@ -209,4 +271,19 @@ void PluginBrowser::pluginListChanged()
     juce::MessageManager::callAsync([this]() {
         rebuildFilteredList();
     });
+}
+
+void PluginBrowser::changeListenerCallback(juce::ChangeBroadcaster*)
+{
+    // Reserved for future use (e.g. file watcher notifications)
+}
+
+void PluginBrowser::refreshPathList()
+{
+    pathModel.paths.clear();
+    auto& customPaths = audioEngine.getPluginManager().getCustomSearchPaths();
+    for (int i = 0; i < customPaths.getNumPaths(); ++i)
+        pathModel.paths.add(customPaths[i].getFullPathName());
+    pathListBox.updateContent();
+    pathListBox.repaint();
 }
