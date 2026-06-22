@@ -36,6 +36,8 @@ public:
 
     //── Plugin search paths ──────────────────────────────────────────────────
     void addSearchPath(const juce::File& path);
+    void removeSearchPath(const juce::File& path);
+    const juce::FileSearchPath& getCustomSearchPaths() const { return customSearchPaths; }
     juce::FileSearchPath getDefaultVST3Paths();
     juce::FileSearchPath getDefaultAUPaths(); // macOS only
 
@@ -55,6 +57,10 @@ private:
     juce::KnownPluginList knownPlugins;
     std::atomic<bool> scanning { false };
     std::unique_ptr<juce::PluginDirectoryScanner> scanner;
+
+    juce::FileSearchPath customSearchPaths;
+    void saveCustomPaths();
+    void loadCustomPaths();
 
     juce::ListenerList<Listener> listeners;
 
