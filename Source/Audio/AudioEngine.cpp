@@ -45,25 +45,32 @@ void AudioEngine::initialise()
     deviceManager.addMidiInputDeviceCallback({}, this);
 
     midiCollector.reset(44100.0);
-    audioWriterThread.startThread(juce::Thread::Priority::high); // Priority slightly above normal
+    audioWriterThread.startThread(juce::Thread::Priority::high);
 
-    // Initialize Graph
+    // Initialize Graph — must configure bus layout BEFORE adding nodes
     processorGraph.clear();
+    processorGraph.enableAllBuses();
+    // Tell the graph it processes stereo in/out at the default sample rate
+    processorGraph.setPlayConfigDetails(2, 2, 44100.0, 512);
+
     using AudioGraphIOProcessor = juce::AudioProcessorGraph::AudioGraphIOProcessor;
 
     // Create IO nodes
-    inputNode = processorGraph.addNode(std::make_unique<AudioGraphIOProcessor>(AudioGraphIOProcessor::audioInputNode));
-    outputNode = processorGraph.addNode(std::make_unique<AudioProcessorGraph::AudioGraphIOProcessor>(AudioGraphIOProcessor::audioOutputNode));
+    inputNode  = processorGraph.addNode(std::make_unique<AudioGraphIOProcessor>(AudioGraphIOProcessor::audioInputNode));
+    outputNode = processorGraph.addNode(std::make_unique<AudioGraphIOProcessor>(AudioGraphIOProcessor::audioOutputNode));
     
     // Create Master Node
     masterNode = processorGraph.addNode(std::make_unique<MixerProcessor>());
 
-    // Connect Master -> Output
+    // Connect Master -> Output (stereo)
     if (masterNode && outputNode)
     {
         for (int ch = 0; ch < 2; ++ch)
             processorGraph.addConnection({ { masterNode->nodeID, ch }, { outputNode->nodeID, ch } });
     }
+
+    juce::Logger::writeToLog("AudioEngine: Graph initialised with " 
+        + juce::String(processorGraph.getNumNodes()) + " nodes");
 }
 
 void AudioEngine::shutdown()
@@ -609,7 +616,18 @@ void AudioEngine::audioDeviceAboutToStart(juce::AudioIODevice* device)
     currentSampleRate = device->getCurrentSampleRate();
     currentBlockSize  = device->getCurrentBufferSizeSamples();
     midiCollector.reset(currentSampleRate);
+    
+    // Reconfigure graph with actual device parameters
+    int numOuts = device->getActiveOutputChannels().countNumberOfSetBits();
+    int numIns  = device->getActiveInputChannels().countNumberOfSetBits();
+    if (numOuts < 2) numOuts = 2;
+    if (numIns  < 2) numIns  = 2;
+    processorGraph.setPlayConfigDetails(numIns, numOuts, currentSampleRate, currentBlockSize);
     processorGraph.prepareToPlay(currentSampleRate, currentBlockSize);
+    
+    juce::Logger::writeToLog("AudioEngine: Device started - SR=" + juce::String(currentSampleRate)
+        + " BS=" + juce::String(currentBlockSize) 
+        + " In=" + juce::String(numIns) + " Out=" + juce::String(numOuts));
     
     if (usePredictiveBuffering.load()) {
         predictiveBuffer.setSize(2, currentBlockSize);
@@ -830,17 +848,103 @@ void AudioEngine::processAudioBlock(juce::AudioBuffer<float>& buffer)
         }
     }
 
-    // Process Graph
-    // For now, we are only handling output buffer processing.
-    // Ideally, we would pass input data if we had recording enabled.
-    processorGraph.processBlock(buffer, midiBuffer);
+    // ── Direct Rendering ─────────────────────────────────────────────────────
+    // Bypass the AudioProcessorGraph and render clips directly into the output.
+    // This guarantees audio output regardless of graph bus-layout configuration.
+    
+    double playTime = playheadPosition.load();
+    double devSR = currentSampleRate;
+    if (devSR <= 0.0) devSR = 44100.0;
+    int blockSamples = buffer.getNumSamples();
+    int outChannels = buffer.getNumChannels();
 
-    // Update analyzers
-    // for (auto* analyzer : analyzers)
-    // {
-    //     if (analyzer)
-    //         analyzer->pushBuffer(buffer);
-    // }
+    buffer.clear();
+
+    for (auto* track : tracks)
+    {
+        if (track->mute) continue;
+        if (track->type != OrpheusTrackInfo::Type::Audio && 
+            track->type != OrpheusTrackInfo::Type::Midi) continue;
+
+        // Per-track temporary buffer
+        juce::AudioBuffer<float> trackBuf(outChannels, blockSamples);
+        trackBuf.clear();
+
+        // Render all audio clips on this track
+        for (auto* clip : track->clips)
+        {
+            auto* ac = dynamic_cast<AudioClip*>(clip);
+            if (!ac || !ac->isLoaded) continue;
+
+            int srcChannels = ac->audioData.getNumChannels();
+            int srcSamples  = ac->audioData.getNumSamples();
+            if (srcChannels <= 0 || srcSamples <= 0 || ac->sampleRate <= 0.0) continue;
+            if (ac->duration <= 0.0) continue;
+            if (ac->muted) continue;
+
+            double clipStart = ac->startTime;
+            double clipEnd   = ac->startTime + ac->duration;
+            double blockEnd  = playTime + (blockSamples / devSR);
+
+            if (playTime >= clipEnd || blockEnd <= clipStart) continue;
+
+            int startSample = (int)juce::jmax(0.0, (clipStart - playTime) * devSR);
+            int endSample   = (int)juce::jmin((double)blockSamples, (clipEnd - playTime) * devSR);
+            int numToFill   = juce::jmin(endSample - startSample, blockSamples - startSample);
+            if (numToFill <= 0) continue;
+
+            // Map session time → source sample position
+            double segmentStartTime = playTime + (startSample / devSR);
+            double offsetInClip = segmentStartTime - clipStart;
+            double srcPos = offsetInClip * ac->sampleRate;
+
+            for (int s = 0; s < numToFill; ++s)
+            {
+                int idx = (int)(srcPos + s * (ac->sampleRate / devSR));
+
+                if (ac->loopEnabled && srcSamples > 0)
+                    idx = idx % srcSamples;
+
+                if (idx < 0 || idx >= srcSamples) continue;
+
+                float gain = (float)ac->gain;
+
+                // Fades
+                double localTime = offsetInClip + (s / devSR);
+                if (ac->fadeIn > 0.0 && localTime < ac->fadeIn)
+                    gain *= (float)(localTime / ac->fadeIn);
+                if (ac->fadeOut > 0.0 && localTime > ac->duration - ac->fadeOut)
+                    gain *= (float)((ac->duration - localTime) / ac->fadeOut);
+
+                for (int ch = 0; ch < outChannels; ++ch)
+                {
+                    int srcCh = ch % srcChannels;
+                    trackBuf.addSample(ch, startSample + s,
+                                       ac->audioData.getSample(srcCh, idx) * gain);
+                }
+            }
+        }
+
+        // Apply track volume and pan
+        float vol = track->volume;
+        float pan = track->pan;
+        float leftGain  = vol * ((pan <= 0.0f) ? 1.0f : 1.0f - pan);
+        float rightGain = vol * ((pan >= 0.0f) ? 1.0f : 1.0f + pan);
+
+        if (outChannels >= 2)
+        {
+            trackBuf.applyGain(0, 0, blockSamples, leftGain);
+            trackBuf.applyGain(1, 0, blockSamples, rightGain);
+        }
+        else
+        {
+            trackBuf.applyGain(vol);
+        }
+
+        // Mix into output
+        for (int ch = 0; ch < outChannels; ++ch)
+            buffer.addFrom(ch, 0, trackBuf, ch, 0, blockSamples);
+    }
 }
 
 void AudioEngine::handleIncomingMidiMessage(juce::MidiInput*, const juce::MidiMessage& message)
