@@ -173,6 +173,9 @@ target_sources(OrpheusPlus PRIVATE
     # Distribution Prep
     Source/AudioCleanup/DistributionPrepProcessor.cpp
     Source/UI/DistributionPrepPanel.cpp
+
+    # Settings Hub
+    Source/UI/SettingsHubPanel.cpp
 )
 
 target_include_directories(OrpheusPlus PRIVATE
@@ -210,7 +213,7 @@ target_link_libraries(OrpheusPlus PRIVATE
 
 # MSVC 14.44 ICE workarounds
 if(MSVC)
-    target_compile_options(OrpheusPlus PRIVATE /bigobj /d2FH4-)
+    target_compile_options(OrpheusPlus PRIVATE /bigobj /d2FH4- /FS)
 endif()
 
 # Copy the onnxruntime.dll to the output directory so the executable can find it at runtime

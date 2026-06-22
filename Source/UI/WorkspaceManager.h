@@ -7,8 +7,10 @@
 //
 // Layout:  [LeftSidebar | Timeline + BottomTabs | RightSidebar]
 //          All zones separated by draggable resizer bars.
+//          Tabs are closeable and reorderable via drag-and-drop.
 //==============================================================================
-class WorkspaceManager : public juce::Component
+class WorkspaceManager : public juce::Component,
+                         public juce::DragAndDropContainer
 {
 public:
     WorkspaceManager();
@@ -27,14 +29,23 @@ public:
     void addToLeftSidebar(const juce::String& name, std::unique_ptr<juce::Component> content);
     void addToRightSidebar(const juce::String& name, std::unique_ptr<juce::Component> content);
 
-    // Show a specific bottom tab by name
+    // Show a specific bottom tab by name (reopens if closed)
     void showBottomTab(const juce::String& name);
+
+    // Close/reopen bottom tabs
+    void closeBottomTab(int tabIndex);
+    void reopenBottomTab(const juce::String& name);
+    juce::StringArray getClosedTabNames() const;
 
     // Toggle sidebar visibility
     void setLeftSidebarVisible(bool visible);
     void setRightSidebarVisible(bool visible);
     bool isLeftSidebarVisible() const { return leftSidebarVisible; }
     bool isRightSidebarVisible() const { return rightSidebarVisible; }
+
+    // Callback fired when a tab is closed (so toolbar can update state)
+    std::function<void(const juce::String&)> onTabClosed;
+    std::function<void(const juce::String&)> onTabReopened;
 
     // Layout persistence
     juce::ValueTree saveLayout();
@@ -47,12 +58,30 @@ private:
     // Bottom tabbed zone
     std::unique_ptr<juce::TabbedComponent> bottomTabs;
 
+    // Closed tabs storage (name -> { component, colour })
+    struct ClosedTabInfo {
+        juce::Component* component = nullptr;
+        juce::Colour colour;
+    };
+    std::map<juce::String, ClosedTabInfo> closedTabs;
+
     // Sidebars — stacked CollapsiblePanels inside a viewport
-    struct SidebarContainer : public juce::Component
+    struct SidebarContainer : public juce::Component,
+                              public juce::DragAndDropTarget
     {
         juce::OwnedArray<CollapsiblePanel> panels;
         void resized() override;
         void addPanel(const juce::String& name, std::unique_ptr<juce::Component> content);
+
+        // Drag-and-drop reordering
+        bool isInterestedInDragSource(const SourceDetails& details) override;
+        void itemDragEnter(const SourceDetails& details) override;
+        void itemDragMove(const SourceDetails& details) override;
+        void itemDragExit(const SourceDetails& details) override;
+        void itemDropped(const SourceDetails& details) override;
+        void paint(juce::Graphics& g) override;
+
+        int dropInsertIndex = -1;
     };
 
     juce::Viewport leftViewport, rightViewport;
@@ -71,7 +100,7 @@ private:
     std::unique_ptr<juce::StretchableLayoutResizerBar> timelineBottomResizer;
 
     // Static sizes
-    static constexpr int resizerBarSize = 5;
+    static constexpr int resizerBarSize = 3;
 
     // Internal helper to lay out the center area (timeline + bottom tabs)
     void layoutCenter(juce::Rectangle<int> centerBounds);

@@ -25,6 +25,7 @@
 #include "UI/PitchGamePanel.h"
 #include "UI/MacroControlPanel.h"
 #include "UI/ShortcutsSettingsPanel.h"
+#include "UI/SettingsHubPanel.h"
 #include "UI/ProjectSettingsPanel.h"
 #include "UI/ADRPanel.h"
 #include "UI/DistributionPrepPanel.h"
@@ -93,6 +94,7 @@ private:
     PitchGamePanel* pitchGame = nullptr;
     MacroControlPanel* macroControls = nullptr;
     ShortcutsSettingsPanel* shortcutsSettings = nullptr;
+    SettingsHubPanel* settingsHub = nullptr;
     AIHumanizerPanel* aiHumanizer = nullptr;
     AICoPilotPanel* aiCoPilot = nullptr;
     ADRPanel* adrPanel = nullptr;
@@ -106,6 +108,9 @@ private:
 
     std::unique_ptr<ProjectSettingsPanel> projectSettingsPanel;
     std::unique_ptr<ExportDialog> exportDialog;
+
+    // Tooltip support for toolbar hover descriptions
+    std::unique_ptr<juce::TooltipWindow> tooltipWindow;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MainComponent)
 };

@@ -43,6 +43,9 @@ MainComponent::MainComponent()
     statusBar = std::make_unique<StatusBar>(*audioEngine);
     addAndMakeVisible(statusBar.get());
 
+    // 5. Tooltip window — enables hover descriptions for all SettableTooltipClient items
+    tooltipWindow = std::make_unique<juce::TooltipWindow>(this, 400);
+
     //═══════════════════════════════════════════════════════════════════════
     //  TIMELINE ZONE (top half, permanent)
     //═══════════════════════════════════════════════════════════════════════
@@ -128,6 +131,10 @@ MainComponent::MainComponent()
     auto shortcutsComp = std::make_unique<ShortcutsSettingsPanel>(commandManager);
     shortcutsSettings = shortcutsComp.get();
     workspace->addToBottomTab("Shortcuts", colUtil, shortcutsComp.release());
+
+    auto settingsComp = std::make_unique<SettingsHubPanel>(*audioEngine, appState, *projectManager, commandManager);
+    settingsHub = settingsComp.get();
+    workspace->addToBottomTab("Settings", colUtil, settingsComp.release());
 
     auto pitchComp = std::make_unique<PitchGamePanel>(*audioEngine);
     pitchGame = pitchComp.get();
@@ -221,7 +228,7 @@ void MainComponent::wireToolbarCallbacks()
 
     // File
     toolbar->onExport = [this]() { showExportDialog(); };
-    toolbar->onShowSettings = [this]() { toggleProjectSettings(); };
+    toolbar->onShowSettings = [this]() { workspace->showBottomTab("Settings"); };
 
     // View — switch bottom tabs
     toolbar->onShowMixer     = [this]() { workspace->showBottomTab("Mixer"); };

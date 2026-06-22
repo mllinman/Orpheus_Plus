@@ -4,7 +4,8 @@
 
 //==============================================================================
 // CollapsiblePanel — A panel with a clickable header that collapses/expands.
-// Panels stack vertically in sidebars. Retains undock capability.
+// Panels stack vertically in sidebars. Retains undock and close capability.
+// Header bar is a drag handle for reordering within sidebars.
 //==============================================================================
 class CollapsiblePanel : public juce::Component
 {
@@ -15,6 +16,7 @@ public:
     void paint(juce::Graphics&) override;
     void resized() override;
     void mouseDown(const juce::MouseEvent&) override;
+    void mouseDrag(const juce::MouseEvent&) override;
 
     bool isCollapsed() const { return collapsed; }
     void setCollapsed(bool shouldCollapse);
@@ -27,7 +29,10 @@ public:
     void setUndocked(bool shouldUndock);
     bool isUndocked() const { return floatingWindow != nullptr; }
 
-    static constexpr int headerHeight = 26;
+    // Close callback (fired when × is clicked)
+    std::function<void()> onClose;
+
+    static constexpr int headerHeight = 22;
     static constexpr int expandedMinHeight = 120;
 
 private:
@@ -45,6 +50,7 @@ private:
     std::unique_ptr<FloatingWindow> floatingWindow;
     bool collapsed = false;
     int expandedHeight = 200; // Remembers last expanded height
+    bool dragging = false;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(CollapsiblePanel)
 };

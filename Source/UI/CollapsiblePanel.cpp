@@ -28,32 +28,51 @@ void CollapsiblePanel::paint(juce::Graphics& g)
     g.drawHorizontalLine((int)header.getBottom(), 0, (float)getWidth());
 
     // Collapse chevron
-    float chevX = header.getX() + 10;
+    float chevX = header.getX() + 8;
     float chevY = header.getCentreY();
     juce::Path chevron;
     if (collapsed)
     {
-        chevron.addTriangle(chevX, chevY - 4, chevX, chevY + 4, chevX + 5, chevY);
+        chevron.addTriangle(chevX, chevY - 3, chevX, chevY + 3, chevX + 4, chevY);
     }
     else
     {
-        chevron.addTriangle(chevX - 3, chevY - 2, chevX + 3, chevY - 2, chevX, chevY + 3);
+        chevron.addTriangle(chevX - 2, chevY - 2, chevX + 2, chevY - 2, chevX, chevY + 2);
     }
     g.setColour(OrpheusLookAndFeel::textSecondary());
     g.fillPath(chevron);
 
     // Panel name
     g.setColour(collapsed ? OrpheusLookAndFeel::textMuted() : OrpheusLookAndFeel::textPrimary());
-    g.setFont(juce::Font(11.5f).boldened());
-    g.drawText(panelName, header.withTrimmedLeft(24), juce::Justification::centredLeft);
+    g.setFont(juce::Font(10.5f).boldened());
+    g.drawText(panelName, header.withTrimmedLeft(20).withTrimmedRight(60),
+               juce::Justification::centredLeft);
 
-    // Undock button hint
+    // Right-side buttons (only on hover)
     if (isMouseOver(true) && !collapsed)
     {
-        auto undockArea = header.removeFromRight(40);
+        // Close × button
+        auto closeArea = header.removeFromRight(24);
         g.setColour(OrpheusLookAndFeel::textMuted());
+        g.setFont(juce::Font(12.0f));
+        g.drawText(juce::String::charToString(0x2715), closeArea, juce::Justification::centred); // ✕
+
+        // Undock button
+        auto undockArea = header.removeFromRight(24);
         g.setFont(juce::Font(10.0f));
         g.drawText(juce::String::charToString(0x2197), undockArea, juce::Justification::centred); // ↗
+    }
+
+    // Drag handle indicator (subtle dots when hovering)
+    if (isMouseOver(true))
+    {
+        g.setColour(OrpheusLookAndFeel::textMuted().withAlpha(0.3f));
+        float dotX = header.getX() + 3;
+        for (int i = 0; i < 3; ++i)
+        {
+            float dotY = header.getCentreY() - 4.0f + i * 4.0f;
+            g.fillEllipse(dotX, dotY, 2.0f, 2.0f);
+        }
     }
 
     // Body background when expanded
@@ -68,7 +87,7 @@ void CollapsiblePanel::resized()
 {
     if (!collapsed && content != nullptr && floatingWindow == nullptr)
     {
-        auto contentBounds = getLocalBounds().withTrimmedTop(headerHeight);
+        auto contentBounds = getLocalBounds().withTrimmedTop(headerHeight).reduced(2);
         content->setBounds(contentBounds);
         content->setVisible(true);
     }
@@ -81,15 +100,41 @@ void CollapsiblePanel::resized()
 void CollapsiblePanel::mouseDown(const juce::MouseEvent& e)
 {
     auto header = getLocalBounds().removeFromTop(headerHeight);
-    if (header.contains(e.getPosition()))
+    if (!header.contains(e.getPosition())) return;
+
+    int x = e.getPosition().getX();
+
+    // Close button area (rightmost 24px of header)
+    if (x > getWidth() - 24 && !collapsed)
     {
-        // Check if clicking the undock area
-        if (e.getPosition().getX() > getWidth() - 40 && !collapsed)
+        if (onClose)
+            onClose();
+        return;
+    }
+
+    // Undock area (next 24px from right)
+    if (x > getWidth() - 48 && !collapsed)
+    {
+        setUndocked(true);
+        return;
+    }
+
+    // Otherwise toggle collapse
+    setCollapsed(!collapsed);
+}
+
+void CollapsiblePanel::mouseDrag(const juce::MouseEvent& e)
+{
+    auto header = getLocalBounds().removeFromTop(headerHeight);
+    if (!header.contains(e.getMouseDownPosition())) return;
+
+    if (e.getDistanceFromDragStart() > 8 && !dragging)
+    {
+        dragging = true;
+        if (auto* dragContainer = juce::DragAndDropContainer::findParentDragContainerFor(this))
         {
-            setUndocked(true);
-            return;
+            dragContainer->startDragging("SidebarPanel:" + panelName, this);
         }
-        setCollapsed(!collapsed);
     }
 }
 

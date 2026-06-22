@@ -69,6 +69,7 @@ PluginBrowser::PluginBrowser(AudioEngine& e, AppState& s)
     addAndMakeVisible(showPathsToggle);
 
     addPathButton.onClick = [this] {
+        if (fileChooser != nullptr) return; // Prevent double-open
         fileChooser = std::make_unique<juce::FileChooser>(
             "Select VST Plugin Directory",
             juce::File::getSpecialLocation(juce::File::userHomeDirectory));
@@ -83,6 +84,8 @@ PluginBrowser::PluginBrowser(AudioEngine& e, AppState& s)
                     audioEngine.getPluginManager().addSearchPath(result);
                     refreshPathList();
                 }
+                // Release the dialog so it doesn't persist
+                juce::MessageManager::callAsync([this]() { fileChooser.reset(); });
             });
     };
     addPathButton.setVisible(false);

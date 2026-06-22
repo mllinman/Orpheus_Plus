@@ -17,9 +17,6 @@
 //Path to a program.
 CMAKE_AR:FILEPATH=C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.44.35207/bin/Hostx64/x64/lib.exe
 
-//No help, variable specified on the command line.
-CMAKE_BUILD_TYPE:UNINITIALIZED=Release
-
 //Semicolon separated list of supported configuration types, only
 // supports Debug, Release, MinSizeRel, and RelWithDebInfo, anything
 // else will be ignored.
@@ -271,9 +268,6 @@ OrpheusPlus_IS_TOP_LEVEL:STATIC=ON
 
 //Value Computed by CMake
 OrpheusPlus_SOURCE_DIR:STATIC=C:/Users/mllin/OneDrive/Documents/GitHub/Orpheus_Plus
-
-//The directory containing a CMake configuration file for onnxruntime.
-onnxruntime_DIR:PATH=onnxruntime_DIR-NOTFOUND
 
 
 ########################

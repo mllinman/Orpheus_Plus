@@ -556,6 +556,24 @@ void OrpheusLookAndFeel::drawTabButton(juce::Graphics& g, int w, int h, const ju
     }
 
     // Tab text — coloured when active, muted otherwise
+    float textEndX = (float)w;
+
+    // Close × button (shown on hover or active)
+    if (isFront || isMouseOver)
+    {
+        float closeSize = 12.0f;
+        float closeX = bounds.getRight() - closeSize - 4.0f;
+        float closeY = bounds.getCentreY() - closeSize / 2.0f;
+        auto closeArea = juce::Rectangle<float>(closeX, closeY, closeSize, closeSize);
+
+        // Draw × symbol
+        g.setColour((isMouseOver && !isFront) ? textMuted() : catColour.withAlpha(0.5f));
+        g.setFont(defaultFont.withHeight(10.0f));
+        g.drawText(juce::String::charToString(0x2715), closeArea, juce::Justification::centred);
+
+        textEndX = closeX - 2.0f;
+    }
+
     if (isFront)
     {
         g.setColour(catColour.brighter(0.3f));
@@ -581,7 +599,7 @@ void OrpheusLookAndFeel::drawTabButton(juce::Graphics& g, int w, int h, const ju
         g.setColour(catColour);
         g.fillEllipse(dotX, dotY, dotR * 2, dotR * 2);
 
-        g.drawText(text, juce::Rectangle<float>(dotX + dotR * 2 + 3, 0, (float)w - dotX - dotR * 2 - 6, (float)h),
+        g.drawText(text, juce::Rectangle<float>(dotX + dotR * 2 + 3, 0, textEndX - dotX - dotR * 2 - 6, (float)h),
                    juce::Justification::centredLeft, true);
     }
     else
@@ -589,4 +607,7 @@ void OrpheusLookAndFeel::drawTabButton(juce::Graphics& g, int w, int h, const ju
         g.drawText(text, 0, 0, w, h, juce::Justification::centred, true);
     }
 }
+
+
+
 
