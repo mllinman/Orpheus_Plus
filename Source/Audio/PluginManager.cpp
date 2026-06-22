@@ -14,6 +14,7 @@ PluginManager::PluginManager(AudioEngine& e) : engine(e)
     auto pluginListFile = juce::File::getSpecialLocation(juce::File::userApplicationDataDirectory)
                             .getChildFile("OrpheusPlus/plugins.xml");
     loadPluginList(pluginListFile);
+    loadCustomPaths();
 }
 
 PluginManager::~PluginManager()
@@ -36,6 +37,9 @@ void PluginManager::scanForPlugins()
        #if JUCE_MAC
         paths.addPath(getDefaultAUPaths());
        #endif
+
+        // Add user-specified custom directories
+        paths.addPath(customSearchPaths);
 
         auto deadMansPedal = juce::File::getSpecialLocation(juce::File::userApplicationDataDirectory)
                                .getChildFile("OrpheusPlus/deadmanspedal.txt");
@@ -325,7 +329,78 @@ void PluginManager::loadPluginList(const juce::File& file)
 
 void PluginManager::addSearchPath(const juce::File& path)
 {
-    // Stored for next scan
+    if (!path.isDirectory())
+    {
+        OrpheusLogger::logError("PluginManager: addSearchPath — not a valid directory: " + path.getFullPathName());
+        return;
+    }
+
+    // Check if already in the list
+    for (int i = 0; i < customSearchPaths.getNumPaths(); ++i)
+    {
+        if (customSearchPaths[i] == path)
+        {
+            OrpheusLogger::logInfo("PluginManager: Path already registered: " + path.getFullPathName());
+            return;
+        }
+    }
+
+    customSearchPaths.add(path);
+    saveCustomPaths();
+    OrpheusLogger::logInfo("PluginManager: Added custom VST path: " + path.getFullPathName());
+}
+
+void PluginManager::removeSearchPath(const juce::File& path)
+{
+    juce::FileSearchPath newPaths;
+    bool found = false;
+    for (int i = 0; i < customSearchPaths.getNumPaths(); ++i)
+    {
+        if (customSearchPaths[i] == path)
+            found = true;
+        else
+            newPaths.add(customSearchPaths[i]);
+    }
+
+    if (found)
+    {
+        customSearchPaths = newPaths;
+        saveCustomPaths();
+        OrpheusLogger::logInfo("PluginManager: Removed custom VST path: " + path.getFullPathName());
+    }
+}
+
+void PluginManager::saveCustomPaths()
+{
+    auto pathsFile = juce::File::getSpecialLocation(juce::File::userApplicationDataDirectory)
+                       .getChildFile("OrpheusPlus/customPaths.xml");
+    pathsFile.getParentDirectory().createDirectory();
+
+    juce::XmlElement root("CustomPluginPaths");
+    for (int i = 0; i < customSearchPaths.getNumPaths(); ++i)
+    {
+        auto* pathEl = root.createNewChildElement("Path");
+        pathEl->setAttribute("dir", customSearchPaths[i].getFullPathName());
+    }
+    root.writeTo(pathsFile);
+}
+
+void PluginManager::loadCustomPaths()
+{
+    auto pathsFile = juce::File::getSpecialLocation(juce::File::userApplicationDataDirectory)
+                       .getChildFile("OrpheusPlus/customPaths.xml");
+    if (!pathsFile.existsAsFile()) return;
+
+    if (auto xml = juce::XmlDocument::parse(pathsFile))
+    {
+        for (auto* child : xml->getChildWithTagNameIterator("Path"))
+        {
+            juce::File dir(child->getStringAttribute("dir"));
+            if (dir.isDirectory())
+                customSearchPaths.add(dir);
+        }
+        OrpheusLogger::logInfo("PluginManager: Loaded " + juce::String(customSearchPaths.getNumPaths()) + " custom VST paths.");
+    }
 }
 
 juce::FileSearchPath PluginManager::getDefaultVST3Paths()
