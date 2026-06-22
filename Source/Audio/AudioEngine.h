@@ -409,7 +409,7 @@ private:
     std::vector<SurroundPanner>     trackPanners_;
 
     // ── Zero-Latency Engine ──
-    std::atomic<bool> usePredictiveBuffering { true };
+    std::atomic<bool> usePredictiveBuffering { false };
     juce::AudioBuffer<float> predictiveBuffer;
     bool predictiveBufferReady { false };
 

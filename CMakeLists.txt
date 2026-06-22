@@ -215,15 +215,11 @@ target_link_libraries(OrpheusPlus PRIVATE
 if(MSVC)
     target_compile_options(OrpheusPlus PRIVATE /bigobj /d2FH4- /FS)
 
-    # Disable full optimization for files that trigger MSVC 14.44 ICE in Release
-    # The ICE occurs in JUCE EdgeTable template instantiation with /O2
-    set_source_files_properties(
-        Source/UI/VoiceCloningPanel.cpp
-        Source/UI/AICoPilotPanel.cpp
-        Source/AI/CompositionCoPilot.cpp
-        Source/Audio/SpatialReverbProcessor.cpp
-        PROPERTIES COMPILE_FLAGS "$<$<CONFIG:Release>:/Od>"
-    )
+    # MSVC 14.44 crashes with /O2 on many JUCE template-heavy files.
+    # Override Release optimization to /O1 (optimize for size) which avoids the ICE
+    # while still producing optimized code.
+    string(REPLACE "/O2" "/O1" CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE}")
+    string(REPLACE "/O2" "/O1" CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE}")
 endif()
 
 # Copy the onnxruntime.dll to the output directory so the executable can find it at runtime

@@ -36,7 +36,7 @@ AudioEngine::~AudioEngine()
 
 void AudioEngine::initialise()
 {
-    deviceManager.initialiseWithDefaultDevices(2, 12); // Request up to 12 channels for 7.1.4 routing
+    deviceManager.initialiseWithDefaultDevices(2, 2); // Stereo in/out — uses system default device
     deviceManager.addAudioCallback(this);
 
     // Enable all MIDI inputs
@@ -281,10 +281,10 @@ int AudioEngine::addAudioTrack(const juce::String& name)
             processorGraph.addConnection({ { genNode->nodeID, ch }, { faderNode->nodeID, ch } });
     }
 
-    // 4. Connect Fader -> Master
+    // 4. Connect Fader -> Master (stereo)
     if (faderNode && masterNode)
     {
-        for (int ch = 0; ch < 12; ++ch)
+        for (int ch = 0; ch < 2; ++ch)
             processorGraph.addConnection({ { faderNode->nodeID, ch }, { masterNode->nodeID, ch } });
     }
     
@@ -318,10 +318,10 @@ int AudioEngine::addMidiTrack(const juce::String& name)
             processorGraph.addConnection({ { genNode->nodeID, ch }, { faderNode->nodeID, ch } });
     }
 
-    // 4. Connect Fader -> Master
+    // 4. Connect Fader -> Master (stereo)
     if (faderNode && masterNode)
     {
-        for (int ch = 0; ch < 12; ++ch)
+        for (int ch = 0; ch < 2; ++ch)
             processorGraph.addConnection({ { faderNode->nodeID, ch }, { masterNode->nodeID, ch } });
     }
     
