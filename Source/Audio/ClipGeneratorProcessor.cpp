@@ -43,8 +43,17 @@ void ClipGeneratorProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce
         {
             if (!ac->isLoaded) continue;
 
+            // Safety: skip clips with no actual audio data
+            int srcChannels = ac->audioData.getNumChannels();
+            int srcSamples  = ac->audioData.getNumSamples();
+            if (srcChannels <= 0 || srcSamples <= 0 || ac->sampleRate <= 0.0)
+                continue;
+
             double clipStart = ac->startTime;
             double clipEnd = ac->startTime + ac->duration;
+
+            // Sanity check duration
+            if (ac->duration <= 0.0) continue;
 
             // Find intersection between clip and current block
             double blockStart = playhead;
@@ -57,43 +66,45 @@ void ClipGeneratorProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce
                 int endSample = (int)juce::jmin((double)numSamples, (clipEnd - blockStart) * sr);
                 int numToFill = endSample - startSample;
 
-                if (numToFill <= 0) continue;
+                if (numToFill <= 0 || startSample >= numSamples) continue;
+                // Clamp numToFill to prevent buffer overrun
+                numToFill = juce::jmin(numToFill, numSamples - startSample);
 
                 float stretch = ac->getStretchFactor(bpm);
+                if (stretch <= 0.0f) stretch = 1.0f; // safety
                 float pitch = std::pow(2.0f, ac->pitchShift / 12.0f);
+                if (pitch <= 0.0f) pitch = 1.0f; // safety
                 
-                // For the placeholder Lagrange, we just pass the ratio
-                // In actual Rubber Band, we'd set these properties on the stretcher
-                
-                // Prepare a source buffer subset
-                // (Roughly estimating how many source samples we need)
                 double speedRatio = (double)stretch * (double)pitch;
-                int approxSourceSamples = (int)(numToFill * speedRatio) + 4; // padding for interpolation
+                if (speedRatio <= 0.0) speedRatio = 1.0;
+                int approxSourceSamples = (int)(numToFill * speedRatio) + 4;
                 
-                juce::AudioBuffer<float> sourceSubset(ac->audioData.getNumChannels(), approxSourceSamples);
-                juce::AudioBuffer<float> outputSubset(ac->audioData.getNumChannels(), numToFill);
+                // Safety: cap source samples to prevent huge allocations
+                approxSourceSamples = juce::jmin(approxSourceSamples, srcSamples);
+                if (approxSourceSamples <= 0) continue;
+
+                juce::AudioBuffer<float> sourceSubset(srcChannels, approxSourceSamples);
+                juce::AudioBuffer<float> outputSubset(srcChannels, numToFill);
+                sourceSubset.clear();
+                outputSubset.clear();
                 
                 // Map session time to source samples
                 double segmentStartTime = blockStart + (startSample / sr);
                 double offsetInSession = segmentStartTime - clipStart;
                 double sourceStartPos = offsetInSession * ac->sampleRate * stretch;
 
-                for (int ch = 0; ch < ac->audioData.getNumChannels(); ++ch)
+                for (int ch = 0; ch < srcChannels; ++ch)
                 {
                     for (int s = 0; s < approxSourceSamples; ++s)
                     {
-                        double pos = sourceStartPos + (s * (ac->sampleRate / sr) * (1.0 / pitch)); // This logic is tricky with dual-ratios
-                        // Actually, let's let the stretcher handle the math via speedRatio
-                        // We just need a contiguous chunk of source audio.
-                        
                         double actualSourcePos = sourceStartPos + s;
-                        if (ac->loopEnabled)
-                            actualSourcePos = std::fmod(actualSourcePos, (double)ac->audioData.getNumSamples());
                         
-                        if (actualSourcePos >= 0 && actualSourcePos < ac->audioData.getNumSamples())
-                            sourceSubset.setSample(ch, s, ac->audioData.getSample(ch, (int)actualSourcePos));
-                        else
-                            sourceSubset.setSample(ch, s, 0.0f);
+                        if (ac->loopEnabled && srcSamples > 0)
+                            actualSourcePos = std::fmod(actualSourcePos, (double)srcSamples);
+                        
+                        int idx = (int)actualSourcePos;
+                        if (idx >= 0 && idx < srcSamples)
+                            sourceSubset.setSample(ch, s, ac->audioData.getSample(ch, idx));
                     }
                 }
 
@@ -104,7 +115,7 @@ void ClipGeneratorProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce
                 // Apply fades and gain
                 for (int s = 0; s < numToFill; ++s)
                 {
-                    double currentSampleTime = blockStart + ((double)s / sr);
+                    double currentSampleTime = blockStart + ((double)(startSample + s) / sr);
                     double clipLocalTime = currentSampleTime - ac->startTime;
                     
                     float sampleGain = (float)ac->gain;
