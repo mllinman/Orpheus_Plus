@@ -131,6 +131,10 @@ MainComponent::MainComponent()
     auto autoMixComp = std::make_unique<AutoMixPanel>(audioEngine.get(), nullptr);
     workspace->addToBottomTab("Auto-Mix", colAI, autoMixComp.release());
 
+    auto smartFixComp = std::make_unique<SmartTrackFixerPanel>(*audioEngine);
+    smartTrackFixer = smartFixComp.get();
+    workspace->addToBottomTab("Track Fixer", colAI, smartFixComp.release());
+
     // ── Utility ───────────────────────────────────────────────────────────
     auto shortcutsComp = std::make_unique<ShortcutsSettingsPanel>(commandManager);
     shortcutsSettings = shortcutsComp.get();

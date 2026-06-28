@@ -140,6 +140,7 @@ target_sources(OrpheusPlus PRIVATE
     Source/UI/MacroControlPanel.cpp
     Source/UI/TextToSamplePanel.cpp
     Source/UI/AutoMixPanel.cpp
+    Source/UI/SmartTrackFixerPanel.cpp
     Source/UI/ToolbarComponent.cpp
     Source/UI/CollapsiblePanel.cpp
     Source/UI/StatusBar.cpp
@@ -159,6 +160,8 @@ target_sources(OrpheusPlus PRIVATE
     Source/AI/ArrangementCoPilot.cpp
     Source/AI/TextToSampleGenerator.cpp
     Source/AI/AutoMixer.cpp
+    Source/AI/TrackElementClassifier.cpp
+    Source/AI/SmartTrackFixer.cpp
     Source/Audio/MelodyCompleter.cpp
     Source/Mastering/LatentMatchEQ.cpp
     Source/Mastering/SpectralCarver.cpp

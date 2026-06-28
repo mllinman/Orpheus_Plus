@@ -36,6 +36,7 @@
 #include "UI/StatusBar.h"
 #include "UI/TextToSamplePanel.h"
 #include "UI/AutoMixPanel.h"
+#include "UI/SmartTrackFixerPanel.h"
 
 class MainComponent : public juce::Component,
                       public juce::MenuBarModel
@@ -109,6 +110,7 @@ private:
     AICoPilotPanel* aiCoPilot = nullptr;
     ADRPanel* adrPanel = nullptr;
     DistributionPrepPanel* distPrep = nullptr;
+    SmartTrackFixerPanel* smartTrackFixer = nullptr;
 
     // Owned panels (for bottom tabs / sidebars)
     std::unique_ptr<MixerPanel> mixerPanel;
