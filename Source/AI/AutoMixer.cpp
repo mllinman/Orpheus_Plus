@@ -24,7 +24,7 @@ void AutoMixer::analyzeSession(AudioEngine* engine)
         {
             if (auto* audioClip = dynamic_cast<AudioClip*>(clip))
             {
-                juce::File file(audioClip->getFilePath());
+                juce::File file(audioClip->sourceFile);
                 if (file.existsAsFile())
                 {
                     juce::AudioFormatManager fmtMgr;

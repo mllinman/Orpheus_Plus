@@ -99,7 +99,7 @@ SmartTrackFixer::analyzeAndFixAll(AudioEngine& engine, float intensity)
             if (auto* audioClip = dynamic_cast<AudioClip*>(clip))
             {
                 // Try to load a short segment for analysis
-                auto file = juce::File(audioClip->getFilePath());
+                auto file = audioClip->sourceFile;
                 if (file.existsAsFile())
                 {
                     juce::AudioFormatManager fmtMgr;
