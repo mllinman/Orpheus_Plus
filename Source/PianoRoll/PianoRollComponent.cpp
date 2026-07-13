@@ -267,6 +267,9 @@ void PianoRollComponent::paintGrid(juce::Graphics& g, juce::Rectangle<int> area)
 
 void PianoRollComponent::paintNotes(juce::Graphics& g, juce::Rectangle<int> area)
 {
+    // Clip to grid area so notes don't draw outside it
+    g.reduceClipRegion(area);
+
     // Define an array of distinct colors for multi-track rendering
     const juce::Colour trackColours[] = {
         juce::Colour(0xff6c5ce7), // Legacy accent purple
@@ -300,9 +303,6 @@ void PianoRollComponent::paintNotes(juce::Graphics& g, juce::Rectangle<int> area
     std::vector<MidiNote*> localNotes;
     for (auto* n : notes) localNotes.push_back(n);
     drawNotes(localNotes, noteColour);
-    
-    // Create clip bounds to prevent notes drawing outside grid
-    g.reduceClipRegion(area);
 }
 
 void PianoRollComponent::paintVelocityLane(juce::Graphics& g, juce::Rectangle<int> area)
@@ -317,7 +317,7 @@ void PianoRollComponent::paintVelocityLane(juce::Graphics& g, juce::Rectangle<in
     for (auto* note : notes)
     {
         auto bounds = getNoteBounds(*note);
-        int centerX = bounds.getX() + bounds.getWidth() / 2;
+        int centerX = (int)(bounds.getX() + bounds.getWidth() / 2.0f);
         int x = area.getX() + centerX - (int)horizontalOffset;
 
         if (x < area.getX() || x > area.getRight()) continue;
@@ -384,8 +384,9 @@ void PianoRollComponent::mouseDown(const juce::MouseEvent& e)
     else if (n != nullptr)
     {
         if (!e.mods.isShiftDown() && !n->selected)
+        {
             for (auto* other : notes) other->selected = false;
-            
+        }
         n->selected = true;
 
         auto bounds = getNoteBounds(*n);

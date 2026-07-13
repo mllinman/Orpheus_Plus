@@ -53,15 +53,18 @@ void MackieControlSurface::handleNoteOn(int note, int velocity)
         // Check Mute (16-23)
         if (note >= 16 && note <= 23) {
             int trackIdx = (note - 16) + (currentBank * 8);
-            // Toggle mute
-            bool isMuted = audioEngine.getTrack(trackIdx)->mute;
+            auto* track = audioEngine.getTrack(trackIdx);
+            if (track == nullptr) break;
+            bool isMuted = track->mute;
             audioEngine.setTrackMute(trackIdx, !isMuted);
             updateMute(trackIdx, !isMuted);
         }
         // Check Solo (8-15)
         else if (note >= 8 && note <= 15) {
             int trackIdx = (note - 8) + (currentBank * 8);
-            bool isSolo = audioEngine.getTrack(trackIdx)->solo;
+            auto* track = audioEngine.getTrack(trackIdx);
+            if (track == nullptr) break;
+            bool isSolo = track->solo;
             audioEngine.setTrackSolo(trackIdx, !isSolo);
             updateSolo(trackIdx, !isSolo);
         }
@@ -87,9 +90,11 @@ void MackieControlSurface::handleControlChange(int controller, int value)
     if (controller >= 16 && controller <= 23)
     {
         int trackIndex = (controller - 16) + (currentBank * 8);
+        auto* track = audioEngine.getTrack(trackIndex);
+        if (track == nullptr) return;
         // value is typically endless encoder (1-63 right, 65-127 left)
         // Convert to absolute pan value -1.0 to 1.0
-        float currentPan = audioEngine.getTrack(trackIndex)->pan;
+        float currentPan = track->pan;
         float delta = 0.0f;
         if (value >= 1 && value <= 63) delta = value * 0.05f;
         else if (value >= 65 && value <= 127) delta = -(value - 64) * 0.05f;
