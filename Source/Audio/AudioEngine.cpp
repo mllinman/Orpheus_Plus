@@ -132,33 +132,37 @@ void AudioEngine::stop()
     if (recording.load())
     {
         recording.store(false);
-        // Finalize recording
-        if (audioWriter)
-        {
-            audioWriter.reset(); // flushes and closes file
-            
-            // Add new AudioClip to track
-            if (armedTrackIndex >= 0 && armedTrackIndex < tracks.size())
-            {
-                auto* clip = new AudioClip(currentRecordingFile, 0.0 /* start position */);
-                clip->loadAudioData(formatManager);
-                tracks[armedTrackIndex]->clips.add(clip);
-                juce::MessageManager::callAsync([this]{ listeners.call(&Listener::trackListChanged); });
-            }
-        }
+        finalizeRecording();
+    }
+    
+    playheadPosition.store(0.0);
+    listeners.call(&Listener::playbackStopped);
+}
+
+void AudioEngine::finalizeRecording()
+{
+    if (audioWriter)
+    {
+        audioWriter.reset(); // flushes and closes file
         
-        if (recordedMidi.getNumEvents() > 0 && armedTrackIndex >= 0 && armedTrackIndex < tracks.size())
+        // Add new AudioClip to track
+        if (armedTrackIndex >= 0 && armedTrackIndex < tracks.size())
         {
-            // Add new MidiClip
-            auto* clip = new MidiClip(0.0, recordedMidi.getEndTime());
-            clip->midiData = recordedMidi;
+            auto* clip = new AudioClip(currentRecordingFile, 0.0 /* start position */);
+            clip->loadAudioData(formatManager);
             tracks[armedTrackIndex]->clips.add(clip);
             juce::MessageManager::callAsync([this]{ listeners.call(&Listener::trackListChanged); });
         }
     }
     
-    playheadPosition.store(0.0);
-    listeners.call(&Listener::playbackStopped);
+    if (recordedMidi.getNumEvents() > 0 && armedTrackIndex >= 0 && armedTrackIndex < tracks.size())
+    {
+        // Add new MidiClip
+        auto* clip = new MidiClip(0.0, recordedMidi.getEndTime());
+        clip->midiData = recordedMidi;
+        tracks[armedTrackIndex]->clips.add(clip);
+        juce::MessageManager::callAsync([this]{ listeners.call(&Listener::trackListChanged); });
+    }
 }
 
 void AudioEngine::pause()
@@ -217,9 +221,8 @@ void AudioEngine::toggleRecord()
     }
     else
     {
-        // Stop recording
         recording.store(false);
-        stop(); // this will trigger the finalize logic in stop()
+        finalizeRecording();
     }
 }
 
@@ -727,8 +730,12 @@ void AudioEngine::audioDeviceIOCallbackWithContext(
     // Advance playhead
     if (playing.load())
     {
-        double advance = numSamples / currentSampleRate;
-        playheadPosition.fetch_add(advance);
+        double advance = (double)numSamples / currentSampleRate;
+        // Replaced fetch_add(advance) to avoid C++20 requirement which triggers ICE on MSVC C1001
+        double expected = playheadPosition.load();
+        while (!playheadPosition.compare_exchange_weak(expected, expected + advance)) {
+            // spin until successful
+        }
     }
 
     // Update meters

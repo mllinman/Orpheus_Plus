@@ -182,7 +182,12 @@ void CollapsiblePanel::setUndocked(bool shouldUndock)
             floatingWindow->setContentNonOwned(content.get(), true);
         }
         floatingWindow->setVisible(true);
-        floatingWindow->centreWithSize(500, 400);
+        int w = 500, h = 400;
+        if (content != nullptr) {
+            w = juce::jmax(300, content->getWidth());
+            h = juce::jmax(200, content->getHeight());
+        }
+        floatingWindow->centreWithSize(w, h);
         repaint();
     }
     else if (!shouldUndock && floatingWindow != nullptr)

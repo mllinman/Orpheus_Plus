@@ -345,22 +345,20 @@ void WorkspaceManager::updateTabTooltips()
 
 void WorkspaceManager::showRightSidebarPanel(const juce::String& panelName)
 {
-    // Find the named panel in the right sidebar, expand it, and scroll to it
-    for (int i = 0; i < rightContainer.panels.size(); ++i)
+    // Find the named panel in the right sidebar, expand it
+    for (int i = 0; i < rightContainer.getNumPanels(); ++i)
     {
-        auto* panel = rightContainer.panels[i];
-        if (panel->getPanelName() == panelName)
+        if (auto* panel = rightContainer.getPanel(i))
         {
-            // Make sure it's visible and expanded
-            panel->setVisible(true);
-            panel->setCollapsed(false);
-
-            // Re-layout so positions are updated
-            rightContainer.resized();
-
-            // Scroll the viewport to show this panel
-            rightViewport.setViewPosition(0, panel->getY());
-            return;
+            if (auto* cp = dynamic_cast<CollapsiblePanel*>(panel))
+            {
+                if (cp->getPanelName() == panelName)
+                {
+                    cp->setVisible(true);
+                    rightContainer.expandPanelFully(cp, true);
+                    return;
+                }
+            }
         }
     }
 }

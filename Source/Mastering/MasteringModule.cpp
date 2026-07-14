@@ -44,22 +44,23 @@ void MasteringModule::paint(juce::Graphics& g)
     g.drawHorizontalLine(39, 0.0f, (float)getWidth());
 
     // ── Signal Chain Strip ──
-    auto chainArea = area.removeFromTop(50);
-    chainArea = chainArea.reduced(8, 4);
-    struct ChainBlock { const char* name; bool enabled; juce::Colour col; };
+    struct ChainBlock { const char* name; bool enabled; juce::Colour col; juce::Component* comp; };
     ChainBlock blocks[] = {
-        { "M/S",    midSideEnabled,  OrpheusLookAndFeel::accentSecondary() },
-        { "EQ",     eqEnabled,       OrpheusLookAndFeel::accentPrimary() },
-        { "DYN",    dynamicEqEnabled,OrpheusLookAndFeel::accentPrimary().brighter() },
-        { "COMP",   mbCompEnabled,   OrpheusLookAndFeel::accentWarning() },
-        { "SAT",    satEnabled,      OrpheusLookAndFeel::accentDanger() },
-        { "REVERB", reverbEnabled,   OrpheusLookAndFeel::accentSecondary() },
-        { "LIMIT",  limiterEnabled,  OrpheusLookAndFeel::accentPrimary() },
-        { "A-LUFS", autoLufsEnabled, OrpheusLookAndFeel::accentSuccess() }
+        { "M/S",    midSideEnabled,  OrpheusLookAndFeel::accentSecondary(), &msToggle },
+        { "EQ",     eqEnabled,       OrpheusLookAndFeel::accentPrimary(), &eqToggle },
+        { "MATCH",  matchEqEnabled,  OrpheusLookAndFeel::accentPrimary().darker(), &matchEqToggle },
+        { "DYN",    dynamicEqEnabled,OrpheusLookAndFeel::accentPrimary().brighter(), &dynEqToggle },
+        { "COMP",   mbCompEnabled,   OrpheusLookAndFeel::accentWarning(), &compToggle },
+        { "SAT",    satEnabled,      OrpheusLookAndFeel::accentDanger(), &satToggle },
+        { "REVERB", reverbEnabled,   OrpheusLookAndFeel::accentSecondary(), &reverbToggle },
+        { "LIMIT",  limiterEnabled,  OrpheusLookAndFeel::accentPrimary(), &limiterToggle },
+        { "A-LUFS", autoLufsEnabled, OrpheusLookAndFeel::accentSuccess(), &autoLufsToggle }
     };
-    int blockW = chainArea.getWidth() / 8;
-    for (int i = 0; i < 8; ++i) {
-        auto blockBounds = chainArea.removeFromLeft(blockW).reduced(3);
+    
+    int numBlocks = 9;
+    for (int i = 0; i < numBlocks; ++i) {
+        auto blockBounds = blocks[i].comp->getBounds();
+        
         // Block background
         g.setColour(blocks[i].enabled ? blocks[i].col.withAlpha(0.15f) : OrpheusLookAndFeel::bgDark());
         g.fillRoundedRectangle(blockBounds.toFloat(), 4.0f);
@@ -73,7 +74,7 @@ void MasteringModule::paint(juce::Graphics& g)
         g.drawText(blocks[i].name, blockBounds, juce::Justification::centred);
         
         // Arrow between blocks
-        if (i < 7) {
+        if (i < numBlocks - 1) {
             float ax = (float)blockBounds.getRight() + 2;
             float ay = (float)blockBounds.getCentreY();
             g.setColour(OrpheusLookAndFeel::textMuted());
@@ -229,25 +230,34 @@ void MasteringModule::resized()
     auto bounds = getLocalBounds();
     bounds.removeFromTop(40); // header
     
+    // Meters section
+    auto meterArea = bounds.removeFromRight(120);
+
     // Toggles over the Chain Strip
     auto togglesRow = bounds.removeFromTop(50).reduced(8, 4);
-    int w = togglesRow.getWidth() / 8;
-    msToggle.setBounds(togglesRow.removeFromLeft(w).reduced(3));
-    eqToggle.setBounds(togglesRow.removeFromLeft(w).reduced(3));
-    dynEqToggle.setBounds(togglesRow.removeFromLeft(w).reduced(3));
-    compToggle.setBounds(togglesRow.removeFromLeft(w).reduced(3));
-    satToggle.setBounds(togglesRow.removeFromLeft(w).reduced(3));
-    reverbToggle.setBounds(togglesRow.removeFromLeft(w).reduced(3));
-    limiterToggle.setBounds(togglesRow.removeFromLeft(w).reduced(3));
-    autoLufsToggle.setBounds(togglesRow.removeFromLeft(w).reduced(3));
+    
+    juce::FlexBox fbToggles;
+    fbToggles.flexDirection = juce::FlexBox::Direction::row;
+    fbToggles.justifyContent = juce::FlexBox::JustifyContent::spaceBetween;
+    fbToggles.alignContent = juce::FlexBox::AlignContent::center;
+
+    for (auto* t : { &msToggle, &eqToggle, &matchEqToggle, &dynEqToggle, &compToggle, &satToggle, &reverbToggle, &limiterToggle, &autoLufsToggle }) {
+        fbToggles.items.add(juce::FlexItem(*t).withFlex(1.0f).withMargin(juce::FlexItem::Margin(3.0f)));
+    }
+    fbToggles.performLayout(togglesRow);
 
     auto buttonRow = bounds.removeFromTop(40);
-    analyzeButton.setBounds(buttonRow.removeFromLeft(150).reduced(5));
-    loadMatchEQBtn.setBounds(buttonRow.removeFromLeft(150).reduced(5));
-    phaseAlignBtn.setBounds(buttonRow.removeFromLeft(200).reduced(5));
+    juce::FlexBox fbButtons;
+    fbButtons.flexDirection = juce::FlexBox::Direction::row;
+    fbButtons.justifyContent = juce::FlexBox::JustifyContent::flexStart;
+    
+    fbButtons.items.add(juce::FlexItem(analyzeButton).withWidth(140.0f).withMargin(5.0f));
+    fbButtons.items.add(juce::FlexItem(loadMatchEQBtn).withWidth(140.0f).withMargin(5.0f));
+    fbButtons.items.add(juce::FlexItem(phaseAlignBtn).withWidth(190.0f).withMargin(5.0f));
+    
+    fbButtons.performLayout(buttonRow);
 
     // Meters are painted, so nothing to layout for them
-
     // The rest (signal chain strip, EQ visualization, etc.) are all painted
 }
 
