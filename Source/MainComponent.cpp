@@ -263,12 +263,12 @@ void MainComponent::wireToolbarCallbacks()
     toolbar->onShowMixer     = [this]() { workspace->showBottomTab("Mixer"); };
     toolbar->onShowPianoRoll = [this]() { workspace->showBottomTab("Piano Roll"); };
     toolbar->onShowSession   = [this]() { workspace->showBottomTab("Session"); };
-    toolbar->onShowSpectrum  = [this]() { workspace->setRightSidebarVisible(true); };
-    toolbar->onShowCoPilot   = [this]() { workspace->setRightSidebarVisible(true); };
+    toolbar->onShowSpectrum  = [this]() { workspace->setRightSidebarVisible(true); workspace->showRightSidebarPanel("Spectrum"); };
+    toolbar->onShowCoPilot   = [this]() { workspace->setRightSidebarVisible(true); workspace->showRightSidebarPanel("AI Co-Pilot"); };
 
     // AI panels
     toolbar->onShowStemSep      = [this]() { workspace->showBottomTab("Stem Sep"); };
-    toolbar->onShowAutoTune     = [this]() { workspace->setRightSidebarVisible(true); };
+    toolbar->onShowAutoTune     = [this]() { workspace->setRightSidebarVisible(true); workspace->showRightSidebarPanel("AutoTune"); };
     toolbar->onShowHumanizer    = [this]() { workspace->showBottomTab("AI Humanizer"); };
     toolbar->onShowTextToSample = [this]() { workspace->showBottomTab("Text-to-Sample"); };
     toolbar->onShowAutoMix      = [this]() { workspace->showBottomTab("Auto-Mix"); };
@@ -306,6 +306,24 @@ void MainComponent::showExportDialog()
 
 void MainComponent::setupCallbacks()
 {
+    // Wire tab close/reopen notifications to the status bar
+    if (workspace && statusBar)
+    {
+        workspace->onTabClosed = [this](const juce::String& name)
+        {
+            statusBar->setStatus("Closed tab: " + name + "  (View > Reopen Closed Tab to restore)");
+        };
+        workspace->onTabReopened = [this](const juce::String& name)
+        {
+            statusBar->setStatus("Reopened tab: " + name);
+        };
+    }
+
+    // Wire project-loaded callback to refresh UI state
+    appState.onProjectLoaded = [this]()
+    {
+        resized();
+    };
 }
 
 //==============================================================================
@@ -469,17 +487,17 @@ void MainComponent::menuItemSelected(int menuItemID, int /*topLevelMenuIndex*/)
 
         // ── AI ───────────────────────────────────────────────────────────
         case 600: workspace->showBottomTab("Stem Sep");        break;
-        case 601: workspace->setRightSidebarVisible(true);     break;
+        case 601: workspace->setRightSidebarVisible(true); workspace->showRightSidebarPanel("AutoTune"); break;
         case 602: workspace->showBottomTab("AI Humanizer");    break;
         case 603: workspace->showBottomTab("Auto-Mix");        break;
         case 604: workspace->showBottomTab("Text-to-Sample");  break;
         case 605: workspace->showBottomTab("Voice Clone");     break;
-        case 610: workspace->setRightSidebarVisible(true);     break;
+        case 610: workspace->setRightSidebarVisible(true); workspace->showRightSidebarPanel("AI Co-Pilot"); break;
         case 611: workspace->showBottomTab("Dist Prep");       break;
 
         // ── Help ─────────────────────────────────────────────────────────
         case 700: workspace->showBottomTab("User Manual");  break;
-        case 701: workspace->showBottomTab("Settings");     break;
+        case 701: workspace->showBottomTab("Shortcuts");  break;
         case 710: workspace->showBottomTab("Settings");     break;
         default: break;
     }

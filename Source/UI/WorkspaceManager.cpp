@@ -45,6 +45,15 @@ void WorkspaceManager::SidebarContainer::addPanel(const juce::String& name,
                                                    std::unique_ptr<juce::Component> content)
 {
     auto* cp = panels.add(new CollapsiblePanel(name, std::move(content)));
+
+    // Wire close button — collapse and hide the panel, then re-layout
+    cp->onClose = [this, cp]()
+    {
+        cp->setCollapsed(true);
+        cp->setVisible(false);
+        resized();
+    };
+
     addAndMakeVisible(cp);
     resized();
 }
@@ -470,5 +479,27 @@ void WorkspaceManager::updateTabTooltips()
     {
         if (auto* tabBtn = tabBar.getTabButton(i))
             tabBtn->setTooltip(tabBar.getTabNames()[i]);
+    }
+}
+
+void WorkspaceManager::showRightSidebarPanel(const juce::String& panelName)
+{
+    // Find the named panel in the right sidebar, expand it, and scroll to it
+    for (int i = 0; i < rightContainer.panels.size(); ++i)
+    {
+        auto* panel = rightContainer.panels[i];
+        if (panel->getPanelName() == panelName)
+        {
+            // Make sure it's visible and expanded
+            panel->setVisible(true);
+            panel->setCollapsed(false);
+
+            // Re-layout so positions are updated
+            rightContainer.resized();
+
+            // Scroll the viewport to show this panel
+            rightViewport.setViewPosition(0, panel->getY());
+            return;
+        }
     }
 }

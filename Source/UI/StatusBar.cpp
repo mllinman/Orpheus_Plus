@@ -22,6 +22,13 @@ void StatusBar::timerCallback()
         int blockSize = device->getCurrentBufferSizeSamples();
         latencyMs = (int)(blockSize * 1000.0 / sampleRate);
     }
+
+    // Auto-clear status message after countdown
+    if (statusClearCountdown > 0)
+    {
+        if (--statusClearCountdown == 0)
+            statusMessage.clear();
+    }
     
     repaint();
 }
@@ -73,4 +80,14 @@ void StatusBar::paint(juce::Graphics& g)
     // Sample rate
     juce::String srStr = juce::String((int)sampleRate / 1000) + "." + juce::String(((int)sampleRate % 1000) / 100) + " kHz";
     drawMetric(x, mw, "Rate:", srStr, OrpheusLookAndFeel::textSecondary());
+    x += mw;
+
+    // Status message (right-aligned)
+    if (statusMessage.isNotEmpty())
+    {
+        g.setColour(OrpheusLookAndFeel::accentPrimary());
+        g.setFont(juce::Font(11.0f));
+        auto msgArea = juce::Rectangle<float>(x + 20, 0, bounds.getWidth() - x - 30, bounds.getHeight());
+        g.drawText(statusMessage, msgArea, juce::Justification::centredRight);
+    }
 }

@@ -43,6 +43,9 @@ public:
     bool isLeftSidebarVisible() const { return leftSidebarVisible; }
     bool isRightSidebarVisible() const { return rightSidebarVisible; }
 
+    // Expand and scroll to a specific right sidebar panel by name
+    void showRightSidebarPanel(const juce::String& panelName);
+
     // Callback fired when a tab is closed (so toolbar can update state)
     std::function<void(const juce::String&)> onTabClosed;
     std::function<void(const juce::String&)> onTabReopened;
