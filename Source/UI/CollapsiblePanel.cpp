@@ -6,6 +6,7 @@ CollapsiblePanel::CollapsiblePanel(const juce::String& name, std::unique_ptr<juc
     if (content != nullptr)
         addAndMakeVisible(content.get());
 
+    addAndMakeVisible(bottomResizer);
     setTooltip(panelName);
 }
 
@@ -90,12 +91,23 @@ void CollapsiblePanel::resized()
     if (!collapsed && content != nullptr && floatingWindow == nullptr)
     {
         auto contentBounds = getLocalBounds().withTrimmedTop(headerHeight).reduced(2);
+        contentBounds.removeFromBottom(4); // space for resizer
         content->setBounds(contentBounds);
         content->setVisible(true);
+        bottomResizer.setBounds(0, getHeight() - 4, getWidth(), 4);
+        bottomResizer.setVisible(true);
+
+        if (getHeight() != expandedHeight && getHeight() >= headerHeight)
+        {
+            expandedHeight = getHeight();
+            if (auto* parent = getParentComponent())
+                parent->resized();
+        }
     }
     else if (content != nullptr && floatingWindow == nullptr)
     {
         content->setVisible(false);
+        bottomResizer.setVisible(false);
     }
 }
 

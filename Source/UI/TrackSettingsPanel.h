@@ -7,6 +7,7 @@
 
 //==============================================================================
 class TrackSettingsPanel : public juce::Component,
+                           public juce::ChangeListener,
                            private juce::Timer
 {
 public:

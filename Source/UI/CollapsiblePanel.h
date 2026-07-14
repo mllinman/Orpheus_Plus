@@ -73,5 +73,7 @@ private:
     int expandedHeight = 200; // Remembers last expanded height
     bool dragging = false;
 
+    juce::ResizableEdgeComponent bottomResizer { this, nullptr, juce::ResizableEdgeComponent::bottomEdge };
+
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(CollapsiblePanel)
 };

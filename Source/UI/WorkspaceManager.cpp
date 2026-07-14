@@ -9,30 +9,10 @@ void WorkspaceManager::SidebarContainer::resized()
     int viewportH = getParentHeight();
     if (viewportH <= 0) viewportH = 600;
 
-    // Count collapsed vs expanded
-    int collapsedTotal = 0;
-    int expandedCount = 0;
-    for (auto* panel : panels)
-    {
-        if (panel->isCollapsed())
-            collapsedTotal += CollapsiblePanel::headerHeight;
-        else
-            expandedCount++;
-    }
-
-    // Give each expanded panel a sensible height (min 180px) so that
-    // panels don't get squished.  If total content exceeds the viewport
-    // the scrollbar will handle it.
-    static constexpr int preferredExpandedHeight = 180;
-    int availableForExpanded = juce::jmax(0, viewportH - collapsedTotal);
-    int perExpandedHeight = expandedCount > 0
-        ? juce::jmax(preferredExpandedHeight, availableForExpanded / expandedCount)
-        : 0;
-
     int y = 0;
     for (auto* panel : panels)
     {
-        int h = panel->isCollapsed() ? CollapsiblePanel::headerHeight : perExpandedHeight;
+        int h = panel->getDesiredHeight();
         panel->setBounds(0, y, getWidth(), h);
         y += h;
     }

@@ -580,6 +580,10 @@ void TrackLaneComponent::mouseMoved(const juce::MouseEvent& e)
 
 void TrackLaneComponent::mouseDown(const juce::MouseEvent& e)
 {
+    // Always select this track when clicked anywhere
+    if (appState.getSelectedTrackIndex() != trackIndex)
+        appState.setSelectedTrackIndex(trackIndex);
+
     int headerWidth = timeline.getTrackHeaderWidth();
 
     if (e.mods.isRightButtonDown())

@@ -186,9 +186,21 @@ TrackSettingsPanel::TrackSettingsPanel(AudioEngine& e, AppState& s)
     contentArea.addAndMakeVisible(spatialPanner.get());
 
     startTimerHz(10);
+    appState.addChangeListener(this);
 }
 
-TrackSettingsPanel::~TrackSettingsPanel() { stopTimer(); }
+TrackSettingsPanel::~TrackSettingsPanel() { 
+    stopTimer(); 
+    appState.removeChangeListener(this);
+}
+
+void TrackSettingsPanel::changeListenerCallback(juce::ChangeBroadcaster* source)
+{
+    if (source == &appState)
+    {
+        setTrackIndex(appState.getSelectedTrackIndex());
+    }
+}
 
 void TrackSettingsPanel::setTrackIndex(int index)
 {
