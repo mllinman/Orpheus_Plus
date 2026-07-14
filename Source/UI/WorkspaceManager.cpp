@@ -20,10 +20,13 @@ void WorkspaceManager::SidebarContainer::resized()
             expandedCount++;
     }
 
-    // Distribute remaining height proportionally among expanded panels
+    // Give each expanded panel a sensible height (min 180px) so that
+    // panels don't get squished.  If total content exceeds the viewport
+    // the scrollbar will handle it.
+    static constexpr int preferredExpandedHeight = 180;
     int availableForExpanded = juce::jmax(0, viewportH - collapsedTotal);
     int perExpandedHeight = expandedCount > 0
-        ? juce::jmax(CollapsiblePanel::expandedMinHeight, availableForExpanded / expandedCount)
+        ? juce::jmax(preferredExpandedHeight, availableForExpanded / expandedCount)
         : 0;
 
     int y = 0;
@@ -33,6 +36,8 @@ void WorkspaceManager::SidebarContainer::resized()
         panel->setBounds(0, y, getWidth(), h);
         y += h;
     }
+
+    // Set container height to total content — viewport will scroll if needed
     setSize(getWidth(), juce::jmax(y, viewportH));
 }
 
@@ -141,7 +146,7 @@ WorkspaceManager::WorkspaceManager()
         &verticalLayout, 1, false);
     addAndMakeVisible(timelineBottomResizer.get());
 
-    // Horizontal layout: [0]=leftSidebar, [1]=resizer, [2]=center, [3]=resizer, [4]=rightSidebar
+    // Horizontal layout (both sidebars): [0]=left, [1]=resizer, [2]=center, [3]=resizer, [4]=right
     horizontalLayout.setItemLayout(0, 120, 500, 240);     // Left sidebar
     horizontalLayout.setItemLayout(1, resizerBarSize, resizerBarSize, resizerBarSize);
     horizontalLayout.setItemLayout(2, 200, -1.0, -1.0);   // Center (flex)
@@ -155,6 +160,25 @@ WorkspaceManager::WorkspaceManager()
     rightSidebarResizer = std::make_unique<juce::StretchableLayoutResizerBar>(
         &horizontalLayout, 3, true);
     addAndMakeVisible(rightSidebarResizer.get());
+
+    // Single-sidebar layouts with draggable resizer bars
+    // Left-only: [0]=leftSidebar, [1]=resizer, [2]=center
+    leftOnlyLayout.setItemLayout(0, 120, 500, 240);
+    leftOnlyLayout.setItemLayout(1, resizerBarSize, resizerBarSize, resizerBarSize);
+    leftOnlyLayout.setItemLayout(2, 200, -1.0, -1.0);
+
+    leftOnlyResizer = std::make_unique<juce::StretchableLayoutResizerBar>(
+        &leftOnlyLayout, 1, true);
+    addAndMakeVisible(leftOnlyResizer.get());
+
+    // Right-only: [0]=center, [1]=resizer, [2]=rightSidebar
+    rightOnlyLayout.setItemLayout(0, 200, -1.0, -1.0);
+    rightOnlyLayout.setItemLayout(1, resizerBarSize, resizerBarSize, resizerBarSize);
+    rightOnlyLayout.setItemLayout(2, 120, 500, 280);
+
+    rightOnlyResizer = std::make_unique<juce::StretchableLayoutResizerBar>(
+        &rightOnlyLayout, 1, true);
+    addAndMakeVisible(rightOnlyResizer.get());
 }
 
 WorkspaceManager::~WorkspaceManager()
@@ -175,6 +199,10 @@ void WorkspaceManager::resized()
     if (leftSidebarVisible && rightSidebarVisible)
     {
         // Full 5-component horizontal layout
+        // Hide single-sidebar resizers
+        leftOnlyResizer->setVisible(false);
+        rightOnlyResizer->setVisible(false);
+
         juce::Component* hComps[] = {
             &leftViewport, leftSidebarResizer.get(),
             nullptr, // placeholder — we'll set center bounds manually
@@ -208,35 +236,55 @@ void WorkspaceManager::resized()
     }
     else if (leftSidebarVisible)
     {
-        // Left sidebar + center only
-        auto leftArea = bounds.removeFromLeft(240);
-        leftViewport.setBounds(leftArea);
-        leftViewport.setVisible(true);
+        // Left sidebar + center only — use leftOnlyLayout for draggable resizer
         leftSidebarResizer->setVisible(false);
         rightSidebarResizer->setVisible(false);
         rightViewport.setVisible(false);
+        rightOnlyResizer->setVisible(false);
+        leftOnlyResizer->setVisible(true);
+        leftViewport.setVisible(true);
 
-        leftContainer.setSize(leftArea.getWidth() - leftViewport.getScrollBarThickness(),
+        juce::Component centerPlaceholder;
+        juce::Component* comps[] = { &leftViewport, leftOnlyResizer.get(), &centerPlaceholder };
+        addAndMakeVisible(&centerPlaceholder);
+        leftOnlyLayout.layOutComponents(comps, 3,
+            bounds.getX(), bounds.getY(), bounds.getWidth(), bounds.getHeight(),
+            false, true);
+
+        auto centerBounds = centerPlaceholder.getBounds();
+        removeChildComponent(&centerPlaceholder);
+
+        leftContainer.setSize(leftViewport.getWidth() - leftViewport.getScrollBarThickness(),
                               leftContainer.getHeight());
         leftContainer.resized();
 
-        layoutCenter(bounds);
+        layoutCenter(centerBounds);
     }
     else if (rightSidebarVisible)
     {
-        // Center + right sidebar only
-        auto rightArea = bounds.removeFromRight(280);
-        rightViewport.setBounds(rightArea);
-        rightViewport.setVisible(true);
+        // Center + right sidebar only — use rightOnlyLayout for draggable resizer
         leftSidebarResizer->setVisible(false);
         rightSidebarResizer->setVisible(false);
         leftViewport.setVisible(false);
+        leftOnlyResizer->setVisible(false);
+        rightOnlyResizer->setVisible(true);
+        rightViewport.setVisible(true);
 
-        rightContainer.setSize(rightArea.getWidth() - rightViewport.getScrollBarThickness(),
+        juce::Component centerPlaceholder;
+        juce::Component* comps[] = { &centerPlaceholder, rightOnlyResizer.get(), &rightViewport };
+        addAndMakeVisible(&centerPlaceholder);
+        rightOnlyLayout.layOutComponents(comps, 3,
+            bounds.getX(), bounds.getY(), bounds.getWidth(), bounds.getHeight(),
+            false, true);
+
+        auto centerBounds = centerPlaceholder.getBounds();
+        removeChildComponent(&centerPlaceholder);
+
+        rightContainer.setSize(rightViewport.getWidth() - rightViewport.getScrollBarThickness(),
                                rightContainer.getHeight());
         rightContainer.resized();
 
-        layoutCenter(bounds);
+        layoutCenter(centerBounds);
     }
     else
     {
@@ -245,6 +293,8 @@ void WorkspaceManager::resized()
         rightViewport.setVisible(false);
         leftSidebarResizer->setVisible(false);
         rightSidebarResizer->setVisible(false);
+        leftOnlyResizer->setVisible(false);
+        rightOnlyResizer->setVisible(false);
         layoutCenter(bounds);
     }
 }
@@ -266,6 +316,7 @@ void WorkspaceManager::addToBottomTab(const juce::String& name, juce::Colour tab
     if (bottomTabs)
     {
         bottomTabs->addTab(name, tabColour, content, false);
+        updateTabTooltips();
     }
 }
 
@@ -407,5 +458,17 @@ void WorkspaceManager::layoutCenter(juce::Rectangle<int> centerBounds)
         // No timeline — give all space to bottom tabs
         bottomTabs->setBounds(centerBounds);
         timelineBottomResizer->setVisible(false);
+    }
+}
+
+void WorkspaceManager::updateTabTooltips()
+{
+    if (!bottomTabs) return;
+
+    auto& tabBar = bottomTabs->getTabbedButtonBar();
+    for (int i = 0; i < tabBar.getNumTabs(); ++i)
+    {
+        if (auto* tabBtn = tabBar.getTabButton(i))
+            tabBtn->setTooltip(tabBar.getTabNames()[i]);
     }
 }
