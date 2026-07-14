@@ -105,5 +105,14 @@ private:
     // Internal helper to lay out the center area (timeline + bottom tabs)
     void layoutCenter(juce::Rectangle<int> centerBounds);
 
+    // Apply tooltip text to each tab button matching its tab name
+    void updateTabTooltips();
+
+    // Layout managers for single-sidebar modes
+    juce::StretchableLayoutManager leftOnlyLayout;   // [leftSidebar | resizer | center]
+    juce::StretchableLayoutManager rightOnlyLayout;  // [center | resizer | rightSidebar]
+    std::unique_ptr<juce::StretchableLayoutResizerBar> leftOnlyResizer;
+    std::unique_ptr<juce::StretchableLayoutResizerBar> rightOnlyResizer;
+
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(WorkspaceManager)
 };

@@ -5,6 +5,8 @@ CollapsiblePanel::CollapsiblePanel(const juce::String& name, std::unique_ptr<juc
 {
     if (content != nullptr)
         addAndMakeVisible(content.get());
+
+    setTooltip(panelName);
 }
 
 CollapsiblePanel::~CollapsiblePanel()

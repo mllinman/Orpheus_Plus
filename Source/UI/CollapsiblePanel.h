@@ -7,7 +7,8 @@
 // Panels stack vertically in sidebars. Retains undock and close capability.
 // Header bar is a drag handle for reordering within sidebars.
 //==============================================================================
-class CollapsiblePanel : public juce::Component
+class CollapsiblePanel : public juce::Component,
+                         public juce::SettableTooltipClient
 {
 public:
     CollapsiblePanel(const juce::String& name, std::unique_ptr<juce::Component> content);

@@ -31,13 +31,30 @@ TransportBar::TransportBar(AudioEngine& e, juce::ApplicationCommandManager& c)
     rewindButton.onClick = [this] { audioEngine.stop(); };
     rewindButton.setTooltip("Stop / Rewind to Beginning");
 
-    playButton.onClick   = [this] { audioEngine.togglePlayback(); };
+    playButton.onClick   = [this] {
+        audioEngine.togglePlayback();
+        // Immediate visual feedback
+        bool playing = audioEngine.isPlaying();
+        playButton.setColour(juce::TextButton::buttonColourId,
+            playing ? juce::Colour(0xff2e7d32) : juce::Colour(0xff1b5e20));
+        playButton.setButtonText(playing
+            ? juce::CharPointer_UTF8("\xe2\x8f\xb8")   // ⏸
+            : juce::CharPointer_UTF8("\xe2\x96\xb6")); // ▶
+        repaint();
+    };
     playButton.setTooltip("Play / Pause (Space)");
 
-    stopButton.onClick   = [this] { audioEngine.stop(); };
+    stopButton.onClick   = [this] { audioEngine.stop(); repaint(); };
     stopButton.setTooltip("Stop Playback");
 
-    recordButton.onClick = [this] { audioEngine.toggleRecord(); };
+    recordButton.onClick = [this] {
+        audioEngine.toggleRecord();
+        bool recording = audioEngine.isRecording();
+        recordButton.setColour(juce::TextButton::buttonColourId,
+            recording ? OrpheusLookAndFeel::accentDanger()
+                      : OrpheusLookAndFeel::accentDanger().darker(0.3f));
+        repaint();
+    };
     recordButton.setTooltip("Record (Arm a track first)");
 
     loopButton.setToggleable(true);
@@ -57,11 +74,13 @@ TransportBar::TransportBar(AudioEngine& e, juce::ApplicationCommandManager& c)
     bpmSlider.setRange(20.0, 300.0, 0.1);
     bpmSlider.setValue(120.0, juce::dontSendNotification);
     bpmSlider.setNumDecimalPlacesToDisplay(1);
+    bpmSlider.setTooltip("Beats Per Minute — project tempo");
     bpmSlider.onValueChange = [this] {
         audioEngine.setBpm(bpmSlider.getValue());
     };
     bpmLabel.setJustificationType(juce::Justification::centred);
     bpmLabel.setFont(juce::Font(10.0f));
+    bpmLabel.setTooltip("Beats Per Minute");
     addAndMakeVisible(bpmLabel);
     addAndMakeVisible(bpmSlider);
 
@@ -69,10 +88,12 @@ TransportBar::TransportBar(AudioEngine& e, juce::ApplicationCommandManager& c)
     for (int i = 1; i <= 16; ++i)
         timeSigNumerator.addItem(juce::String(i), i);
     timeSigNumerator.setSelectedId(4, juce::dontSendNotification);
+    timeSigNumerator.setTooltip("Time Signature — beats per bar");
 
     for (int d : { 2, 4, 8, 16 })
         timeSigDenominator.addItem(juce::String(d), d);
     timeSigDenominator.setSelectedId(4, juce::dontSendNotification);
+    timeSigDenominator.setTooltip("Time Signature — beat value");
 
     addAndMakeVisible(timeSigNumerator);
     addAndMakeVisible(timeSigDenominator);
@@ -83,12 +104,14 @@ TransportBar::TransportBar(AudioEngine& e, juce::ApplicationCommandManager& c)
     positionLabel.setFont(digitalFont);
     positionLabel.setColour(juce::Label::textColourId, juce::Colour(0xff00ffcc)); // Bright cyan LED
     positionLabel.setJustificationType(juce::Justification::centred);
+    positionLabel.setTooltip("Playhead Position — Hours:Minutes:Seconds.Milliseconds");
     addAndMakeVisible(positionLabel);
 
     barBeatLabel.setText("1 | 1 | 000", juce::dontSendNotification);
     barBeatLabel.setFont(digitalFont);
     barBeatLabel.setColour(juce::Label::textColourId, juce::Colour(0xffffca28)); // Bright yellow LED
     barBeatLabel.setJustificationType(juce::Justification::centred);
+    barBeatLabel.setTooltip("Playhead Position — Bar | Beat | Tick");
     addAndMakeVisible(barBeatLabel);
 
     // Master volume
@@ -96,11 +119,13 @@ TransportBar::TransportBar(AudioEngine& e, juce::ApplicationCommandManager& c)
     masterVolumeSlider.setRange(0.0, 1.0, 0.001);
     masterVolumeSlider.setValue(1.0, juce::dontSendNotification);
     masterVolumeSlider.setTextBoxStyle(juce::Slider::NoTextBox, false, 0, 0);
+    masterVolumeSlider.setTooltip("Master Output Volume");
     masterVolumeSlider.onValueChange = [this] {
         audioEngine.setMasterVolume((float)masterVolumeSlider.getValue());
     };
     masterVolumeLabel.setFont(juce::Font(10.0f));
     masterVolumeLabel.setJustificationType(juce::Justification::centred);
+    masterVolumeLabel.setTooltip("Master Volume");
     addAndMakeVisible(masterVolumeLabel);
     addAndMakeVisible(masterVolumeSlider);
 

@@ -245,6 +245,20 @@ void MainComponent::wireToolbarCallbacks()
     toolbar->onExport = [this]() { showExportDialog(); };
     toolbar->onShowSettings = [this]() { workspace->showBottomTab("Settings"); };
 
+    // Edit — undo, redo, clipboard
+    toolbar->onUndo  = [this]() { commandManager.invokeDirectly(juce::StandardApplicationCommandIDs::undo, true); };
+    toolbar->onRedo  = [this]() { commandManager.invokeDirectly(juce::StandardApplicationCommandIDs::redo, true); };
+    toolbar->onCut   = [this]() { commandManager.invokeDirectly(juce::StandardApplicationCommandIDs::cut,  true); };
+    toolbar->onCopy  = [this]() { commandManager.invokeDirectly(juce::StandardApplicationCommandIDs::copy, true); };
+    toolbar->onPaste = [this]() { commandManager.invokeDirectly(juce::StandardApplicationCommandIDs::paste, true); };
+
+    // Tools — editing modes (maps toolbar buttons to TimelineComponent::EditTool)
+    toolbar->onSelectTool = [this]() { if (timeline) timeline->setTool(TimelineComponent::EditTool::Select); };
+    toolbar->onDrawTool   = [this]() { if (timeline) timeline->setTool(TimelineComponent::EditTool::Draw); };
+    toolbar->onSliceTool  = [this]() { if (timeline) timeline->setTool(TimelineComponent::EditTool::Split); };
+    toolbar->onEraserTool = [this]() { if (timeline) timeline->setTool(TimelineComponent::EditTool::Erase); };
+    toolbar->onMuteTool   = [this]() { if (timeline) timeline->setTool(TimelineComponent::EditTool::Select); };
+
     // View — switch bottom tabs
     toolbar->onShowMixer     = [this]() { workspace->showBottomTab("Mixer"); };
     toolbar->onShowPianoRoll = [this]() { workspace->showBottomTab("Piano Roll"); };
