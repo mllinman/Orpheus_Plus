@@ -163,6 +163,7 @@ public:
     void pause();
     void togglePlayback();
     void toggleRecord();
+    void finalizeRecording();
     bool isPlaying()   const { return playing.load(); }
     bool isRecording() const { return recording.load(); }
     bool isExporting() const { return exporting.load(); }

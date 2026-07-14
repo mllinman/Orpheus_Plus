@@ -126,7 +126,9 @@ bool StemSeparator::runDemucs(const juce::File& inputFile, const juce::File& out
         {
             if (!running.load()) { proc.kill(); return false; }
             juce::Thread::sleep(500);
-            progress.fetch_add(0.01f);
+            float currentVal = progress.load();
+            while (!progress.compare_exchange_weak(currentVal, currentVal + 0.01f)) {}
+            
             float p = juce::jmin(0.99f, progress.load());
             juce::MessageManager::callAsync([this, p] {
                 listeners.call(&Listener::stemSeparationProgress, p);

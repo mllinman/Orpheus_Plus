@@ -189,7 +189,7 @@ void WorkspaceManager::addToBottomTab(const juce::String& name, juce::Colour tab
 void WorkspaceManager::addToLeftSidebar(const juce::String& name, std::unique_ptr<juce::Component> content)
 {
     auto* cp = new CollapsiblePanel(name, std::move(content));
-    leftContainer.addPanel(cp, true, true);
+    leftContainer.addPanel(-1, cp, true);
     leftContainer.setMaximumPanelSize(cp, 0); // Allow it to expand as much as needed
 }
 

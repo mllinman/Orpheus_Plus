@@ -13,18 +13,19 @@
 #include "../Mastering/MasteringModule.h"
 #include "../Mastering/PhaseAlignmentAI.h"
 #include "../UI/SpectrumAnalyzer.h"
-
+#include "../Timeline/MidiClip.h"
+#include "../Timeline/AudioClip.h"
 
 AudioEngine::AudioEngine()
 {
     formatManager.registerBasicFormats();
 
-    pluginManager  = std::make_unique<PluginManager>(*this);
-    midiLearnManager = std::make_unique<MidiLearnManager>();
-    stemSeparator  = std::make_unique<StemSeparator>();
-    audioToMidi    = std::make_unique<AudioToMidiConverter>();
-    // autoTune       = std::make_unique<AutoTuneProcessor>();
-    // audioCleanup   = std::make_unique<AudioCleanupProcessor>();
+    pluginManager.reset(new PluginManager(*this));
+    midiLearnManager.reset(new MidiLearnManager());
+    stemSeparator.reset(new StemSeparator());
+    audioToMidi.reset(new AudioToMidiConverter());
+    // autoTune.reset(new AutoTuneProcessor());
+    // audioCleanup.reset(new AudioCleanupProcessor());
 
     initialise();
 }
