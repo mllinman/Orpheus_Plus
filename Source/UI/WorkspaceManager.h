@@ -68,27 +68,7 @@ private:
     };
     std::map<juce::String, ClosedTabInfo> closedTabs;
 
-    // Sidebars — stacked CollapsiblePanels inside a viewport
-    struct SidebarContainer : public juce::Component,
-                              public juce::DragAndDropTarget
-    {
-        juce::OwnedArray<CollapsiblePanel> panels;
-        void resized() override;
-        void addPanel(const juce::String& name, std::unique_ptr<juce::Component> content);
-
-        // Drag-and-drop reordering
-        bool isInterestedInDragSource(const SourceDetails& details) override;
-        void itemDragEnter(const SourceDetails& details) override;
-        void itemDragMove(const SourceDetails& details) override;
-        void itemDragExit(const SourceDetails& details) override;
-        void itemDropped(const SourceDetails& details) override;
-        void paint(juce::Graphics& g) override;
-
-        int dropInsertIndex = -1;
-    };
-
-    juce::Viewport leftViewport, rightViewport;
-    SidebarContainer leftContainer, rightContainer;
+    juce::ConcertinaPanel leftContainer, rightContainer;
 
     bool leftSidebarVisible = true;
     bool rightSidebarVisible = true;

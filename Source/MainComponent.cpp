@@ -70,8 +70,9 @@ MainComponent::MainComponent()
     auto colUtil   = juce::Colour(0xffa1a1aa);  // Zinc — utility
 
     // ── Core Views ────────────────────────────────────────────────────────
-    mixerPanel = std::make_unique<MixerPanel>(*audioEngine, appState);
-    workspace->addToBottomTab("Mixer", colCore, mixerPanel.get());
+    auto mixerComp = std::make_unique<MixerPanel>(*audioEngine, appState);
+    mixerPanel = mixerComp.get();
+    workspace->addToBottomTab("Mixer", colCore, mixerComp.release());
 
     auto pianoRollComp = std::make_unique<PianoRollComponent>(appState, *audioEngine);
     pianoRoll = pianoRollComp.get();
@@ -198,7 +199,9 @@ MainComponent::MainComponent()
     wireToolbarCallbacks();
     setupCallbacks();
 
+    commandManager.setFirstCommandTarget(this);
     commandManager.registerAllCommandsForTarget(this);
+    addKeyListener(commandManager.getKeyMappings());
 
     setSize(1200, 800);
 }
