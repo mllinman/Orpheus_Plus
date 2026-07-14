@@ -12,7 +12,7 @@
 #include "../AudioCleanup/AudioCleanupProcessor.h"
 #include "../Mastering/MasteringModule.h"
 #include "../Mastering/PhaseAlignmentAI.h"
-// #include "../UI/SpectrumAnalyzer.h"
+#include "../UI/SpectrumAnalyzer.h"
 
 
 AudioEngine::AudioEngine()
