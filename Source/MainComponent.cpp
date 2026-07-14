@@ -198,14 +198,77 @@ MainComponent::MainComponent()
     wireToolbarCallbacks();
     setupCallbacks();
 
-    setWantsKeyboardFocus(true);
-    setSize(1440, 900);
+    commandManager.registerAllCommandsForTarget(this);
+
+    setSize(1200, 800);
 }
 
 MainComponent::~MainComponent()
 {
+    if (audioEngine)
+        audioEngine->unregisterAnalyzer(spectrumAnalyzer);
     menuBar->setModel(nullptr);
     juce::LookAndFeel::setDefaultLookAndFeel(nullptr);
+}
+
+//==============================================================================
+// ApplicationCommandTarget Implementation
+//==============================================================================
+
+juce::ApplicationCommandTarget* MainComponent::getNextCommandTarget()
+{
+    return nullptr;
+}
+
+void MainComponent::getAllCommands(juce::Array<juce::CommandID>& commands)
+{
+    commands.add(juce::StandardApplicationCommandIDs::undo);
+    commands.add(juce::StandardApplicationCommandIDs::redo);
+}
+
+void MainComponent::getCommandInfo(juce::CommandID commandID, juce::ApplicationCommandInfo& result)
+{
+    switch (commandID)
+    {
+        case juce::StandardApplicationCommandIDs::undo:
+            result.setInfo("Undo", "Undo the last action", "Edit", 0);
+            result.addDefaultKeypress('z', juce::ModifierKeys::commandModifier);
+            result.setActive(appState.canUndo());
+            break;
+        case juce::StandardApplicationCommandIDs::redo:
+            result.setInfo("Redo", "Redo the last action", "Edit", 0);
+            result.addDefaultKeypress('z', juce::ModifierKeys::commandModifier | juce::ModifierKeys::shiftModifier);
+            result.setActive(appState.canRedo());
+            break;
+        default:
+            break;
+    }
+}
+
+bool MainComponent::perform(const juce::ApplicationCommandTarget::InvocationInfo& info)
+{
+    switch (info.commandID)
+    {
+        case juce::StandardApplicationCommandIDs::undo:
+            if (appState.canUndo())
+            {
+                appState.undo();
+                repaint();
+                return true;
+            }
+            break;
+        case juce::StandardApplicationCommandIDs::redo:
+            if (appState.canRedo())
+            {
+                appState.redo();
+                repaint();
+                return true;
+            }
+            break;
+        default:
+            break;
+    }
+    return false;
 }
 
 void MainComponent::paint(juce::Graphics& g)

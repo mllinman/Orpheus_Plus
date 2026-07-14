@@ -13,6 +13,7 @@ public:
     void timerCallback() override;
 
     void mouseDrag(const juce::MouseEvent& e) override;
+    void mouseDown(const juce::MouseEvent& e) override;
 
     void setTrackIndex(int trackIdx) { trackIndex = trackIdx; }
 

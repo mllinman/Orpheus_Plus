@@ -39,7 +39,8 @@
 #include "UI/SmartTrackFixerPanel.h"
 
 class MainComponent : public juce::Component,
-                      public juce::MenuBarModel
+                      public juce::MenuBarModel,
+                      public juce::ApplicationCommandTarget
 {
 public:
     MainComponent();
@@ -62,6 +63,12 @@ public:
     void toggleProjectSettings();
     void showExportDialog();
     void setupCallbacks();
+
+    // ApplicationCommandTarget
+    juce::ApplicationCommandTarget* getNextCommandTarget() override;
+    void getAllCommands(juce::Array<juce::CommandID>& commands) override;
+    void getCommandInfo(juce::CommandID commandID, juce::ApplicationCommandInfo& result) override;
+    bool perform(const juce::ApplicationCommandTarget::InvocationInfo& info) override;
 
     // MenuBarModel
     juce::StringArray getMenuBarNames() override;

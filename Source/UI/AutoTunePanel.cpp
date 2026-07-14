@@ -220,12 +220,6 @@ void AutoTunePanel::paintPitchMeter(juce::Graphics& g, juce::Rectangle<int> boun
         g.setColour(OrpheusLookAndFeel::borderSubtle());
         g.drawRoundedRectangle(bounds.toFloat(), 8.0f, 1.0f);
     }
-        g.setColour(juce::Colour(0x6000FFFF));
-        g.drawRoundedRectangle(bounds.toFloat(), 8.0f, 2.0f);
-    } else {
-        g.setColour(OrpheusLookAndFeel::borderSubtle());
-        g.drawRoundedRectangle(bounds.toFloat(), 8.0f, 1.0f);
-    }
 
     auto center = bounds.getCentre();
 

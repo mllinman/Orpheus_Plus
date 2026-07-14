@@ -7,18 +7,47 @@
 void WorkspaceManager::SidebarContainer::resized()
 {
     int viewportH = getParentHeight();
+    if (viewportH <= 0) viewportH = getHeight();
     if (viewportH <= 0) viewportH = 600;
 
-    int y = 0;
+    int numExpanded = 0;
+    int fixedH = 0;
+
     for (auto* panel : panels)
     {
-        int h = panel->getDesiredHeight();
+        if (!panel->isVisible()) continue;
+        if (panel->isCollapsed())
+            fixedH += CollapsiblePanel::headerHeight;
+        else
+            numExpanded++;
+    }
+
+    int remainingH = juce::jmax(0, viewportH - fixedH);
+    int y = 0;
+
+    for (auto* panel : panels)
+    {
+        if (!panel->isVisible()) continue;
+        
+        int h = 0;
+        if (panel->isCollapsed())
+        {
+            h = CollapsiblePanel::headerHeight;
+        }
+        else
+        {
+            // Give equal height to expanded panels, distribute rounding error
+            h = remainingH / juce::jmax(1, numExpanded);
+            remainingH -= h;
+            numExpanded--;
+        }
+        
         panel->setBounds(0, y, getWidth(), h);
         y += h;
     }
 
-    // Set container height to total content — viewport will scroll if needed
-    setSize(getWidth(), juce::jmax(y, viewportH));
+    // Set container height strictly to viewport so no scrollbars appear
+    setSize(getWidth(), viewportH);
 }
 
 void WorkspaceManager::SidebarContainer::addPanel(const juce::String& name,
