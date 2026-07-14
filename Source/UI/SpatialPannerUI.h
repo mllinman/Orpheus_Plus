@@ -12,13 +12,12 @@ public:
     void resized() override;
     void timerCallback() override;
 
-    void mouseDown(const juce::MouseEvent& e) override;
     void mouseDrag(const juce::MouseEvent& e) override;
+
+    void setTrackIndex(int trackIdx) { trackIndex = trackIdx; }
 
 private:
     void updateSpatialPositionFromMouse(const juce::MouseEvent& e);
-
-    void setTrackIndex(int trackIdx) { trackIndex = trackIdx; }
 
     AudioEngine& engine;
     int trackIndex;
