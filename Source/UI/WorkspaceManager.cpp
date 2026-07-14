@@ -1,137 +1,7 @@
 #include "WorkspaceManager.h"
 #include "OrpheusLookAndFeel.h"
 
-//==============================================================================
-// SidebarContainer — proportionally distributes height among expanded panels
-//==============================================================================
-void WorkspaceManager::SidebarContainer::resized()
-{
-    int viewportH = getParentHeight();
-    if (viewportH <= 0) viewportH = getHeight();
-    if (viewportH <= 0) viewportH = 600;
 
-    int numExpanded = 0;
-    int fixedH = 0;
-
-    for (auto* panel : panels)
-    {
-        if (!panel->isVisible()) continue;
-        if (panel->isCollapsed())
-            fixedH += CollapsiblePanel::headerHeight;
-        else
-            numExpanded++;
-    }
-
-    int remainingH = juce::jmax(0, viewportH - fixedH);
-    int y = 0;
-
-    for (auto* panel : panels)
-    {
-        if (!panel->isVisible()) continue;
-        
-        int h = 0;
-        if (panel->isCollapsed())
-        {
-            h = CollapsiblePanel::headerHeight;
-        }
-        else
-        {
-            // Give equal height to expanded panels, distribute rounding error
-            h = remainingH / juce::jmax(1, numExpanded);
-            remainingH -= h;
-            numExpanded--;
-        }
-        
-        panel->setBounds(0, y, getWidth(), h);
-        y += h;
-    }
-
-    // Set container height strictly to viewport so no scrollbars appear
-    setSize(getWidth(), viewportH);
-}
-
-void WorkspaceManager::SidebarContainer::addPanel(const juce::String& name,
-                                                   std::unique_ptr<juce::Component> content)
-{
-    auto* cp = panels.add(new CollapsiblePanel(name, std::move(content)));
-
-    // Wire close button — collapse and hide the panel, then re-layout
-    cp->onClose = [this, cp]()
-    {
-        cp->setCollapsed(true);
-        cp->setVisible(false);
-        resized();
-    };
-
-    addAndMakeVisible(cp);
-    resized();
-}
-
-void WorkspaceManager::SidebarContainer::paint(juce::Graphics& g)
-{
-    // Draw drag-drop insertion indicator
-    if (dropInsertIndex >= 0)
-    {
-        int y = 0;
-        for (int i = 0; i < dropInsertIndex && i < panels.size(); ++i)
-            y += panels[i]->getHeight();
-
-        g.setColour(juce::Colour(0xff4ecdc4));
-        g.fillRect(0, y - 1, getWidth(), 3);
-    }
-}
-
-// Sidebar drag-and-drop reordering
-bool WorkspaceManager::SidebarContainer::isInterestedInDragSource(const SourceDetails& details)
-{
-    return details.description.toString().startsWith("SidebarPanel:");
-}
-
-void WorkspaceManager::SidebarContainer::itemDragEnter(const SourceDetails&)
-{
-    repaint();
-}
-
-void WorkspaceManager::SidebarContainer::itemDragMove(const SourceDetails& details)
-{
-    int mouseY = details.localPosition.getY();
-    int y = 0;
-    dropInsertIndex = panels.size();
-    for (int i = 0; i < panels.size(); ++i)
-    {
-        int midY = y + panels[i]->getHeight() / 2;
-        if (mouseY < midY) { dropInsertIndex = i; break; }
-        y += panels[i]->getHeight();
-    }
-    repaint();
-}
-
-void WorkspaceManager::SidebarContainer::itemDragExit(const SourceDetails&)
-{
-    dropInsertIndex = -1;
-    repaint();
-}
-
-void WorkspaceManager::SidebarContainer::itemDropped(const SourceDetails& details)
-{
-    auto desc = details.description.toString();
-    if (!desc.startsWith("SidebarPanel:")) { dropInsertIndex = -1; return; }
-
-    auto panelName = desc.fromFirstOccurrenceOf("SidebarPanel:", false, false);
-    int sourceIdx = -1;
-    for (int i = 0; i < panels.size(); ++i)
-        if (panels[i]->getPanelName() == panelName) { sourceIdx = i; break; }
-
-    if (sourceIdx >= 0 && dropInsertIndex >= 0 && sourceIdx != dropInsertIndex)
-    {
-        auto* panel = panels[sourceIdx];
-        panels.move(sourceIdx, dropInsertIndex > sourceIdx ? dropInsertIndex - 1 : dropInsertIndex);
-        resized();
-    }
-
-    dropInsertIndex = -1;
-    repaint();
-}
 
 //==============================================================================
 // WorkspaceManager
@@ -146,13 +16,8 @@ WorkspaceManager::WorkspaceManager()
     addAndMakeVisible(bottomTabs.get());
 
     // Sidebars
-    leftViewport.setViewedComponent(&leftContainer, false);
-    leftViewport.setScrollBarsShown(true, false);
-    addAndMakeVisible(leftViewport);
-
-    rightViewport.setViewedComponent(&rightContainer, false);
-    rightViewport.setScrollBarsShown(true, false);
-    addAndMakeVisible(rightViewport);
+    addAndMakeVisible(leftContainer);
+    addAndMakeVisible(rightContainer);
 
     // Vertical resizer between timeline and bottom tabs
     // Layout: [0]=timeline, [1]=resizer, [2]=bottomTabs
@@ -222,9 +87,9 @@ void WorkspaceManager::resized()
         rightOnlyResizer->setVisible(false);
 
         juce::Component* hComps[] = {
-            &leftViewport, leftSidebarResizer.get(),
+            &leftContainer, leftSidebarResizer.get(),
             nullptr, // placeholder — we'll set center bounds manually
-            rightSidebarResizer.get(), &rightViewport
+            rightSidebarResizer.get(), &rightContainer
         };
 
         // We need a temporary component for the center to get its bounds
@@ -240,15 +105,6 @@ void WorkspaceManager::resized()
         auto centerBounds = centerPlaceholder.getBounds();
         removeChildComponent(&centerPlaceholder);
 
-        // Sync sidebar container sizes
-        leftContainer.setSize(leftViewport.getWidth() - leftViewport.getScrollBarThickness(),
-                              leftContainer.getHeight());
-        leftContainer.resized();
-
-        rightContainer.setSize(rightViewport.getWidth() - rightViewport.getScrollBarThickness(),
-                               rightContainer.getHeight());
-        rightContainer.resized();
-
         // Vertical layout inside center
         layoutCenter(centerBounds);
     }
@@ -257,13 +113,13 @@ void WorkspaceManager::resized()
         // Left sidebar + center only — use leftOnlyLayout for draggable resizer
         leftSidebarResizer->setVisible(false);
         rightSidebarResizer->setVisible(false);
-        rightViewport.setVisible(false);
+        rightContainer.setVisible(false);
         rightOnlyResizer->setVisible(false);
         leftOnlyResizer->setVisible(true);
-        leftViewport.setVisible(true);
+        leftContainer.setVisible(true);
 
         juce::Component centerPlaceholder;
-        juce::Component* comps[] = { &leftViewport, leftOnlyResizer.get(), &centerPlaceholder };
+        juce::Component* comps[] = { &leftContainer, leftOnlyResizer.get(), &centerPlaceholder };
         addAndMakeVisible(&centerPlaceholder);
         leftOnlyLayout.layOutComponents(comps, 3,
             bounds.getX(), bounds.getY(), bounds.getWidth(), bounds.getHeight(),
@@ -272,10 +128,6 @@ void WorkspaceManager::resized()
         auto centerBounds = centerPlaceholder.getBounds();
         removeChildComponent(&centerPlaceholder);
 
-        leftContainer.setSize(leftViewport.getWidth() - leftViewport.getScrollBarThickness(),
-                              leftContainer.getHeight());
-        leftContainer.resized();
-
         layoutCenter(centerBounds);
     }
     else if (rightSidebarVisible)
@@ -283,13 +135,13 @@ void WorkspaceManager::resized()
         // Center + right sidebar only — use rightOnlyLayout for draggable resizer
         leftSidebarResizer->setVisible(false);
         rightSidebarResizer->setVisible(false);
-        leftViewport.setVisible(false);
+        leftContainer.setVisible(false);
         leftOnlyResizer->setVisible(false);
         rightOnlyResizer->setVisible(true);
-        rightViewport.setVisible(true);
+        rightContainer.setVisible(true);
 
         juce::Component centerPlaceholder;
-        juce::Component* comps[] = { &centerPlaceholder, rightOnlyResizer.get(), &rightViewport };
+        juce::Component* comps[] = { &centerPlaceholder, rightOnlyResizer.get(), &rightContainer };
         addAndMakeVisible(&centerPlaceholder);
         rightOnlyLayout.layOutComponents(comps, 3,
             bounds.getX(), bounds.getY(), bounds.getWidth(), bounds.getHeight(),
@@ -298,17 +150,13 @@ void WorkspaceManager::resized()
         auto centerBounds = centerPlaceholder.getBounds();
         removeChildComponent(&centerPlaceholder);
 
-        rightContainer.setSize(rightViewport.getWidth() - rightViewport.getScrollBarThickness(),
-                               rightContainer.getHeight());
-        rightContainer.resized();
-
         layoutCenter(centerBounds);
     }
     else
     {
         // No sidebars
-        leftViewport.setVisible(false);
-        rightViewport.setVisible(false);
+        leftContainer.setVisible(false);
+        rightContainer.setVisible(false);
         leftSidebarResizer->setVisible(false);
         rightSidebarResizer->setVisible(false);
         leftOnlyResizer->setVisible(false);
@@ -340,12 +188,16 @@ void WorkspaceManager::addToBottomTab(const juce::String& name, juce::Colour tab
 
 void WorkspaceManager::addToLeftSidebar(const juce::String& name, std::unique_ptr<juce::Component> content)
 {
-    leftContainer.addPanel(name, std::move(content));
+    auto* cp = new CollapsiblePanel(name, std::move(content));
+    leftContainer.addPanel(cp, true, true);
+    leftContainer.setMaximumPanelSize(cp, 0); // Allow it to expand as much as needed
 }
 
 void WorkspaceManager::addToRightSidebar(const juce::String& name, std::unique_ptr<juce::Component> content)
 {
-    rightContainer.addPanel(name, std::move(content));
+    auto* cp = new CollapsiblePanel(name, std::move(content));
+    rightContainer.addPanel(cp, true, true);
+    rightContainer.setMaximumPanelSize(cp, 0);
 }
 
 void WorkspaceManager::showBottomTab(const juce::String& name)
@@ -411,7 +263,7 @@ juce::StringArray WorkspaceManager::getClosedTabNames() const
 void WorkspaceManager::setLeftSidebarVisible(bool visible)
 {
     leftSidebarVisible = visible;
-    leftViewport.setVisible(visible);
+    leftContainer.setVisible(visible);
     leftSidebarResizer->setVisible(visible && rightSidebarVisible);
     resized();
 }
@@ -419,7 +271,7 @@ void WorkspaceManager::setLeftSidebarVisible(bool visible)
 void WorkspaceManager::setRightSidebarVisible(bool visible)
 {
     rightSidebarVisible = visible;
-    rightViewport.setVisible(visible);
+    rightContainer.setVisible(visible);
     rightSidebarResizer->setVisible(visible && leftSidebarVisible);
     resized();
 }
