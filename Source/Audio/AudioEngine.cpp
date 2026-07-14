@@ -36,7 +36,15 @@ AudioEngine::~AudioEngine()
 
 void AudioEngine::initialise()
 {
-    deviceManager.initialiseWithDefaultDevices(2, 2); // Stereo in/out — uses system default device
+    juce::String err = deviceManager.initialiseWithDefaultDevices(2, 2); // Try Stereo in/out
+    if (err.isNotEmpty())
+    {
+        juce::Logger::writeToLog("AudioEngine: Failed to open 2 inputs, trying 0 inputs... Error: " + err);
+        err = deviceManager.initialiseWithDefaultDevices(0, 2); // Fallback to output only
+        if (err.isNotEmpty())
+            juce::Logger::writeToLog("AudioEngine: CRITICAL - Failed to open audio device. Error: " + err);
+    }
+    
     deviceManager.addAudioCallback(this);
 
     // Enable all MIDI inputs
@@ -133,7 +141,9 @@ void AudioEngine::stop()
             if (armedTrackIndex >= 0 && armedTrackIndex < tracks.size())
             {
                 auto* clip = new AudioClip(currentRecordingFile, 0.0 /* start position */);
+                clip->loadAudioData(formatManager);
                 tracks[armedTrackIndex]->clips.add(clip);
+                juce::MessageManager::callAsync([this]{ listeners.call(&Listener::trackListChanged); });
             }
         }
         
@@ -143,6 +153,7 @@ void AudioEngine::stop()
             auto* clip = new MidiClip(0.0, recordedMidi.getEndTime());
             clip->midiData = recordedMidi;
             tracks[armedTrackIndex]->clips.add(clip);
+            juce::MessageManager::callAsync([this]{ listeners.call(&Listener::trackListChanged); });
         }
     }
     
@@ -651,7 +662,8 @@ void AudioEngine::audioDeviceIOCallbackWithContext(
     for (int ch = 0; ch < numOutputChannels; ++ch)
         juce::FloatVectorOperations::clear(outputChannelData[ch], numSamples);
 
-    if (!playing.load()) return;
+    // Do NOT return early if stopped, otherwise live input monitoring and synths won't work.
+    // if (!playing.load()) return;
 
     juce::AudioBuffer<float> buffer(outputChannelData, numOutputChannels, numSamples);
     
@@ -713,8 +725,11 @@ void AudioEngine::audioDeviceIOCallbackWithContext(
     }
 
     // Advance playhead
-    double advance = numSamples / currentSampleRate;
-    playheadPosition.fetch_add(advance);
+    if (playing.load())
+    {
+        double advance = numSamples / currentSampleRate;
+        playheadPosition.fetch_add(advance);
+    }
 
     // Update meters
     if (numOutputChannels >= 1)
@@ -860,8 +875,10 @@ void AudioEngine::processAudioBlock(juce::AudioBuffer<float>& buffer)
 
     buffer.clear();
 
-    for (auto* track : tracks)
+    if (playing.load())
     {
+        for (auto* track : tracks)
+        {
         if (track->mute) continue;
         if (track->type != OrpheusTrackInfo::Type::Audio && 
             track->type != OrpheusTrackInfo::Type::Midi) continue;
@@ -941,9 +958,9 @@ void AudioEngine::processAudioBlock(juce::AudioBuffer<float>& buffer)
             trackBuf.applyGain(vol);
         }
 
-        // Mix into output
-        for (int ch = 0; ch < outChannels; ++ch)
-            buffer.addFrom(ch, 0, trackBuf, ch, 0, blockSamples);
+            for (int ch = 0; ch < outChannels; ++ch)
+                buffer.addFrom(ch, 0, trackBuf, ch, 0, blockSamples);
+        }
     }
 }
 

@@ -146,7 +146,7 @@ WorkspaceManager::WorkspaceManager()
     horizontalLayout.setItemLayout(1, resizerBarSize, resizerBarSize, resizerBarSize);
     horizontalLayout.setItemLayout(2, 200, -1.0, -1.0);   // Center (flex)
     horizontalLayout.setItemLayout(3, resizerBarSize, resizerBarSize, resizerBarSize);
-    horizontalLayout.setItemLayout(4, 120, 500, 280);     // Right sidebar
+    horizontalLayout.setItemLayout(4, 250, 500, 350);     // Right sidebar
 
     leftSidebarResizer = std::make_unique<juce::StretchableLayoutResizerBar>(
         &horizontalLayout, 1, true);

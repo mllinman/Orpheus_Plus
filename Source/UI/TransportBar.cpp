@@ -29,11 +29,21 @@ TransportBar::TransportBar(AudioEngine& e, juce::ApplicationCommandManager& c)
     settingsButton.setButtonText(juce::CharPointer_UTF8("\xe2\x9a\x99"));// ⚙
 
     rewindButton.onClick = [this] { audioEngine.stop(); };
+    rewindButton.setTooltip("Stop / Rewind to Beginning");
+
     playButton.onClick   = [this] { audioEngine.togglePlayback(); };
+    playButton.setTooltip("Play / Pause (Space)");
+
     stopButton.onClick   = [this] { audioEngine.stop(); };
+    stopButton.setTooltip("Stop Playback");
+
     recordButton.onClick = [this] { audioEngine.toggleRecord(); };
+    recordButton.setTooltip("Record (Arm a track first)");
+
     loopButton.setToggleable(true);
     loopButton.onClick = [this] { audioEngine.setLooping(loopButton.getToggleState()); };
+    loopButton.setTooltip("Toggle Loop/Cycle Mode");
+
     settingsButton.setTooltip("Audio/MIDI Settings");
     
     // Command ID 5 is cmdOpenSettings from MainComponent
@@ -96,8 +106,12 @@ TransportBar::TransportBar(AudioEngine& e, juce::ApplicationCommandManager& c)
 
     monoButton.setToggleable(true);
     monoButton.setColour(juce::TextButton::buttonOnColourId, juce::Colour(0xffFFB300));
+    monoButton.setButtonText("Stereo");
+    monoButton.setTooltip("Toggle Master Output between Stereo and Mono");
     monoButton.onClick = [this] {
-        audioEngine.setMonoSum(monoButton.getToggleState());
+        bool isMono = monoButton.getToggleState();
+        audioEngine.setMonoSum(isMono);
+        monoButton.setButtonText(isMono ? "Mono" : "Stereo");
     };
     addAndMakeVisible(monoButton);
 

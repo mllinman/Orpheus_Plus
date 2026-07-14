@@ -53,8 +53,11 @@ void TextToSamplePanel::triggerGeneration()
     generateButton.setEnabled(false);
     isGenerating = true;
 
-    // Launch asynchronously (in a real app, this would spawn a juce::Thread)
-    generator.generateSampleFromText(prompt, 2.0, 44100.0);
+    // Launch asynchronously to prevent UI freeze
+    juce::Thread::launch([this, prompt]() {
+        generator.generateSampleFromText(prompt, 2.0, 44100.0);
+    });
+    
     startTimer(100);
 }
 

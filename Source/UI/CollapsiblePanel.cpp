@@ -189,6 +189,14 @@ CollapsiblePanel::FloatingWindow::FloatingWindow(CollapsiblePanel& o, const juce
 {
     setUsingNativeTitleBar(true);
     setResizable(true, false);
+    
+    rightClickDragger.window = this;
+    addMouseListener(&rightClickDragger, true); // Catch events from all children
+}
+
+CollapsiblePanel::FloatingWindow::~FloatingWindow()
+{
+    removeMouseListener(&rightClickDragger);
 }
 
 void CollapsiblePanel::FloatingWindow::closeButtonPressed()

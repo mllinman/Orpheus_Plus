@@ -9,10 +9,10 @@ TrackLaneComponent::TrackLaneComponent(int idx, AudioEngine& e, AppState& s,
 {
     auto& trackInfo = audioEngine.getTrackInfo(trackIndex);
 
-    // Mute
     muteButton.setColour(juce::TextButton::buttonColourId,   juce::Colour(0xff2d2d44));
     muteButton.setColour(juce::TextButton::buttonOnColourId, juce::Colour(0xffFFB300));
     muteButton.setToggleable(true);
+    muteButton.setTooltip("Mute Track");
     muteButton.onClick = [this] {
         bool m = muteButton.getToggleState();
         audioEngine.setTrackMute(trackIndex, m);
@@ -23,16 +23,27 @@ TrackLaneComponent::TrackLaneComponent(int idx, AudioEngine& e, AppState& s,
     soloButton.setColour(juce::TextButton::buttonColourId,   juce::Colour(0xff2d2d44));
     soloButton.setColour(juce::TextButton::buttonOnColourId, juce::Colour(0xff00BCD4));
     soloButton.setToggleable(true);
+    soloButton.setTooltip("Solo Track");
     soloButton.onClick = [this] {
         bool s = soloButton.getToggleState();
         audioEngine.setTrackSolo(trackIndex, s);
-        audioEngine.setTrackSolo(trackIndex, soloButton.getToggleState());
     };
     addAndMakeVisible(soloButton);
+
+    // Arm
+    armButton.setColour(juce::TextButton::buttonColourId,   juce::Colour(0xff2d2d44));
+    armButton.setColour(juce::TextButton::buttonOnColourId, juce::Colour(0xffF44336)); // Red when armed
+    armButton.setToggleable(true);
+    armButton.setTooltip("Arm Track for Recording");
+    armButton.onClick = [this] {
+        audioEngine.armTrack(trackIndex, armButton.getToggleState());
+    };
+    addAndMakeVisible(armButton);
 
     // Phase Align
     phaseAlignButton.setColour(juce::TextButton::buttonColourId, juce::Colour(0xff2d2d44));
     phaseAlignButton.setButtonText("Ph");
+    phaseAlignButton.setTooltip("Align Phase to Reference Track");
     phaseAlignButton.onClick = [this] {
         if (trackIndex > 0) {
             audioEngine.alignTrackPhase(trackIndex, 0); 
@@ -45,6 +56,7 @@ TrackLaneComponent::TrackLaneComponent(int idx, AudioEngine& e, AppState& s,
     volumeSlider.setRange(0.0, 1.5, 0.001);
     volumeSlider.setValue(1.0, juce::dontSendNotification);
     volumeSlider.setTextBoxStyle(juce::Slider::NoTextBox, false, 0, 0);
+    volumeSlider.setTooltip("Track Volume");
     volumeSlider.onValueChange = [this] {
         audioEngine.setTrackVolume(trackIndex, (float)volumeSlider.getValue());
         if (audioEngine.isPlaying()) {
@@ -58,6 +70,7 @@ TrackLaneComponent::TrackLaneComponent(int idx, AudioEngine& e, AppState& s,
     panSlider.setRange(-1.0, 1.0, 0.001);
     panSlider.setValue(0.0, juce::dontSendNotification);
     panSlider.setTextBoxStyle(juce::Slider::NoTextBox, false, 0, 0);
+    panSlider.setTooltip("Track Pan");
     panSlider.onValueChange = [this] {
         audioEngine.setTrackPan(trackIndex, (float)panSlider.getValue());
         if (audioEngine.isPlaying()) {
@@ -208,7 +221,7 @@ void TrackLaneComponent::resized()
     buttonRow.removeFromLeft(2);
     soloButton.setBounds(buttonRow.removeFromLeft(22));
     buttonRow.removeFromLeft(2);
-    // armButton.setBounds(buttonRow.removeFromLeft(22));
+    armButton.setBounds(buttonRow.removeFromLeft(22));
     buttonRow.removeFromLeft(2);
     showTakesButton.setBounds(buttonRow.removeFromLeft(22));
 
@@ -683,36 +696,80 @@ void TrackLaneComponent::mouseDown(const juce::MouseEvent& e)
     double clickTime = timeline.snapToGrid(timeline.absolutePixelToTime(e.x)); // Snap for tools? Maybe.
     auto tool = timeline.getTool();
 
+class SplitClipAction : public juce::UndoableAction
+{
+public:
+    SplitClipAction(AudioEngine& engine, int trackIdx, Clip* originalClip, double splitTime, TrackLaneComponent* lane)
+        : e(engine), tIdx(trackIdx), orig(originalClip), split(splitTime), laneComp(lane)
+    {
+        oldDur = orig->duration;
+        newDur = split - orig->startTime;
+        remDur = (orig->startTime + orig->duration) - split;
+    }
+
+    bool perform() override
+    {
+        orig->duration = newDur;
+        auto& trackInfo = e.getTrackInfo(tIdx);
+
+        if (orig->getType() == Clip::Type::Audio)
+        {
+            auto* ac = static_cast<AudioClip*>(orig);
+            newClip = new AudioClip(ac->sourceFile, split);
+            auto* nac = static_cast<AudioClip*>(newClip);
+            nac->offset = ac->offset + newDur;
+            nac->duration = remDur;
+            nac->colour = ac->colour;
+            if (laneComp) nac->setThumbnailCache(laneComp->thumbnailCache, e.getFormatManager());
+            trackInfo.clips.add(newClip);
+        }
+        else if (orig->getType() == Clip::Type::Midi)
+        {
+            newClip = new MidiClip(split, remDur);
+            newClip->colour = orig->colour;
+            trackInfo.clips.add(newClip);
+        }
+        if (laneComp) laneComp->repaint();
+        return true;
+    }
+
+    bool undo() override
+    {
+        orig->duration = oldDur;
+        auto& trackInfo = e.getTrackInfo(tIdx);
+        if (newClip) {
+            trackInfo.clips.removeObject(newClip);
+            newClip = nullptr;
+        }
+        if (laneComp) laneComp->repaint();
+        return true;
+    }
+
+private:
+    AudioEngine& e;
+    int tIdx;
+    Clip* orig;
+    Clip* newClip = nullptr;
+    double split;
+    double oldDur, newDur, remDur;
+    TrackLaneComponent* laneComp;
+};
+
+// ... inside mouseDown() ...
+
     if (tool == TimelineComponent::EditTool::Split)
     {
         if (auto* clip = getClipAt(timeline.absolutePixelToTime(e.x))) // hit test unsnapped
         {
-            // Split logic
             double originalEnd = clip->startTime + clip->duration;
             double newDuration = clickTime - clip->startTime;
             double remaining   = originalEnd - clickTime;
             
             if (newDuration > 0.05 && remaining > 0.05) // Min clip length
             {
-                clip->duration = newDuration;
-
-                if (clip->getType() == Clip::Type::Audio)
-                {
-                    auto* ac = static_cast<AudioClip*>(clip);
-                    auto* newClip = new AudioClip(ac->sourceFile, clickTime);
-                    newClip->offset   = ac->offset + newDuration;
-                    newClip->duration = remaining;
-                    newClip->colour   = ac->colour;
-                    newClip->setThumbnailCache(thumbnailCache, audioEngine.getFormatManager()); 
-                    audioEngine.getTrackInfo(trackIndex).clips.add(newClip);
-                }
-                else if (clip->getType() == Clip::Type::Midi)
-                {
-                    auto* newClip = new MidiClip(clickTime, remaining);
-                    newClip->colour = clip->colour;
-                    audioEngine.getTrackInfo(trackIndex).clips.add(newClip);
-                }
-                repaint();
+                audioEngine.getUndoManager().perform(
+                    new SplitClipAction(audioEngine, trackIndex, clip, clickTime, this)
+                );
             }
         }
         return;

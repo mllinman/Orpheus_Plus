@@ -40,9 +40,29 @@ private:
     {
     public:
         FloatingWindow(CollapsiblePanel& owner, const juce::String& name);
+        ~FloatingWindow() override;
         void closeButtonPressed() override;
+        
+        struct RightClickDragger : public juce::MouseListener
+        {
+            juce::ComponentDragger dragger;
+            FloatingWindow* window = nullptr;
+            
+            void mouseDown(const juce::MouseEvent& e) override
+            {
+                if (e.mods.isRightButtonDown() && window)
+                    dragger.startDraggingComponent(window, e.getEventRelativeTo(window));
+            }
+            void mouseDrag(const juce::MouseEvent& e) override
+            {
+                if (e.mods.isRightButtonDown() && window)
+                    dragger.dragComponent(window, e.getEventRelativeTo(window), nullptr);
+            }
+        };
+
     private:
         CollapsiblePanel& owner;
+        RightClickDragger rightClickDragger;
     };
 
     juce::String panelName;
