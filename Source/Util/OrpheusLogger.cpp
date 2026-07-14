@@ -18,7 +18,7 @@ OrpheusLogger::~OrpheusLogger()
 juce::File OrpheusLogger::getLogDirectory()
 {
     return juce::File::getSpecialLocation(juce::File::userApplicationDataDirectory)
-             .getChildFile("OrpheusPlus/Logs");
+             .getChildFile("Orpheus Plus/Logs");
 }
 
 juce::File OrpheusLogger::getCurrentLogFile()

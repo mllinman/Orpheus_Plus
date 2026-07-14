@@ -192,7 +192,7 @@ void AudioEngine::toggleRecord()
             if (tracks[armedTrackIndex]->type == OrpheusTrackInfo::Type::Audio)
             {
                 juce::File docsDir = juce::File::getSpecialLocation(juce::File::userDocumentsDirectory);
-                juce::File projectFolder = docsDir.getChildFile("OrpheusPlus_Projects");
+                juce::File projectFolder = docsDir.getChildFile("Orpheus Plus Projects");
                 projectFolder.createDirectory();
                 
                 currentRecordingFile = projectFolder.getNonexistentChildFile("Recording", ".wav");

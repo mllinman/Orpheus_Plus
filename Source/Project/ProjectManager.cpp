@@ -16,7 +16,7 @@ ProjectManager::~ProjectManager()
 void ProjectManager::loadSettings()
 {
     auto props = juce::PropertiesFile::Options().getDefaultFile().getParentDirectory()
-                      .getChildFile("OrpheusPlus/settings.xml");
+                      .getChildFile("Orpheus Plus/settings.xml");
     
     if (props.existsAsFile())
     {
@@ -36,7 +36,7 @@ void ProjectManager::loadSettings()
 void ProjectManager::saveSettings()
 {
     auto propsFile = juce::PropertiesFile::Options().getDefaultFile().getParentDirectory()
-                      .getChildFile("OrpheusPlus/settings.xml");
+                      .getChildFile("Orpheus Plus/settings.xml");
                       
     propsFile.getParentDirectory().createDirectory();
 
@@ -232,7 +232,7 @@ void ProjectManager::copyAudioFilesToProjectFolder(const juce::File& projectFold
 juce::StringArray ProjectManager::getRecentFiles() const
 {
     auto props = juce::PropertiesFile::Options().getDefaultFile().getParentDirectory()
-                      .getChildFile("OrpheusPlus/settings.xml").getParentDirectory();
+                      .getChildFile("Orpheus Plus/settings.xml").getParentDirectory();
     (void)props;
     // TODO: load from application properties
     return {};

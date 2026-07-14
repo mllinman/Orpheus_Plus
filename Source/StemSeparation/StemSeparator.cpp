@@ -261,5 +261,5 @@ bool StemSeparator::isBackendAvailable()
 juce::File StemSeparator::getModelPath(Model /*m*/)
 {
     return juce::File::getSpecialLocation(juce::File::userApplicationDataDirectory)
-               .getChildFile("OrpheusPlus/models");
+               .getChildFile("Orpheus Plus/models");
 }

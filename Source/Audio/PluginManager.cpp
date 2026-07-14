@@ -12,7 +12,7 @@ PluginManager::PluginManager(AudioEngine& e) : engine(e)
    #endif
 
     auto pluginListFile = juce::File::getSpecialLocation(juce::File::userApplicationDataDirectory)
-                            .getChildFile("OrpheusPlus/plugins.xml");
+                            .getChildFile("Orpheus Plus/plugins.xml");
     loadPluginList(pluginListFile);
     loadCustomPaths();
 }
@@ -20,7 +20,7 @@ PluginManager::PluginManager(AudioEngine& e) : engine(e)
 PluginManager::~PluginManager()
 {
     auto pluginListFile = juce::File::getSpecialLocation(juce::File::userApplicationDataDirectory)
-                            .getChildFile("OrpheusPlus/plugins.xml");
+                            .getChildFile("Orpheus Plus/plugins.xml");
     savePluginList(pluginListFile);
 }
 
@@ -42,7 +42,7 @@ void PluginManager::scanForPlugins()
         paths.addPath(customSearchPaths);
 
         auto deadMansPedal = juce::File::getSpecialLocation(juce::File::userApplicationDataDirectory)
-                               .getChildFile("OrpheusPlus/deadmanspedal.txt");
+                               .getChildFile("Orpheus Plus/deadmanspedal.txt");
 
         if (formatManager.getNumFormats() == 0)
         {
@@ -103,7 +103,7 @@ void PluginManager::scanForPlugins()
             // Auto-save after scan
             auto pluginListFile = juce::File::getSpecialLocation(
                 juce::File::userApplicationDataDirectory)
-                .getChildFile("OrpheusPlus/plugins.xml");
+                .getChildFile("Orpheus Plus/plugins.xml");
             savePluginList(pluginListFile);
         });
     });
@@ -373,7 +373,7 @@ void PluginManager::removeSearchPath(const juce::File& path)
 void PluginManager::saveCustomPaths()
 {
     auto pathsFile = juce::File::getSpecialLocation(juce::File::userApplicationDataDirectory)
-                       .getChildFile("OrpheusPlus/customPaths.xml");
+                       .getChildFile("Orpheus Plus/customPaths.xml");
     pathsFile.getParentDirectory().createDirectory();
 
     juce::XmlElement root("CustomPluginPaths");
@@ -388,7 +388,7 @@ void PluginManager::saveCustomPaths()
 void PluginManager::loadCustomPaths()
 {
     auto pathsFile = juce::File::getSpecialLocation(juce::File::userApplicationDataDirectory)
-                       .getChildFile("OrpheusPlus/customPaths.xml");
+                       .getChildFile("Orpheus Plus/customPaths.xml");
     if (!pathsFile.existsAsFile()) return;
 
     if (auto xml = juce::XmlDocument::parse(pathsFile))
