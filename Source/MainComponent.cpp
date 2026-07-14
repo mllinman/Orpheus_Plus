@@ -158,8 +158,8 @@ MainComponent::MainComponent()
     libraryPanel = std::make_unique<LibraryPanel>(*audioEngine, appState);
     workspace->addToLeftSidebar("Library", std::make_unique<LibraryPanel>(*audioEngine, appState));
 
-    trackSettingsPanel = std::make_unique<TrackSettingsPanel>(*audioEngine, appState);
-    workspace->addToLeftSidebar("Track Settings", std::make_unique<TrackSettingsPanel>(*audioEngine, appState));
+    trackSettingsPanel.reset(new TrackSettingsPanel(*audioEngine, appState));
+    workspace->addToLeftSidebar("Track Settings", std::unique_ptr<juce::Component>(new TrackSettingsPanel(*audioEngine, appState)));
 
     //═══════════════════════════════════════════════════════════════════════
     //  RIGHT SIDEBAR — Mastering, AutoTune, Spectrum, AI CoPilot, ADR

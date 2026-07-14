@@ -20,6 +20,8 @@ public:
     void setTrackIndex(int index);
     int  getTrackIndex() const { return currentTrack; }
 
+    void changeListenerCallback(juce::ChangeBroadcaster* source) override;
+
 private:
     void timerCallback() override;
     void refreshFromTrack();
