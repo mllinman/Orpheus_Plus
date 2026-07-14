@@ -1,9 +1,10 @@
 #include "AutoTunePanel.h"
+#include "../Project/AppState.h"
 #include <cmath>
 #include <functional>
 
-AutoTunePanel::AutoTunePanel(AudioEngine& e)
-    : audioEngine(e)
+AutoTunePanel::AutoTunePanel(AudioEngine& e, AppState& state)
+    : audioEngine(e), appState(state)
 {
     auto setupKnob = [](juce::Slider& s, double min, double max, double def, double step = 0.01) {
         s.setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
@@ -24,10 +25,10 @@ AutoTunePanel::AutoTunePanel(AudioEngine& e)
 
     // Enable / Bypass
     enableToggle.setClickingTogglesState(true);
-    enableToggle.onClick = [this] { processor.setEnabled(enableToggle.getToggleState()); };
+    enableToggle.onClick = [this] { if (auto* p = getProcessor()) p->setEnabled(enableToggle.getToggleState()); };
     bypassToggle.setClickingTogglesState(true);
     neuralModeToggle.setClickingTogglesState(true);
-    neuralModeToggle.onClick = [this] { processor.setNeuralMode(neuralModeToggle.getToggleState()); };
+    neuralModeToggle.onClick = [this] { if (auto* p = getProcessor()) p->setNeuralMode(neuralModeToggle.getToggleState()); };
     addAndMakeVisible(enableToggle);
     addAndMakeVisible(bypassToggle);
     addAndMakeVisible(neuralModeToggle);
@@ -37,7 +38,7 @@ AutoTunePanel::AutoTunePanel(AudioEngine& e)
     for (int i = 0; i < 12; ++i)
         keyCombo.addItem(noteNames[i], i + 1);
     keyCombo.setSelectedId(1, juce::dontSendNotification);
-    keyCombo.onChange = [this] { processor.setKey(keyCombo.getSelectedId() - 1); repaint(); };
+    keyCombo.onChange = [this] { if (auto* p = getProcessor()) p->setKey(keyCombo.getSelectedId() - 1); repaint(); };
     setupLabel(keyLabel);
     addAndMakeVisible(keyLabel);
     addAndMakeVisible(keyCombo);
@@ -47,7 +48,7 @@ AutoTunePanel::AutoTunePanel(AudioEngine& e)
     scaleCombo.addItem("Major", 2);
     scaleCombo.addItem("Minor", 3);
     scaleCombo.setSelectedId(2, juce::dontSendNotification);
-    scaleCombo.onChange = [this] { processor.setScale(scaleCombo.getSelectedId() - 1); repaint(); };
+    scaleCombo.onChange = [this] { if (auto* p = getProcessor()) p->setScale(scaleCombo.getSelectedId() - 1); repaint(); };
     setupLabel(scaleLabel);
     addAndMakeVisible(scaleLabel);
     addAndMakeVisible(scaleCombo);
@@ -65,61 +66,61 @@ AutoTunePanel::AutoTunePanel(AudioEngine& e)
 
     setupCtrl(pitchCtrl, "PITCH", 0.0, 1.0, 0.5, 0.01);
     pitchCtrl.knob.onValueChange = [this] {
-        processor.setRetuneSpeed((float)pitchCtrl.knob.getValue());
+        if (auto* p = getProcessor()) p->setRetuneSpeed((float)pitchCtrl.knob.getValue());
         pitchCtrl.readout.setText(juce::String(pitchCtrl.knob.getValue(), 2), juce::dontSendNotification);
     };
 
     setupCtrl(volumeCtrl, "VOLUME", 0.0, 2.0, 1.0, 0.01);
     volumeCtrl.knob.onValueChange = [this] {
-        processor.setVolumeLevel((float)volumeCtrl.knob.getValue());
+        if (auto* p = getProcessor()) p->setVolumeLevel((float)volumeCtrl.knob.getValue());
         volumeCtrl.readout.setText(juce::String(volumeCtrl.knob.getValue(), 2), juce::dontSendNotification);
     };
 
     setupCtrl(toneCtrl, "TONE", -12.0, 12.0, 0.0, 0.1);
     toneCtrl.knob.onValueChange = [this] {
-        processor.setFormantShift((float)toneCtrl.knob.getValue());
+        if (auto* p = getProcessor()) p->setFormantShift((float)toneCtrl.knob.getValue());
         toneCtrl.readout.setText(juce::String(toneCtrl.knob.getValue(), 1), juce::dontSendNotification);
     };
 
     setupCtrl(paceCtrl, "PACE", 0.5, 2.0, 1.0, 0.01);
     paceCtrl.knob.onValueChange = [this] {
-        processor.setPaceStretch((float)paceCtrl.knob.getValue());
+        if (auto* p = getProcessor()) p->setPaceStretch((float)paceCtrl.knob.getValue());
         paceCtrl.readout.setText(juce::String(paceCtrl.knob.getValue(), 2), juce::dontSendNotification);
     };
 
     setupCtrl(rhythmCtrl, "RHYTHM", 0.0, 1.0, 0.0, 0.01);
     rhythmCtrl.knob.onValueChange = [this] {
-        processor.setRhythmQuantize((float)rhythmCtrl.knob.getValue());
+        if (auto* p = getProcessor()) p->setRhythmQuantize((float)rhythmCtrl.knob.getValue());
         rhythmCtrl.readout.setText(juce::String(rhythmCtrl.knob.getValue(), 2), juce::dontSendNotification);
     };
 
     setupCtrl(articulationCtrl, "ARTICULATION", 0.0, 1.0, 0.0, 0.01);
     articulationCtrl.knob.onValueChange = [this] {
-        processor.setArticulation((float)articulationCtrl.knob.getValue());
+        if (auto* p = getProcessor()) p->setArticulation((float)articulationCtrl.knob.getValue());
         articulationCtrl.readout.setText(juce::String(articulationCtrl.knob.getValue(), 2), juce::dontSendNotification);
     };
 
-    setupCtrl(resonanceCtrl, "RESONANCE", 0.0, 1.0, 0.0, 0.01);
+    setupCtrl(resonanceCtrl, "RESONANCE", 0.0, 1.0, 0.5, 0.01);
     resonanceCtrl.knob.onValueChange = [this] {
-        processor.setResonance((float)resonanceCtrl.knob.getValue());
+        if (auto* p = getProcessor()) p->setResonance((float)resonanceCtrl.knob.getValue());
         resonanceCtrl.readout.setText(juce::String(resonanceCtrl.knob.getValue(), 2), juce::dontSendNotification);
     };
 
-    setupCtrl(inflectionCtrl, "INFLECTION", 0.0, 1.0, 0.0, 0.01);
+    setupCtrl(inflectionCtrl, "INFLECTION", -1.0, 1.0, 0.0, 0.01);
     inflectionCtrl.knob.onValueChange = [this] {
-        processor.setInflection((float)inflectionCtrl.knob.getValue());
+        if (auto* p = getProcessor()) p->setInflection((float)inflectionCtrl.knob.getValue());
         inflectionCtrl.readout.setText(juce::String(inflectionCtrl.knob.getValue(), 2), juce::dontSendNotification);
     };
 
-    setupCtrl(emphasisCtrl, "EMPHASIS", 0.0, 1.0, 0.0, 0.01);
+    setupCtrl(emphasisCtrl, "EMPHASIS", 0.0, 1.0, 0.5, 0.01);
     emphasisCtrl.knob.onValueChange = [this] {
-        processor.setEmphasis((float)emphasisCtrl.knob.getValue());
+        if (auto* p = getProcessor()) p->setEmphasis((float)emphasisCtrl.knob.getValue());
         emphasisCtrl.readout.setText(juce::String(emphasisCtrl.knob.getValue(), 2), juce::dontSendNotification);
     };
 
-    setupCtrl(projectionCtrl, "PROJECTION", 0.0, 1.0, 0.0, 0.01);
+    setupCtrl(projectionCtrl, "PROJECTION", 0.0, 1.0, 0.5, 0.01);
     projectionCtrl.knob.onValueChange = [this] {
-        processor.setProjection((float)projectionCtrl.knob.getValue());
+        if (auto* p = getProcessor()) p->setProjection((float)projectionCtrl.knob.getValue());
         projectionCtrl.readout.setText(juce::String(projectionCtrl.knob.getValue(), 2), juce::dontSendNotification);
     };
 
@@ -130,15 +131,54 @@ AutoTunePanel::~AutoTunePanel() { stopTimer(); }
 
 void AutoTunePanel::timerCallback()
 {
-    detectedPitch = processor.getDetectedPitch();
-    correctedPitch = processor.getCorrectedPitch();
+    int currentTrackIndex = appState.getSelectedTrackIndex();
+    auto* p = getProcessor();
 
-    if (detectedPitch > 0.0f && correctedPitch > 0.0f) {
-        float ratio = correctedPitch / detectedPitch;
-        centDeviation = 1200.0f * std::log2(ratio);
+    if (p != nullptr) {
+        if (currentTrackIndex != lastTrackIndex && currentTrackIndex >= 0) {
+            lastTrackIndex = currentTrackIndex;
+            keyCombo.setSelectedId(p->getKey() + 1, juce::dontSendNotification);
+            scaleCombo.setSelectedId(p->getScale() + 1, juce::dontSendNotification);
+            neuralModeToggle.setToggleState(p->getNeuralMode(), juce::dontSendNotification);
+            
+            pitchCtrl.knob.setValue(p->getPitchShift(), juce::dontSendNotification);
+            volumeCtrl.knob.setValue(p->getVolumeLevel(), juce::dontSendNotification);
+            toneCtrl.knob.setValue(p->getFormantShift(), juce::dontSendNotification);
+            paceCtrl.knob.setValue(p->getPaceStretch(), juce::dontSendNotification);
+            rhythmCtrl.knob.setValue(p->getRhythmQuantize(), juce::dontSendNotification);
+            articulationCtrl.knob.setValue(p->getArticulation(), juce::dontSendNotification);
+            resonanceCtrl.knob.setValue(p->getResonance(), juce::dontSendNotification);
+            inflectionCtrl.knob.setValue(p->getInflection(), juce::dontSendNotification);
+            emphasisCtrl.knob.setValue(p->getEmphasis(), juce::dontSendNotification);
+            projectionCtrl.knob.setValue(p->getProjection(), juce::dontSendNotification);
+            
+            pitchCtrl.readout.setText(juce::String(p->getPitchShift(), 2), juce::dontSendNotification);
+            volumeCtrl.readout.setText(juce::String(p->getVolumeLevel(), 2), juce::dontSendNotification);
+            toneCtrl.readout.setText(juce::String(p->getFormantShift(), 2), juce::dontSendNotification);
+            paceCtrl.readout.setText(juce::String(p->getPaceStretch(), 2), juce::dontSendNotification);
+            rhythmCtrl.readout.setText(juce::String(p->getRhythmQuantize(), 2), juce::dontSendNotification);
+            articulationCtrl.readout.setText(juce::String(p->getArticulation(), 2), juce::dontSendNotification);
+            resonanceCtrl.readout.setText(juce::String(p->getResonance(), 2), juce::dontSendNotification);
+            inflectionCtrl.readout.setText(juce::String(p->getInflection(), 2), juce::dontSendNotification);
+            emphasisCtrl.readout.setText(juce::String(p->getEmphasis(), 2), juce::dontSendNotification);
+            projectionCtrl.readout.setText(juce::String(p->getProjection(), 2), juce::dontSendNotification);
+        }
+
+        detectedPitch = p->getDetectedPitch();
+        correctedPitch = p->getCorrectedPitch();
+
+        if (detectedPitch > 0.0f && correctedPitch > 0.0f) {
+            float ratio = correctedPitch / detectedPitch;
+            centDeviation = 1200.0f * std::log2(ratio);
+        } else {
+            centDeviation = 0.0f;
+        }
     } else {
+        detectedPitch = 0.0f;
+        correctedPitch = 0.0f;
         centDeviation = 0.0f;
     }
+
     repaint();
 }
 
@@ -166,9 +206,20 @@ void AutoTunePanel::paintPitchMeter(juce::Graphics& g, juce::Rectangle<int> boun
     g.fillRoundedRectangle(bounds.toFloat(), 8.0f);
     
     // Neural Mode Glow
-    if (processor.getNeuralMode()) {
-        g.setColour(juce::Colour(0x3000FFFF)); // Subtle cyan glow
-        g.fillRoundedRectangle(bounds.toFloat().expanded(4.0f), 12.0f);
+    if (auto* p = getProcessor()) {
+        if (p->getNeuralMode()) {
+            g.setColour(juce::Colour(0x3000FFFF)); // Subtle cyan glow
+            g.fillRoundedRectangle(bounds.toFloat().expanded(4.0f), 12.0f);
+            g.setColour(juce::Colour(0x6000FFFF));
+            g.drawRoundedRectangle(bounds.toFloat(), 8.0f, 2.0f);
+        } else {
+            g.setColour(OrpheusLookAndFeel::borderSubtle());
+            g.drawRoundedRectangle(bounds.toFloat(), 8.0f, 1.0f);
+        }
+    } else {
+        g.setColour(OrpheusLookAndFeel::borderSubtle());
+        g.drawRoundedRectangle(bounds.toFloat(), 8.0f, 1.0f);
+    }
         g.setColour(juce::Colour(0x6000FFFF));
         g.drawRoundedRectangle(bounds.toFloat(), 8.0f, 2.0f);
     } else {

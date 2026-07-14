@@ -211,7 +211,7 @@ void TrackSettingsPanel::setTrackIndex(int index)
 void TrackSettingsPanel::refreshFromTrack()
 {
     if (spatialPanner)
-        spatialPanner = std::make_unique<SpatialPannerUI>(audioEngine, currentTrack);
+        spatialPanner->setTrackIndex(currentTrack);
 
     if (currentTrack < 0 || currentTrack >= (int)appState.getTracks().size()) {
         trackNameLabel.setText("No Track Selected", juce::dontSendNotification);
@@ -231,6 +231,19 @@ void TrackSettingsPanel::refreshFromTrack()
         insertsLabel.setText("INSERTS", juce::dontSendNotification);
     else
         insertsLabel.setText("INSTRUMENTS & FX", juce::dontSendNotification);
+        
+    auto& tInfo = audioEngine.getTrackInfo(currentTrack);
+    volumeKnob.setValue(juce::Decibels::gainToDecibels(tInfo.volume), juce::dontSendNotification);
+    volumeReadout.setText(juce::String(volumeKnob.getValue(), 1) + " dB", juce::dontSendNotification);
+    panKnob.setValue(tInfo.pan, juce::dontSendNotification);
+    float v = tInfo.pan;
+    juce::String panText = v < -0.01f ? juce::String((int)(-v * 100)) + "L"
+                         : v > 0.01f  ? juce::String((int)(v * 100)) + "R"
+                         : "C";
+    panReadout.setText(panText, juce::dontSendNotification);
+    muteBtn.setToggleState(tInfo.mute, juce::dontSendNotification);
+    soloBtn.setToggleState(tInfo.solo, juce::dontSendNotification);
+    armBtn.setToggleState(tInfo.armed, juce::dontSendNotification);
 }
 
 void TrackSettingsPanel::timerCallback()

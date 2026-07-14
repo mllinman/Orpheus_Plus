@@ -18,6 +18,8 @@ public:
 private:
     void updateSpatialPositionFromMouse(const juce::MouseEvent& e);
 
+    void setTrackIndex(int trackIdx) { trackIndex = trackIdx; }
+
     AudioEngine& engine;
     int trackIndex;
 

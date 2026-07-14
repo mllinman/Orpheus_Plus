@@ -25,6 +25,7 @@ class SpectrumAnalyzer;
 class PluginManager;
 class MidiLearnManager;
 class MasteringModule;
+class VocalSuiteProcessor;
 
 
 //==============================================================================
@@ -220,6 +221,7 @@ public:
 
     //── AI / DSP Features ────────────────────────────────────────────────────
     void addVocalSuiteToTrack(int trackIndex);
+    VocalSuiteProcessor* getVocalSuiteForTrack(int trackIndex);
     void addAudioCleanupToTrack(int trackIndex);
     void alignAllTracksPhase(); // Global Phase Align
     void alignTrackPhase(int trackIndex, int referenceTrackIndex); // Track-specific Phase Align
@@ -388,6 +390,7 @@ private:
     int    currentBlockSize  = 512;
 
     juce::ListenerList<Listener> listeners;
+    juce::CriticalSection analyzerLock;
     juce::Array<SpectrumAnalyzer*> analyzers;
 
     // ── MIDI Capture Ring Buffer ──

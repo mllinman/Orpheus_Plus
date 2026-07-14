@@ -155,11 +155,13 @@ MainComponent::MainComponent()
     //═══════════════════════════════════════════════════════════════════════
     //  LEFT SIDEBAR — Library + Track Settings
     //═══════════════════════════════════════════════════════════════════════
-    libraryPanel = std::make_unique<LibraryPanel>(*audioEngine, appState);
-    workspace->addToLeftSidebar("Library", std::make_unique<LibraryPanel>(*audioEngine, appState));
+    auto libComp = std::make_unique<LibraryPanel>(*audioEngine, appState);
+    libraryPanel = libComp.get();
+    workspace->addToLeftSidebar("Library", std::move(libComp));
 
-    trackSettingsPanel.reset(new TrackSettingsPanel(*audioEngine, appState));
-    workspace->addToLeftSidebar("Track Settings", std::unique_ptr<juce::Component>(new TrackSettingsPanel(*audioEngine, appState)));
+    auto trackSettingsComp = std::make_unique<TrackSettingsPanel>(*audioEngine, appState);
+    trackSettingsPanel = trackSettingsComp.get();
+    workspace->addToLeftSidebar("Track Settings", std::move(trackSettingsComp));
 
     //═══════════════════════════════════════════════════════════════════════
     //  RIGHT SIDEBAR — Mastering, AutoTune, Spectrum, AI CoPilot, ADR
@@ -170,13 +172,14 @@ MainComponent::MainComponent()
     masteringModule->onPhaseAlign = [this]() { audioEngine->alignAllTracksPhase(); };
     workspace->addToRightSidebar("Mastering", std::move(masterComp));
 
-    auto autoTuneComp = std::make_unique<AutoTunePanel>(*audioEngine);
+    auto autoTuneComp = std::make_unique<AutoTunePanel>(*audioEngine, appState);
     autoTune = autoTuneComp.get();
     workspace->addToRightSidebar("AutoTune", std::move(autoTuneComp));
 
-    spectrumAnalyzer = std::make_unique<SpectrumAnalyzer>(*audioEngine);
-    audioEngine->registerAnalyzer(spectrumAnalyzer.get());
-    workspace->addToRightSidebar("Spectrum", std::make_unique<SpectrumAnalyzer>(*audioEngine));
+    auto specComp = std::make_unique<SpectrumAnalyzer>(*audioEngine);
+    spectrumAnalyzer = specComp.get();
+    audioEngine->registerAnalyzer(spectrumAnalyzer);
+    workspace->addToRightSidebar("Spectrum", std::move(specComp));
 
     auto copilotComp = std::make_unique<AICoPilotPanel>(*audioEngine);
     aiCoPilot = copilotComp.get();
@@ -190,7 +193,7 @@ MainComponent::MainComponent()
     //  WIRING
     //═══════════════════════════════════════════════════════════════════════
     if (pitchGame != nullptr && autoTune != nullptr)
-        pitchGame->setProcessor(&autoTune->getProcessor());
+        pitchGame->setProcessor(autoTune->getProcessor());
 
     wireToolbarCallbacks();
     setupCallbacks();

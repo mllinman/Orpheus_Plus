@@ -43,7 +43,7 @@ void MasteringModule::paint(juce::Graphics& g)
     g.setColour(OrpheusLookAndFeel::borderSubtle());
     g.drawHorizontalLine(39, 0.0f, (float)getWidth());
 
-    // ── Signal Chain Strip (below toggles) ──
+    // ── Signal Chain Strip ──
     auto chainArea = area.removeFromTop(50);
     chainArea = chainArea.reduced(8, 4);
     struct ChainBlock { const char* name; bool enabled; juce::Colour col; };
@@ -66,11 +66,12 @@ void MasteringModule::paint(juce::Graphics& g)
         // Block border
         g.setColour(blocks[i].enabled ? blocks[i].col.withAlpha(0.6f) : OrpheusLookAndFeel::borderSubtle());
         g.drawRoundedRectangle(blockBounds.toFloat(), 4.0f, 1.5f);
-        // LED
-        float ledX = (float)(blockBounds.getX() + 6);
-        float ledY = (float)(blockBounds.getY() + 6);
-        g.setColour(blocks[i].enabled ? blocks[i].col : OrpheusLookAndFeel::textMuted().withAlpha(0.3f));
-        g.fillEllipse(ledX, ledY, 6.0f, 6.0f);
+        
+        // Name
+        g.setColour(blocks[i].enabled ? blocks[i].col : OrpheusLookAndFeel::textMuted());
+        g.setFont(juce::Font(10.0f).boldened());
+        g.drawText(blocks[i].name, blockBounds, juce::Justification::centred);
+        
         // Arrow between blocks
         if (i < 7) {
             float ax = (float)blockBounds.getRight() + 2;
@@ -79,6 +80,9 @@ void MasteringModule::paint(juce::Graphics& g)
             g.drawArrow(juce::Line<float>(ax, ay, ax + 6, ay), 1.5f, 5.0f, 5.0f);
         }
     }
+
+    // ── Button Row Space ──
+    area.removeFromTop(40);
 
     // ── EQ Curve Visualization ──
     area.removeFromTop(4);
@@ -222,20 +226,20 @@ void MasteringModule::paint(juce::Graphics& g)
 
 void MasteringModule::resized()
 {
-    auto area = getLocalBounds();
     auto bounds = getLocalBounds();
     bounds.removeFromTop(40); // header
-    int w = bounds.getWidth() / 9;
-    auto togglesRow = bounds.removeFromTop(40);
-    eqToggle.setBounds(togglesRow.removeFromLeft(w));
-    compToggle.setBounds(togglesRow.removeFromLeft(w));
-    msToggle.setBounds(togglesRow.removeFromLeft(w));
-    satToggle.setBounds(togglesRow.removeFromLeft(w));
-    reverbToggle.setBounds(togglesRow.removeFromLeft(w));
-    limiterToggle.setBounds(togglesRow.removeFromLeft(w));
-    autoLufsToggle.setBounds(togglesRow.removeFromLeft(w));
-    dynEqToggle.setBounds(togglesRow.removeFromLeft(w));
-    matchEqToggle.setBounds(togglesRow.removeFromLeft(w));
+    
+    // Toggles over the Chain Strip
+    auto togglesRow = bounds.removeFromTop(50).reduced(8, 4);
+    int w = togglesRow.getWidth() / 8;
+    msToggle.setBounds(togglesRow.removeFromLeft(w).reduced(3));
+    eqToggle.setBounds(togglesRow.removeFromLeft(w).reduced(3));
+    dynEqToggle.setBounds(togglesRow.removeFromLeft(w).reduced(3));
+    compToggle.setBounds(togglesRow.removeFromLeft(w).reduced(3));
+    satToggle.setBounds(togglesRow.removeFromLeft(w).reduced(3));
+    reverbToggle.setBounds(togglesRow.removeFromLeft(w).reduced(3));
+    limiterToggle.setBounds(togglesRow.removeFromLeft(w).reduced(3));
+    autoLufsToggle.setBounds(togglesRow.removeFromLeft(w).reduced(3));
 
     auto buttonRow = bounds.removeFromTop(40);
     analyzeButton.setBounds(buttonRow.removeFromLeft(150).reduced(5));
@@ -243,6 +247,7 @@ void MasteringModule::resized()
     phaseAlignBtn.setBounds(buttonRow.removeFromLeft(200).reduced(5));
 
     // Meters are painted, so nothing to layout for them
+
     // The rest (signal chain strip, EQ visualization, etc.) are all painted
 }
 
@@ -512,6 +517,21 @@ void MasteringModule::buildUI()
     autoLufsToggle.onClick = [this] { setAutoLUFSEnabled(autoLufsToggle.getToggleState()); };
     dynEqToggle.onClick    = [this] { setDynamicEQEnabled(dynEqToggle.getToggleState()); };
     matchEqToggle.onClick  = [this] { setMatchEQEnabled(matchEqToggle.getToggleState()); };
+
+    auto hideToggle = [](juce::ToggleButton& t) {
+        t.setButtonText("");
+        t.setAlpha(0.0f); // Make the JUCE toggle completely transparent so custom drawing shows
+    };
+
+    hideToggle(eqToggle);
+    hideToggle(compToggle);
+    hideToggle(msToggle);
+    hideToggle(satToggle);
+    hideToggle(reverbToggle);
+    hideToggle(limiterToggle);
+    hideToggle(autoLufsToggle);
+    hideToggle(dynEqToggle);
+    hideToggle(matchEqToggle);
 
     analyzeButton.onClick = [this] { analyzeTrack(); };
     loadMatchEQBtn.onClick = [this] { loadMatchEQReference(); };

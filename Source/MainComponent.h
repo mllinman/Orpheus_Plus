@@ -112,11 +112,10 @@ private:
     DistributionPrepPanel* distPrep = nullptr;
     SmartTrackFixerPanel* smartTrackFixer = nullptr;
 
-    // Owned panels (for bottom tabs / sidebars)
-    std::unique_ptr<MixerPanel> mixerPanel;
-    std::unique_ptr<SpectrumAnalyzer> spectrumAnalyzer;
-    std::unique_ptr<TrackSettingsPanel> trackSettingsPanel;
-    std::unique_ptr<LibraryPanel> libraryPanel;
+    MixerPanel* mixerPanel = nullptr;
+    SpectrumAnalyzer* spectrumAnalyzer = nullptr;
+    TrackSettingsPanel* trackSettingsPanel = nullptr;
+    LibraryPanel* libraryPanel = nullptr;
 
     std::unique_ptr<ProjectSettingsPanel> projectSettingsPanel;
     std::unique_ptr<ExportDialog> exportDialog;

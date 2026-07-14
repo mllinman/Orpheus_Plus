@@ -21,6 +21,7 @@ public:
     void resized() override;
 
 private:
+    void recordAutomation(const juce::String& paramID, float value);
     void timerCallback() override;
     void paintGlassmorphicCard(juce::Graphics& g, juce::Rectangle<int> bounds, const juce::String& title);
     void paintVocalWaveform(juce::Graphics& g, juce::Rectangle<int> bounds);
@@ -72,6 +73,7 @@ private:
     juce::LinearSmoothedValue<float> correctedPitch { 0.0f };
     std::array<float, 128> waveformBuffer;
     int waveformWritePos = 0;
+    int lastTrackIndex = -1;
 
     VocalSuiteProcessor* getActiveProcessor();
     void setupKnob(VocalKnob& vk, const juce::String& name, const juce::String& unit,

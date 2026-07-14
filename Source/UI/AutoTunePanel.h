@@ -4,15 +4,17 @@
 #include "../Audio/AudioEngine.h"
 #include "OrpheusLookAndFeel.h"
 
+class AppState;
+
 //==============================================================================
 class AutoTunePanel : public juce::Component,
                        private juce::Timer
 {
 public:
-    AutoTunePanel(AudioEngine& engine);
+    AutoTunePanel(AudioEngine& engine, AppState& state);
     ~AutoTunePanel() override;
 
-    VocalSuiteProcessor& getProcessor() { return processor; }
+    VocalSuiteProcessor* getProcessor();
 
     void paint(juce::Graphics&) override;
     void resized() override;
@@ -24,7 +26,7 @@ private:
     bool isNoteInScale(int noteInOctave) const;
 
     AudioEngine& audioEngine;
-    VocalSuiteProcessor processor;
+    AppState& appState;
 
     // Master
     juce::ToggleButton enableToggle { "ENABLE" };
@@ -58,6 +60,7 @@ private:
     float detectedPitch  = 0.0f;
     float correctedPitch = 0.0f;
     float centDeviation  = 0.0f;
+    int lastTrackIndex   = -1;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(AutoTunePanel)
 };

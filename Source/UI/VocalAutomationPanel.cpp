@@ -56,63 +56,53 @@ VocalAutomationPanel::VocalAutomationPanel(AudioEngine& e, MainComponent* mainCo
     setupKnob(emphasisKnob,     "EMPHASIS",     "%",   pink.brighter(0.3f),   0.0, 1.0, 0.0, 0.01);
     setupKnob(projectionKnob,   "PROJECTION",   "%",   green.brighter(0.3f),  0.0, 1.0, 0.0, 0.01);
 
-    // Helper lambda for recording automation
-    auto recordAutomation = [this](const juce::String& paramID, float value) {
-        int trackIndex = -1;
-        if (mainComponent) trackIndex = mainComponent->getAppState()->getSelectedTrackIndex();
-        if (trackIndex >= 0) {
-            double time = audioEngine.getPlayheadPosition();
-            audioEngine.recordAutomationPoint(trackIndex, paramID, time, value);
-        }
-    };
-
     // Wire callbacks
-    pitchKnob.slider.onValueChange = [this, recordAutomation] {
+    pitchKnob.slider.onValueChange = [this] {
         float val = (float)pitchKnob.slider.getValue();
         if (auto* p = getActiveProcessor()) p->setPitchShift(val);
         recordAutomation("pitch", val);
     };
-    volumeKnob.slider.onValueChange = [this, recordAutomation] {
+    volumeKnob.slider.onValueChange = [this] {
         float val = (float)volumeKnob.slider.getValue();
         if (auto* p = getActiveProcessor()) p->setVolumeLevel(val);
         recordAutomation("volume", val);
     };
-    toneKnob.slider.onValueChange = [this, recordAutomation] {
+    toneKnob.slider.onValueChange = [this] {
         float val = (float)toneKnob.slider.getValue();
         if (auto* p = getActiveProcessor()) p->setFormantShift(val);
         recordAutomation("tone", val);
     };
-    paceKnob.slider.onValueChange = [this, recordAutomation] {
+    paceKnob.slider.onValueChange = [this] {
         float val = (float)paceKnob.slider.getValue();
         if (auto* p = getActiveProcessor()) p->setPaceStretch(val);
         recordAutomation("pace", val);
     };
-    rhythmKnob.slider.onValueChange = [this, recordAutomation] {
+    rhythmKnob.slider.onValueChange = [this] {
         float val = (float)rhythmKnob.slider.getValue();
         if (auto* p = getActiveProcessor()) p->setRhythmQuantize(val);
         recordAutomation("rhythm", val);
     };
-    articulationKnob.slider.onValueChange = [this, recordAutomation] {
+    articulationKnob.slider.onValueChange = [this] {
         float val = (float)articulationKnob.slider.getValue();
         if (auto* p = getActiveProcessor()) p->setArticulation(val);
         recordAutomation("articulation", val);
     };
-    resonanceKnob.slider.onValueChange = [this, recordAutomation] {
+    resonanceKnob.slider.onValueChange = [this] {
         float val = (float)resonanceKnob.slider.getValue();
         if (auto* p = getActiveProcessor()) p->setResonance(val);
         recordAutomation("resonance", val);
     };
-    inflectionKnob.slider.onValueChange = [this, recordAutomation] {
+    inflectionKnob.slider.onValueChange = [this] {
         float val = (float)inflectionKnob.slider.getValue();
         if (auto* p = getActiveProcessor()) p->setInflection(val);
         recordAutomation("inflection", val);
     };
-    emphasisKnob.slider.onValueChange = [this, recordAutomation] {
+    emphasisKnob.slider.onValueChange = [this] {
         float val = (float)emphasisKnob.slider.getValue();
         if (auto* p = getActiveProcessor()) p->setEmphasis(val);
         recordAutomation("emphasis", val);
     };
-    projectionKnob.slider.onValueChange = [this, recordAutomation] {
+    projectionKnob.slider.onValueChange = [this] {
         float val = (float)projectionKnob.slider.getValue();
         if (auto* p = getActiveProcessor()) p->setProjection(val);
         recordAutomation("projection", val);
@@ -189,6 +179,15 @@ VocalAutomationPanel::VocalAutomationPanel(AudioEngine& e, MainComponent* mainCo
 
 VocalAutomationPanel::~VocalAutomationPanel() { stopTimer(); }
 
+void VocalAutomationPanel::recordAutomation(const juce::String& paramID, float value) {
+    int trackIndex = -1;
+    if (mainComponent) trackIndex = mainComponent->getAppState()->getSelectedTrackIndex();
+    if (trackIndex >= 0) {
+        double time = audioEngine.getPlayheadPosition();
+        audioEngine.recordAutomationPoint(trackIndex, paramID, time, value);
+    }
+}
+
 void VocalAutomationPanel::setupKnob(VocalKnob& vk, const juce::String& name, const juce::String& unit,
                                       juce::Colour col, double min, double max, double def, double step)
 {
@@ -213,7 +212,7 @@ VocalSuiteProcessor* VocalAutomationPanel::getActiveProcessor()
     {
         if (auto* atp = mainComponent->getAutoTunePanel())
         {
-            return &atp->getProcessor();
+            return atp->getProcessor();
         }
     }
     return nullptr;
@@ -221,8 +220,28 @@ VocalSuiteProcessor* VocalAutomationPanel::getActiveProcessor()
 
 void VocalAutomationPanel::timerCallback()
 {
+    int currentTrackIndex = -1;
+    if (mainComponent && mainComponent->getAppState()) {
+        currentTrackIndex = mainComponent->getAppState()->getSelectedTrackIndex();
+    }
+
     if (auto* p = getActiveProcessor())
     {
+        // Sync sliders on track change
+        if (currentTrackIndex != lastTrackIndex && currentTrackIndex >= 0) {
+            lastTrackIndex = currentTrackIndex;
+            pitchKnob.slider.setValue(p->getPitchShift(), juce::dontSendNotification);
+            volumeKnob.slider.setValue(p->getVolumeLevel(), juce::dontSendNotification);
+            toneKnob.slider.setValue(p->getFormantShift(), juce::dontSendNotification);
+            paceKnob.slider.setValue(p->getPaceStretch(), juce::dontSendNotification);
+            rhythmKnob.slider.setValue(p->getRhythmQuantize(), juce::dontSendNotification);
+            articulationKnob.slider.setValue(p->getArticulation(), juce::dontSendNotification);
+            resonanceKnob.slider.setValue(p->getResonance(), juce::dontSendNotification);
+            inflectionKnob.slider.setValue(p->getInflection(), juce::dontSendNotification);
+            emphasisKnob.slider.setValue(p->getEmphasis(), juce::dontSendNotification);
+            projectionKnob.slider.setValue(p->getProjection(), juce::dontSendNotification);
+        }
+
         detectedPitch = p->getDetectedPitch();
         correctedPitch = p->getCorrectedPitch();
     }

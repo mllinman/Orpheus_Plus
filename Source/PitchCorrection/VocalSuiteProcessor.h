@@ -41,8 +41,11 @@ public:
     bool getNeuralMode() const        { return neuralMode; }
     
     void setRetuneSpeed(float s)      { retuneSpeed = juce::jlimit(0.0f, 1.0f, s); } // 0=Natural, 1=Robotic
+    float getRetuneSpeed() const      { return retuneSpeed; }
     void setKey(int semitone)         { key = semitone; }
+    int getKey() const                { return key; }
     void setScale(int scaleType)      { scale = scaleType; }
+    int getScale() const              { return scale; }
     void setFormantShift(float f)     { formantShift = juce::jlimit(-12.0f, 12.0f, f); } // semitones
     void setDoublerAmount(float d)    { doublerAmount = juce::jlimit(0.0f, 1.0f, d); }
     void setHarmonyInterval(int h)    { harmonyInterval = h; } // e.g. +3, -5
@@ -58,6 +61,17 @@ public:
     void setInflection(float i)       { inflectionAmount = juce::jlimit(0.0f, 1.0f, i); }
     void setEmphasis(float e)         { emphasisAmount = juce::jlimit(0.0f, 1.0f, e); }
     void setProjection(float p)       { projectionAmount = juce::jlimit(0.0f, 1.0f, p); }
+
+    float getPitchShift() const       { return pitchShift; }
+    float getVolumeLevel() const      { return volumeLevel; }
+    float getFormantShift() const     { return formantShift; }
+    float getPaceStretch() const      { return paceStretch; }
+    float getRhythmQuantize() const   { return rhythmQuantize; }
+    float getArticulation() const     { return articulation; }
+    float getResonance() const        { return resonanceAmount; }
+    float getInflection() const       { return inflectionAmount; }
+    float getEmphasis() const         { return emphasisAmount; }
+    float getProjection() const       { return projectionAmount; }
 
     float getDetectedPitch() const { return detectedPitch.load(); }
     float getCorrectedPitch() const { return correctedPitch.load(); }

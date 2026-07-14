@@ -736,6 +736,16 @@ void AudioEngine::audioDeviceIOCallbackWithContext(
         masterPeakL.store(buffer.getMagnitude(0, 0, numSamples));
     if (numOutputChannels >= 2)
         masterPeakR.store(buffer.getMagnitude(1, 0, numSamples));
+
+    // Send audio to analyzers
+    {
+        juce::ScopedLock sl(analyzerLock);
+        for (auto* analyzer : analyzers)
+        {
+            if (analyzer != nullptr)
+                analyzer->pushBuffer(buffer);
+        }
+    }
 }
 
 void AudioEngine::processAudioBlock(juce::AudioBuffer<float>& buffer)
@@ -1009,12 +1019,15 @@ void AudioEngine::handleIncomingMidiMessage(juce::MidiInput*, const juce::MidiMe
 //──────────────────────────────────────────────────────────────────────────────
 void AudioEngine::registerAnalyzer(SpectrumAnalyzer* analyzer)
 {
-    // analyzers.add(analyzer);
+    juce::ScopedLock sl(analyzerLock);
+    if (analyzer != nullptr && !analyzers.contains(analyzer))
+        analyzers.add(analyzer);
 }
 
 void AudioEngine::unregisterAnalyzer(SpectrumAnalyzer* analyzer)
 {
-    // analyzers.remove(analyzer);
+    juce::ScopedLock sl(analyzerLock);
+    analyzers.removeAllInstancesOf(analyzer);
 }
 
 //──────────────────────────────────────────────────────────────────────────────
@@ -1278,6 +1291,26 @@ void AudioEngine::addVocalSuiteToTrack(int trackIndex)
     }
     
     updateTrackGraphConnections(trackIndex);
+}
+
+VocalSuiteProcessor* AudioEngine::getVocalSuiteForTrack(int trackIndex)
+{
+    if (trackIndex < 0 || trackIndex >= tracks.size()) return nullptr;
+    auto* track = tracks[trackIndex];
+    
+    for (int i = 0; i < OrpheusTrackInfo::MAX_PLUGINS; ++i)
+    {
+        if (track->pluginSlots[i] != -1)
+        {
+            auto node = processorGraph.getNodeForId(juce::AudioProcessorGraph::NodeID(track->pluginSlots[i]));
+            if (node && node->getProcessor())
+            {
+                if (auto* vs = dynamic_cast<VocalSuiteProcessor*>(node->getProcessor()))
+                    return vs;
+            }
+        }
+    }
+    return nullptr;
 }
 
 void AudioEngine::freezeTrack(int trackIndex)
