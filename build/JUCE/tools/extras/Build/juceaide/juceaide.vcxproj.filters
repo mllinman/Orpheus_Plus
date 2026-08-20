@@ -1,43 +1,43 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClCompile Include="C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\JUCE\extras\Build\juceaide\Main.cpp">
+    <ClCompile Include="C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Orpheus_Plus\JUCE\extras\Build\juceaide\Main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\JUCE\extras\Build\juce_build_tools\juce_build_tools.cpp">
+    <ClCompile Include="C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Orpheus_Plus\JUCE\extras\Build\juce_build_tools\juce_build_tools.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\JUCE\modules\juce_gui_basics\juce_gui_basics.cpp">
+    <ClCompile Include="C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Orpheus_Plus\JUCE\modules\juce_gui_basics\juce_gui_basics.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\JUCE\modules\juce_graphics\juce_graphics.cpp">
+    <ClCompile Include="C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Orpheus_Plus\JUCE\modules\juce_graphics\juce_graphics.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\JUCE\modules\juce_graphics\juce_graphics_Harfbuzz.cpp">
+    <ClCompile Include="C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Orpheus_Plus\JUCE\modules\juce_graphics\juce_graphics_Harfbuzz.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\JUCE\modules\juce_graphics\juce_graphics_Sheenbidi.c">
+    <ClCompile Include="C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Orpheus_Plus\JUCE\modules\juce_graphics\juce_graphics_Sheenbidi.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\JUCE\modules\juce_events\juce_events.cpp">
+    <ClCompile Include="C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Orpheus_Plus\JUCE\modules\juce_events\juce_events.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\JUCE\modules\juce_core\juce_core.cpp">
+    <ClCompile Include="C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Orpheus_Plus\JUCE\modules\juce_core\juce_core.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\JUCE\modules\juce_core\juce_core_CompilationTime.cpp">
+    <ClCompile Include="C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Orpheus_Plus\JUCE\modules\juce_core\juce_core_CompilationTime.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\JUCE\modules\juce_data_structures\juce_data_structures.cpp">
+    <ClCompile Include="C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Orpheus_Plus\JUCE\modules\juce_data_structures\juce_data_structures.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <CustomBuild Include="C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\JUCE\extras\Build\juceaide\CMakeLists.txt" />
+    <CustomBuild Include="C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Orpheus_Plus\JUCE\extras\Build\juceaide\CMakeLists.txt" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Source Files">
-      <UniqueIdentifier>{9D9E029A-2851-3B14-B2AA-C1EE5E2673C8}</UniqueIdentifier>
+      <UniqueIdentifier>{7ADCC99A-17CC-311D-A605-DFF5AE67271A}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

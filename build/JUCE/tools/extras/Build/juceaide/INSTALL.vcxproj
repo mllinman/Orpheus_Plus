@@ -10,9 +10,9 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{EF9A3469-5008-3A36-A623-FBF264198C90}</ProjectGuid>
+    <ProjectGuid>{930A18C9-5B90-347E-9683-2C68E699AD85}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <WindowsTargetPlatformVersion>10.0.26100.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.28000.0</WindowsTargetPlatformVersion>
     <Platform>x64</Platform>
     <ProjectName>INSTALL</ProjectName>
     <VCProjectUpgraderObjectName>NoUpgrade</VCProjectUpgraderObjectName>
@@ -50,7 +50,7 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <CustomBuild Include="C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\JUCE\tools\CMakeFiles\ae581236d9c0362a6d84c8fd52816156\INSTALL_force.rule">
+    <CustomBuild Include="C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Orpheus_Plus\build\JUCE\tools\CMakeFiles\69dd08f2b597ada66478a560acdf0137\INSTALL_force.rule">
       <BuildInParallel Condition="'$(Configuration)|$(Platform)'=='Custom|x64'">true</BuildInParallel>
       <Message Condition="'$(Configuration)|$(Platform)'=='Custom|x64'"> </Message>
       <Command Condition="'$(Configuration)|$(Platform)'=='Custom|x64'">setlocal
@@ -63,21 +63,21 @@ exit /b %1
 :cmDone
 if %errorlevel% neq 0 goto :VCEnd</Command>
       <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Custom|x64'">%(AdditionalInputs)</AdditionalInputs>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Custom|x64'">C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\JUCE\tools\extras\Build\juceaide\CMakeFiles\INSTALL_force</Outputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Custom|x64'">C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Orpheus_Plus\build\JUCE\tools\extras\Build\juceaide\CMakeFiles\INSTALL_force</Outputs>
       <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Custom|x64'">false</LinkObjects>
       <VerifyInputsAndOutputsExist Condition="'$(Configuration)|$(Platform)'=='Custom|x64'">false</VerifyInputsAndOutputsExist>
     </CustomBuild>
   </ItemGroup>
   <ItemGroup />
   <ItemGroup>
-    <ProjectReference Include="C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\JUCE\tools\ZERO_CHECK.vcxproj">
-      <Project>{74E09FC3-3FA4-350C-B5C6-2CBFB5315711}</Project>
+    <ProjectReference Include="C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Orpheus_Plus\build\JUCE\tools\ZERO_CHECK.vcxproj">
+      <Project>{3739F2BA-4063-30C4-81B0-1D362AD2F846}</Project>
       <Name>ZERO_CHECK</Name>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </ProjectReference>
-    <ProjectReference Include="C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Build\JUCE\tools\ALL_BUILD.vcxproj">
-      <Project>{F9CA7043-6451-3D4C-9C86-CA5A12D9AA7D}</Project>
+    <ProjectReference Include="C:\Users\mllin\OneDrive\Documents\GitHub\Orpheus_Plus\Orpheus_Plus\build\JUCE\tools\ALL_BUILD.vcxproj">
+      <Project>{1DD34636-5F5D-33BD-9C47-6DD8CAE541E3}</Project>
       <Name>ALL_BUILD</Name>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>

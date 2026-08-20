@@ -1,4 +1,4 @@
-# Install script for directory: C:/Users/mllin/OneDrive/Documents/GitHub/Orpheus_Plus/JUCE
+# Install script for directory: C:/Users/mllin/OneDrive/Documents/GitHub/Orpheus_Plus/Orpheus_Plus/JUCE
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -34,40 +34,40 @@ endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("C:/Users/mllin/OneDrive/Documents/GitHub/Orpheus_Plus/Build/JUCE/modules/cmake_install.cmake")
+  include("C:/Users/mllin/OneDrive/Documents/GitHub/Orpheus_Plus/Orpheus_Plus/build/JUCE/modules/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("C:/Users/mllin/OneDrive/Documents/GitHub/Orpheus_Plus/Build/JUCE/extras/Build/cmake_install.cmake")
+  include("C:/Users/mllin/OneDrive/Documents/GitHub/Orpheus_Plus/Orpheus_Plus/build/JUCE/extras/Build/cmake_install.cmake")
 endif()
 
 if(CMAKE_INSTALL_COMPONENT STREQUAL "Unspecified" OR NOT CMAKE_INSTALL_COMPONENT)
   file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/lib/cmake/JUCE-8.0.12" TYPE FILE FILES
-    "C:/Users/mllin/OneDrive/Documents/GitHub/Orpheus_Plus/Build/JUCE/JUCEConfigVersion.cmake"
-    "C:/Users/mllin/OneDrive/Documents/GitHub/Orpheus_Plus/Build/JUCE/JUCEConfig.cmake"
-    "C:/Users/mllin/OneDrive/Documents/GitHub/Orpheus_Plus/JUCE/extras/Build/CMake/JUCECheckAtomic.cmake"
-    "C:/Users/mllin/OneDrive/Documents/GitHub/Orpheus_Plus/JUCE/extras/Build/CMake/JUCEHelperTargets.cmake"
-    "C:/Users/mllin/OneDrive/Documents/GitHub/Orpheus_Plus/JUCE/extras/Build/CMake/JUCEModuleSupport.cmake"
-    "C:/Users/mllin/OneDrive/Documents/GitHub/Orpheus_Plus/JUCE/extras/Build/CMake/JUCEUtils.cmake"
-    "C:/Users/mllin/OneDrive/Documents/GitHub/Orpheus_Plus/JUCE/extras/Build/CMake/JuceLV2Defines.h.in"
-    "C:/Users/mllin/OneDrive/Documents/GitHub/Orpheus_Plus/JUCE/extras/Build/CMake/LaunchScreen.storyboard"
-    "C:/Users/mllin/OneDrive/Documents/GitHub/Orpheus_Plus/JUCE/extras/Build/CMake/PIPAudioProcessor.cpp.in"
-    "C:/Users/mllin/OneDrive/Documents/GitHub/Orpheus_Plus/JUCE/extras/Build/CMake/PIPAudioProcessorWithARA.cpp.in"
-    "C:/Users/mllin/OneDrive/Documents/GitHub/Orpheus_Plus/JUCE/extras/Build/CMake/PIPComponent.cpp.in"
-    "C:/Users/mllin/OneDrive/Documents/GitHub/Orpheus_Plus/JUCE/extras/Build/CMake/PIPConsole.cpp.in"
-    "C:/Users/mllin/OneDrive/Documents/GitHub/Orpheus_Plus/JUCE/extras/Build/CMake/RecentFilesMenuTemplate.nib"
-    "C:/Users/mllin/OneDrive/Documents/GitHub/Orpheus_Plus/JUCE/extras/Build/CMake/UnityPluginGUIScript.cs.in"
-    "C:/Users/mllin/OneDrive/Documents/GitHub/Orpheus_Plus/JUCE/extras/Build/CMake/checkBundleSigning.cmake"
-    "C:/Users/mllin/OneDrive/Documents/GitHub/Orpheus_Plus/JUCE/extras/Build/CMake/copyDir.cmake"
-    "C:/Users/mllin/OneDrive/Documents/GitHub/Orpheus_Plus/JUCE/extras/Build/CMake/juce_runtime_arch_detection.cpp"
-    "C:/Users/mllin/OneDrive/Documents/GitHub/Orpheus_Plus/JUCE/extras/Build/CMake/juce_LinuxSubprocessHelper.cpp"
+    "C:/Users/mllin/OneDrive/Documents/GitHub/Orpheus_Plus/Orpheus_Plus/build/JUCE/JUCEConfigVersion.cmake"
+    "C:/Users/mllin/OneDrive/Documents/GitHub/Orpheus_Plus/Orpheus_Plus/build/JUCE/JUCEConfig.cmake"
+    "C:/Users/mllin/OneDrive/Documents/GitHub/Orpheus_Plus/Orpheus_Plus/JUCE/extras/Build/CMake/JUCECheckAtomic.cmake"
+    "C:/Users/mllin/OneDrive/Documents/GitHub/Orpheus_Plus/Orpheus_Plus/JUCE/extras/Build/CMake/JUCEHelperTargets.cmake"
+    "C:/Users/mllin/OneDrive/Documents/GitHub/Orpheus_Plus/Orpheus_Plus/JUCE/extras/Build/CMake/JUCEModuleSupport.cmake"
+    "C:/Users/mllin/OneDrive/Documents/GitHub/Orpheus_Plus/Orpheus_Plus/JUCE/extras/Build/CMake/JUCEUtils.cmake"
+    "C:/Users/mllin/OneDrive/Documents/GitHub/Orpheus_Plus/Orpheus_Plus/JUCE/extras/Build/CMake/JuceLV2Defines.h.in"
+    "C:/Users/mllin/OneDrive/Documents/GitHub/Orpheus_Plus/Orpheus_Plus/JUCE/extras/Build/CMake/LaunchScreen.storyboard"
+    "C:/Users/mllin/OneDrive/Documents/GitHub/Orpheus_Plus/Orpheus_Plus/JUCE/extras/Build/CMake/PIPAudioProcessor.cpp.in"
+    "C:/Users/mllin/OneDrive/Documents/GitHub/Orpheus_Plus/Orpheus_Plus/JUCE/extras/Build/CMake/PIPAudioProcessorWithARA.cpp.in"
+    "C:/Users/mllin/OneDrive/Documents/GitHub/Orpheus_Plus/Orpheus_Plus/JUCE/extras/Build/CMake/PIPComponent.cpp.in"
+    "C:/Users/mllin/OneDrive/Documents/GitHub/Orpheus_Plus/Orpheus_Plus/JUCE/extras/Build/CMake/PIPConsole.cpp.in"
+    "C:/Users/mllin/OneDrive/Documents/GitHub/Orpheus_Plus/Orpheus_Plus/JUCE/extras/Build/CMake/RecentFilesMenuTemplate.nib"
+    "C:/Users/mllin/OneDrive/Documents/GitHub/Orpheus_Plus/Orpheus_Plus/JUCE/extras/Build/CMake/UnityPluginGUIScript.cs.in"
+    "C:/Users/mllin/OneDrive/Documents/GitHub/Orpheus_Plus/Orpheus_Plus/JUCE/extras/Build/CMake/checkBundleSigning.cmake"
+    "C:/Users/mllin/OneDrive/Documents/GitHub/Orpheus_Plus/Orpheus_Plus/JUCE/extras/Build/CMake/copyDir.cmake"
+    "C:/Users/mllin/OneDrive/Documents/GitHub/Orpheus_Plus/Orpheus_Plus/JUCE/extras/Build/CMake/juce_runtime_arch_detection.cpp"
+    "C:/Users/mllin/OneDrive/Documents/GitHub/Orpheus_Plus/Orpheus_Plus/JUCE/extras/Build/CMake/juce_LinuxSubprocessHelper.cpp"
     )
 endif()
 
 string(REPLACE ";" "\n" CMAKE_INSTALL_MANIFEST_CONTENT
        "${CMAKE_INSTALL_MANIFEST_FILES}")
 if(CMAKE_INSTALL_LOCAL_ONLY)
-  file(WRITE "C:/Users/mllin/OneDrive/Documents/GitHub/Orpheus_Plus/Build/JUCE/install_local_manifest.txt"
+  file(WRITE "C:/Users/mllin/OneDrive/Documents/GitHub/Orpheus_Plus/Orpheus_Plus/build/JUCE/install_local_manifest.txt"
      "${CMAKE_INSTALL_MANIFEST_CONTENT}")
 endif()

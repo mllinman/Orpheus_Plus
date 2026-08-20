@@ -1,4 +1,4 @@
-# Install script for directory: C:/Users/mllin/OneDrive/Documents/GitHub/Orpheus_Plus/JUCE/extras/Build
+# Install script for directory: C:/Users/mllin/OneDrive/Documents/GitHub/Orpheus_Plus/Orpheus_Plus/JUCE/extras/Build
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -34,12 +34,12 @@ endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("C:/Users/mllin/OneDrive/Documents/GitHub/Orpheus_Plus/Build/JUCE/tools/extras/Build/juceaide/cmake_install.cmake")
+  include("C:/Users/mllin/OneDrive/Documents/GitHub/Orpheus_Plus/Orpheus_Plus/build/JUCE/tools/extras/Build/juceaide/cmake_install.cmake")
 endif()
 
 string(REPLACE ";" "\n" CMAKE_INSTALL_MANIFEST_CONTENT
        "${CMAKE_INSTALL_MANIFEST_FILES}")
 if(CMAKE_INSTALL_LOCAL_ONLY)
-  file(WRITE "C:/Users/mllin/OneDrive/Documents/GitHub/Orpheus_Plus/Build/JUCE/tools/extras/Build/install_local_manifest.txt"
+  file(WRITE "C:/Users/mllin/OneDrive/Documents/GitHub/Orpheus_Plus/Orpheus_Plus/build/JUCE/tools/extras/Build/install_local_manifest.txt"
      "${CMAKE_INSTALL_MANIFEST_CONTENT}")
 endif()

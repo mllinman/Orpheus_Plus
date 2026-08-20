@@ -129,6 +129,15 @@ AutoTunePanel::AutoTunePanel(AudioEngine& e, AppState& state)
 
 AutoTunePanel::~AutoTunePanel() { stopTimer(); }
 
+VocalSuiteProcessor* AutoTunePanel::getProcessor()
+{
+    const int trackIndex = appState.getSelectedTrackIndex();
+    if (trackIndex < 0)
+        return nullptr;
+
+    return audioEngine.getVocalSuiteForTrack(trackIndex);
+}
+
 void AutoTunePanel::timerCallback()
 {
     int currentTrackIndex = appState.getSelectedTrackIndex();

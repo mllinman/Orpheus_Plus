@@ -196,7 +196,7 @@ void WorkspaceManager::addToLeftSidebar(const juce::String& name, std::unique_pt
 void WorkspaceManager::addToRightSidebar(const juce::String& name, std::unique_ptr<juce::Component> content)
 {
     auto* cp = new CollapsiblePanel(name, std::move(content));
-    rightContainer.addPanel(cp, true, true);
+    rightContainer.addPanel(-1, cp, true);
     rightContainer.setMaximumPanelSize(cp, 0);
 }
 

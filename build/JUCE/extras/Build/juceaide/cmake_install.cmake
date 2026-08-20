@@ -1,4 +1,4 @@
-# Install script for directory: C:/Users/mllin/OneDrive/Documents/GitHub/Orpheus_Plus/JUCE/extras/Build/juceaide
+# Install script for directory: C:/Users/mllin/OneDrive/Documents/GitHub/Orpheus_Plus/Orpheus_Plus/JUCE/extras/Build/juceaide
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -33,12 +33,12 @@ if(NOT DEFINED CMAKE_CROSSCOMPILING)
 endif()
 
 if(CMAKE_INSTALL_COMPONENT STREQUAL "Unspecified" OR NOT CMAKE_INSTALL_COMPONENT)
-  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/bin/JUCE-8.0.12" TYPE PROGRAM FILES "C:/Users/mllin/OneDrive/Documents/GitHub/Orpheus_Plus/Build/JUCE/tools/extras/Build/juceaide/juceaide_artefacts/Custom/juceaide.exe")
+  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/bin/JUCE-8.0.12" TYPE PROGRAM FILES "C:/Users/mllin/OneDrive/Documents/GitHub/Orpheus_Plus/Orpheus_Plus/build/JUCE/tools/extras/Build/juceaide/juceaide_artefacts/Custom/juceaide.exe")
 endif()
 
 string(REPLACE ";" "\n" CMAKE_INSTALL_MANIFEST_CONTENT
        "${CMAKE_INSTALL_MANIFEST_FILES}")
 if(CMAKE_INSTALL_LOCAL_ONLY)
-  file(WRITE "C:/Users/mllin/OneDrive/Documents/GitHub/Orpheus_Plus/Build/JUCE/extras/Build/juceaide/install_local_manifest.txt"
+  file(WRITE "C:/Users/mllin/OneDrive/Documents/GitHub/Orpheus_Plus/Orpheus_Plus/build/JUCE/extras/Build/juceaide/install_local_manifest.txt"
      "${CMAKE_INSTALL_MANIFEST_CONTENT}")
 endif()
