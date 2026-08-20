@@ -1,32 +1,23 @@
-cmake_minimum_required(VERSION 3.22)
-project(OrpheusPlus VERSION 1.0.0)
+cmake_minimum_required(VERSION 3.24)
+project(OrpheusPlus VERSION 2.0.0)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # ── JUCE ────────────────────────────────────────────────────────────────────
-# Clone JUCE into the project or point to your local copy:
-#   git submodule add https://github.com/juce-framework/JUCE.git JUCE
 add_subdirectory(JUCE)
 
 # ── Third-party deps ─────────────────────────────────────────────────────────
-# Rubber Band Library (pitch/time stretching)
-# find_package(RubberBand REQUIRED)
-
-# ONNX Runtime (AI model inference for stem sep, audio-to-MIDI, noise removal)
 include(FetchContent)
 FetchContent_Declare(
     onnxruntime
-    URL "https://github.com/microsoft/onnxruntime/releases/download/v1.17.1/onnxruntime-win-x64-1.17.1.zip"
+    URL "https://github.com/microsoft/onnxruntime/releases/download/v1.29.0/onnxruntime-win-x64-1.29.0.zip"
 )
 FetchContent_MakeAvailable(onnxruntime)
 
-# We must explicitly add the include directory and link the library for ONNX Runtime since it doesn't provide standard CMake targets in the ZIP release.
 set(ONNXRUNTIME_INCLUDE_DIR ${onnxruntime_SOURCE_DIR}/include)
 set(ONNXRUNTIME_LIB_DIR ${onnxruntime_SOURCE_DIR}/lib)
-
-# RNNoise (neural noise suppression) - compile from source
-# add_subdirectory(third_party/rnnoise)
 
 # ── OrpheusPlus target ───────────────────────────────────────────────────────
 juce_add_gui_app(OrpheusPlus
@@ -46,73 +37,13 @@ target_sources(OrpheusPlus PRIVATE
     Source/Main.cpp
     Source/MainComponent.cpp
 
-    # Newly Added Missing Sources
+    # Utility
     Source/Util/OrpheusLogger.cpp
-    Source/UI/ExportDialog.cpp
-    Source/UI/WorkspaceManager.cpp
-    Source/UI/WorkspaceManager.h
-    Source/UI/SpatialPannerUI.cpp
-    Source/UI/SpatialPannerUI.h
-    Source/AI/CompositionCoPilot.cpp
-    Source/AI/CompositionCoPilot.h
-    Source/UI/AICoPilotPanel.cpp
-    Source/UI/AICoPilotPanel.h
-    Source/Audio/SpatialReverbProcessor.cpp
-    Source/Audio/SpatialReverbProcessor.h
-    Source/Mastering/PhaseAlignmentAI.cpp
-    Source/Control/MacroController.cpp
-
-    # Audio Engine
-    Source/Audio/AudioEngine.cpp
-    Source/Audio/ClipGeneratorProcessor.cpp
-    Source/Audio/TrackProcessor.cpp
-    Source/Audio/TrackFaderProcessor.cpp
-    Source/Audio/MixerProcessor.cpp
-    Source/Audio/PluginManager.cpp
-    Source/Audio/PluginSandbox.cpp
-    Source/Audio/MidiLearnManager.cpp
-    Source/Audio/TimeStretcher.cpp
-    Source/Audio/ConvolutionReverbProcessor.cpp
-    Source/Audio/OrpheusSynth.cpp
-    Source/Audio/MidiGeneratorProcessor.cpp
-    Source/Audio/ChordGeneratorProcessor.cpp
-    Source/Audio/Arpeggiator.cpp
-    Source/Audio/ArpeggiatorProcessor.cpp
-    Source/Audio/SimpleDelayProcessor.cpp
-    Source/Audio/TransientDetector.cpp
-    Source/Audio/TempoFollower.cpp
-
-    # Timeline
-    Source/Timeline/TimelineComponent.cpp
-    Source/Timeline/TrackLaneComponent.cpp
-    Source/Timeline/AudioClip.cpp
-    Source/Timeline/MidiClip.cpp
-    Source/Timeline/TransportController.cpp
-
-    # Piano Roll
-    Source/PianoRoll/PianoRollComponent.cpp
-
-
-    # Mastering
-    Source/Mastering/MasteringModule.cpp
-    Source/Mastering/MultibandCompressor.cpp
-    Source/Mastering/LinearPhaseEQ.cpp
-    Source/Mastering/LUFSMeter.cpp
-
-    # AI Features
-    Source/StemSeparation/StemSeparator.cpp
-    Source/AudioToMidi/AudioToMidiConverter.cpp
-    Source/PitchCorrection/VocalSuiteProcessor.cpp
-    Source/AudioCleanup/AudioCleanupProcessor.cpp
-    Source/AudioCleanup/AIHumanizerProcessor.cpp
-    Source/VoiceCloning/VoiceConversionProcessor.cpp
-    Source/VoiceCloning/SpeakerEmbeddingExtractor.cpp
-
-    # Project Management
-    Source/Project/ProjectManager.cpp
-    Source/Project/AppState.cpp
 
     # UI
+    Source/UI/ExportDialog.cpp
+    Source/UI/WorkspaceManager.cpp
+    Source/UI/SpatialPannerUI.cpp
     Source/UI/OrpheusLookAndFeel.cpp
     Source/UI/TransportBar.cpp
     Source/UI/MixerPanel.cpp
@@ -144,41 +75,91 @@ target_sources(OrpheusPlus PRIVATE
     Source/UI/ToolbarComponent.cpp
     Source/UI/CollapsiblePanel.cpp
     Source/UI/StatusBar.cpp
+    Source/UI/AICoPilotPanel.cpp
+    Source/UI/ADRPanel.cpp
+    Source/UI/DistributionPrepPanel.cpp
+    Source/UI/SettingsHubPanel.cpp
 
-    # Transcription
-    Source/Transcription/TablatureGenerator.cpp
+    # Audio Engine
+    Source/Audio/AudioEngine.cpp
+    Source/Audio/ClipGeneratorProcessor.cpp
+    Source/Audio/TrackProcessor.cpp
+    Source/Audio/TrackFaderProcessor.cpp
+    Source/Audio/MixerProcessor.cpp
+    Source/Audio/PluginManager.cpp
+    Source/Audio/PluginSandbox.cpp
+    Source/Audio/MidiLearnManager.cpp
+    Source/Audio/TimeStretcher.cpp
+    Source/Audio/ConvolutionReverbProcessor.cpp
+    Source/Audio/SpatialReverbProcessor.cpp
+    Source/Audio/OrpheusSynth.cpp
+    Source/Audio/MidiGeneratorProcessor.cpp
+    Source/Audio/ChordGeneratorProcessor.cpp
+    Source/Audio/Arpeggiator.cpp
+    Source/Audio/ArpeggiatorProcessor.cpp
+    Source/Audio/SimpleDelayProcessor.cpp
+    Source/Audio/TransientDetector.cpp
+    Source/Audio/TempoFollower.cpp
+    Source/Audio/MelodyCompleter.cpp
 
-    # Utility
-    # Phase 8, 9, 10, 12 Expansion Modules
-    Source/Hardware/MackieControlSurface.cpp
-    Source/Cloud/CloudSyncManager.cpp
-    Source/Video/VideoTrackComponent.cpp
-    Source/Score/ScoreViewComponent.cpp
+    # Timeline
+    Source/Timeline/TimelineComponent.cpp
+    Source/Timeline/TrackLaneComponent.cpp
+    Source/Timeline/AudioClip.cpp
+    Source/Timeline/MidiClip.cpp
+    Source/Timeline/TransportController.cpp
+
+    # Piano Roll
+    Source/PianoRoll/PianoRollComponent.cpp
+
+    # Mastering
+    Source/Mastering/MasteringModule.cpp
+    Source/Mastering/MultibandCompressor.cpp
+    Source/Mastering/LinearPhaseEQ.cpp
+    Source/Mastering/LUFSMeter.cpp
+    Source/Mastering/PhaseAlignmentAI.cpp
     Source/Mastering/AdvancedConvolutionReverb.cpp
-    Source/Scripting/ScriptingEngine.cpp
+    Source/Mastering/LatentMatchEQ.cpp
+    Source/Mastering/SpectralCarver.cpp
+
+    # AI Features
+    Source/StemSeparation/StemSeparator.cpp
+    Source/AudioToMidi/AudioToMidiConverter.cpp
+    Source/PitchCorrection/VocalSuiteProcessor.cpp
+    Source/AudioCleanup/AudioCleanupProcessor.cpp
+    Source/AudioCleanup/AIHumanizerProcessor.cpp
+    Source/AudioCleanup/ADRProcessor.cpp
+    Source/AudioCleanup/DistributionPrepProcessor.cpp
+    Source/VoiceCloning/VoiceConversionProcessor.cpp
+    Source/VoiceCloning/SpeakerEmbeddingExtractor.cpp
     Source/AI/AIPluginHost.cpp
     Source/AI/ArrangementCoPilot.cpp
+    Source/AI/CompositionCoPilot.cpp
     Source/AI/TextToSampleGenerator.cpp
     Source/AI/AutoMixer.cpp
     Source/AI/TrackElementClassifier.cpp
     Source/AI/SmartTrackFixer.cpp
-    Source/Audio/MelodyCompleter.cpp
-    Source/Mastering/LatentMatchEQ.cpp
-    Source/Mastering/SpectralCarver.cpp
+    Source/AI/VariationGeneratorAI.cpp
+
+    # Project Management
+    Source/Project/ProjectManager.cpp
+    Source/Project/AppState.cpp
+
+    # Transcription
+    Source/Transcription/TablatureGenerator.cpp
+
+    # Phase 8, 9, 10, 12 Expansion Modules
+    Source/Hardware/MackieControlSurface.cpp
+    Source/Hardware/OSCManager.cpp
+    Source/Cloud/CloudSyncManager.cpp
+    Source/Video/VideoTrackComponent.cpp
+    Source/Score/ScoreViewComponent.cpp
+    Source/Scripting/ScriptingEngine.cpp
+    Source/Control/MacroController.cpp
+    Source/Control/MultiBreakpointEnvelope.cpp
 
     # Export Architecture
     Source/Export/AudioExportManager.cpp
-
-    # ADR
-    Source/AudioCleanup/ADRProcessor.cpp
-    Source/UI/ADRPanel.cpp
-
-    # Distribution Prep
-    Source/AudioCleanup/DistributionPrepProcessor.cpp
-    Source/UI/DistributionPrepPanel.cpp
-
-    # Settings Hub
-    Source/UI/SettingsHubPanel.cpp
 )
 
 target_include_directories(OrpheusPlus PRIVATE
@@ -209,20 +190,27 @@ target_link_libraries(OrpheusPlus PRIVATE
     juce::juce_graphics
     juce::juce_gui_basics
     juce::juce_gui_extra
+    juce::juce_osc
     juce::juce_recommended_config_flags
-    # juce::juce_recommended_lto_flags  # Disabled — triggers MSVC 14.44 ICE (C1001) during LTCG
     ${ONNXRUNTIME_LIB_DIR}/onnxruntime.lib
 )
 
-# MSVC 14.44 ICE workarounds
+# ── MSVC ICE Workarounds & Build Hardening ────────────────────────────────────
 if(MSVC)
-    target_compile_options(OrpheusPlus PRIVATE /bigobj /d2FH4- /FS)
+    target_compile_options(OrpheusPlus PRIVATE
+        /bigobj          # Support large object files (100+ source files)
+        /d2FH4-          # Disable FH4 exception handling (avoids linker ICE)
+        /FS              # Force synchronous PDB writes (parallel build safety)
+        /Zc:__cplusplus  # Report correct C++ standard to headers
+        /GL-             # Disable Whole Program Optimization (avoids C1001 ICE)
+        /W4              # High warning level for future-proofing
+        /wd4100          # Suppress: unreferenced formal parameter (common in JUCE overrides)
+        /wd4244          # Suppress: conversion from double to float (common in audio code)
+        /wd4267          # Suppress: conversion from size_t (common in JUCE containers)
+    )
 
-    # MSVC 14.44 crashes with /O2 on many JUCE template-heavy files.
-    # Override Release optimization to /O1 (optimize for size) which avoids the ICE
-    # while still producing optimized code.
-    string(REPLACE "/O2" "/O1" CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE}")
-    string(REPLACE "/O2" "/O1" CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE}")
+    set(CMAKE_CXX_FLAGS_RELEASE "/O1 /DNDEBUG" CACHE STRING "Release flags" FORCE)
+    set(CMAKE_C_FLAGS_RELEASE   "/O1 /DNDEBUG" CACHE STRING "Release flags" FORCE)
 endif()
 
 # Copy the onnxruntime.dll to the output directory so the executable can find it at runtime

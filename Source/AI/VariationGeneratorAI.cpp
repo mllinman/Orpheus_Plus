@@ -13,7 +13,7 @@ juce::StringArray VariationGeneratorAI::generateVariations(const AudioClip& orig
     for (int i = 0; i < numVariations; ++i)
     {
         // Mock generation
-        juce::String newFile = synthesizeVariation(originalClip.getFilePath(), i, style);
+        juce::String newFile = synthesizeVariation(originalClip.sourceFile.getFullPathName(), i, style);
         generatedFiles.add(newFile);
     }
     

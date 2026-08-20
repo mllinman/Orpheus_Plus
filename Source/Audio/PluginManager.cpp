@@ -160,7 +160,7 @@ void PluginManager::openPluginEditor(int trackIndex, int pluginSlot)
     if (!processor) return;
 
     // Check availability of editor
-    auto* editor = processor->createEditor();
+    auto* editor = processor->createEditorIfNeeded();
     
     // Create window (self-deletes on close)
     auto* window = new PluginWindow(*processor, editor);

@@ -69,12 +69,12 @@ void OSCManager::oscMessageReceived(const juce::OSCMessage& message)
 
 void OSCManager::oscBundleReceived(const juce::OSCBundle& bundle)
 {
-    for (auto* element : bundle)
+    for (const auto& element : bundle)
     {
-        if (element->isMessage())
-            oscMessageReceived(element->getMessage());
-        else if (element->isBundle())
-            oscBundleReceived(element->getBundle());
+        if (element.isMessage())
+            oscMessageReceived(element.getMessage());
+        else if (element.isBundle())
+            oscBundleReceived(element.getBundle());
     }
 }
 
